@@ -469,10 +469,11 @@ in
 {
   home.packages = with pkgs; [
     # `sweet` was removed in upstream nixpkgs (its dependency on the
-    # unmaintained `gtk-engine-murrine` against GTK 2). Until a replacement
-    # is added via overlay or a local package, this reference will fail to
-    # evaluate. Re-enable once `pkgs.sweet` is provided (see plan §3).
-    sweet
+    # unmaintained `gtk-engine-murrine` against GTK 2). Dropped per Phase 0
+    # Option C of the autonomous-install plan: the system picks a default
+    # theme from the desktop environment at activation time. Re-add a
+    # replacement theme here (e.g. `orchis-theme` or `catppuccin-gtk-theme`)
+    # if a specific look-and-feel is needed.
     kdePackages.xdg-desktop-portal-kde
     xdg-desktop-portal-gnome
     xdg-desktop-portal-gtk
@@ -482,7 +483,6 @@ in
     QT_STYLE_OVERRIDE = "kvantum";
     QT_QUICK_CONTROLS_STYLE = "org.kde.desktop";
     XDG_MENU_PREFIX = "plasma-";
-    GTK_THEME = lib.mkForce "Sweet-Dark";
     GTK_USE_PORTAL = "1";
   };
 
@@ -641,10 +641,9 @@ in
         source = candyIconsSrc;
         force = true;
       };
-      "themes/Sweet-Dark" = {
-        source = "${pkgs.sweet}/share/themes/Sweet-Dark";
-        force = true;
-      };
+      # `themes/Sweet-Dark` removed (Phase 0 Option C): the system picks
+      # its default theme from the desktop environment at activation.
+      # Add a replacement entry here if a specific theme is desired.
       "plasma/desktoptheme/Dr460nized" = {
         source = "${garudaDr460nized}/usr/share/plasma/desktoptheme/Dr460nized";
         force = true;
@@ -792,12 +791,16 @@ in
     export QT_STYLE_OVERRIDE=kvantum
     export QT_QUICK_CONTROLS_STYLE=org.kde.desktop
     export XDG_MENU_PREFIX=plasma-
-    export GTK_THEME=Sweet-Dark
+    # GTK_THEME removed (Phase 0 Option C): the system picks a default
+    # theme from the desktop environment at activation. Add a
+    # `export GTK_THEME=<theme>` line here if a specific look is needed.
     export GTK_USE_PORTAL=1
 
     kwrite=${pkgs.kdePackages.kconfig}/bin/kwriteconfig6
 
-    $DRY_RUN_CMD "$kwrite" --file kdeglobals --group General --key ColorScheme Sweet
+    # ColorScheme removed (Phase 0 Option C): KDE inherits from the
+    # desktop environment default. Pick a specific scheme by re-adding
+    # the original line if desired.
     $DRY_RUN_CMD "$kwrite" --file kdeglobals --group General --key fixed 'FiraCode Nerd Font Mono,10,-1,5,400,0,0,0,0,0,0,0,0,0,0,1'
     $DRY_RUN_CMD "$kwrite" --file kdeglobals --group General --key font 'Fira Sans,10,-1,5,400,0,0,0,0,0,0,0,0,0,0,1'
     $DRY_RUN_CMD "$kwrite" --file kdeglobals --group General --key menuFont 'Fira Sans,10,-1,5,400,0,0,0,0,0,0,0,0,0,0,1'
@@ -810,7 +813,9 @@ in
     $DRY_RUN_CMD "$kwrite" --file kdeglobals --group Icons --key Theme BeautyLine
     $DRY_RUN_CMD "$kwrite" --file kdeglobals --group WM --key activeFont 'Fira Sans,10,-1,5,75,0,0,0,0,0,Bold'
 
-    $DRY_RUN_CMD "$kwrite" --file okularrc --group UiSettings --key ColorScheme Sweet
+    # okularrc ColorScheme removed (Phase 0 Option C); pick a specific
+    # scheme by re-adding the original line if desired.
+    $DRY_RUN_CMD "$kwrite" --file okularrc --group UiSettings --key ColorScheme BreezeClassic || true
     $DRY_RUN_CMD "$kwrite" --file okularrc --group General --key ShowSidebar true
     $DRY_RUN_CMD "$kwrite" --file okularrc --group General --key LockSidebar true
 
@@ -840,7 +845,9 @@ in
     $DRY_RUN_CMD "$kwrite" --file qt6ct/qt6ct.conf --group Interface --key dialog_buttons_have_icons 1
     $DRY_RUN_CMD "$kwrite" --file qt6ct/qt6ct.conf --group Interface --key menus_have_icons true
 
-    $DRY_RUN_CMD ${pkgs.glib}/bin/gsettings set org.gnome.desktop.interface gtk-theme Sweet-Dark 2>/dev/null || true
+    # gtk-theme removed (Phase 0 Option C); re-add with a specific theme
+    # name if needed.
+    $DRY_RUN_CMD ${pkgs.glib}/bin/gsettings set org.gnome.desktop.interface gtk-theme Adwaita-dark 2>/dev/null || true
     $DRY_RUN_CMD ${pkgs.glib}/bin/gsettings set org.gnome.desktop.interface icon-theme BeautyLine 2>/dev/null || true
     $DRY_RUN_CMD ${pkgs.glib}/bin/gsettings set org.gnome.desktop.interface color-scheme prefer-dark 2>/dev/null || true
     $DRY_RUN_CMD ${pkgs.python3}/bin/python3 - <<'PY'
