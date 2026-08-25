@@ -1,5 +1,0 @@
-Script started on 2026-07-14 20:31:32-04:00 [COMMAND="bash tests/readiness/run-task.sh 3 fixture" <not executed on terminal>]
-warning: Nix search path entry '/home/mei/.nix-defexpr/channels' does not exist, ignoring
-TASK 3 FIXTURE PASS
-
-Script done on 2026-07-14 20:33:18-04:00 [COMMAND_EXIT_CODE="0"]

@@ -1,9 +1,0 @@
-success_path_cleanup=PASS
-generator_failure_cleanup=PASS rc=1
-multiline_hash_rejected_cleanup=PASS rc=1
-no_final_newline_rejected_cleanup=PASS rc=1
-unterminated_trailing_content_rejected_cleanup=PASS rc=1
-installer_failure_cleanup=PASS installer_rc=42 workflow_rc=42
-hup_cleanup=PASS rc=129
-int_cleanup=PASS rc=130
-term_cleanup=PASS rc=143

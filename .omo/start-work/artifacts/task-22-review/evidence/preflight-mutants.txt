@@ -1,9 +1,0 @@
-canonical rc=0 stderr=
-missing rc=1 stderr=
-malformed rc=2 stderr=nix-config-home-preflight: fixture must contain one row per prerequisite 
-noncanonical rc=2 stderr=nix-config-home-preflight: fixture must contain one row per prerequisite 
-duplicate rc=2 stderr=nix-config-home-preflight: fixture prerequisite rows must be sorted and complete 
-symlink rc=2 stderr=nix-config-home-preflight: fixture must be a regular non-symlink file 
-directory rc=2 stderr=nix-config-home-preflight: fixture must be a regular non-symlink file 
-live-fake rc=0 stderr=
-live-fake executed=0

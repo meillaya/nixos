@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+host=""
+build_args=()
+
+while (( $# > 0 )); do
+  case "$1" in
+    --host=*)
+      host=${1#*=}
+      shift
+      ;;
+    --host)
+      if (( $# < 2 )); then
+        echo 'build: --host requires a value' >&2
+        exit 2
+      fi
+      host=$2
+      shift 2
+      ;;
+    --help|-h)
+      cat <<'EOF'
+Usage: build [--host HOST] [nix build arguments...]
+
+Builds the selected NixOS toplevel without switching, changing boot entries,
+or deleting generations. Defaults to the current Linux architecture target.
+EOF
+      exit 0
+      ;;
+    *)
+      build_args+=("$1")
+      shift
+      ;;
+  esac
+done
+
+if [[ -z "$host" ]]; then
+  case "$(uname -m)" in
+    x86_64) host="x86_64-linux" ;;
+    *)
+      echo "build: unsupported architecture: $(uname -m)" >&2
+      exit 1
+      ;;
+  esac
+fi
+
+exec nix build ".#nixosConfigurations.${host}.config.system.build.toplevel" \
+  "${build_args[@]}"

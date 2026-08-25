@@ -1,1 +1,0 @@
-dosfstools=/nix/store/alk10nwqax99k8cbrpr4vwkakq9a7sgj-dosfstools-4.2 mtools=/nix/store/x1y6vlqyry8x7vsfddz7x00fqzdlq91s-mtools-4.0.49

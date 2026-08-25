@@ -10,14 +10,16 @@ init_config_root() {
     return
   fi
 
-  # nix-config declares only aarch64-darwin; route shells tests there.
-  local target_system=${DENDRITIC_TARGET_SYSTEM:-aarch64-darwin}
+  local target_system=${DENDRITIC_TARGET_SYSTEM:-$(nix eval --impure --raw --expr 'builtins.currentSystem')}
   case "$target_system" in
+    x86_64-linux)
+      config_root="f.nixosConfigurations.remembrance"
+      ;;
     aarch64-darwin)
-      config_root="f.darwinConfigurations.\"$target_system\""
+      config_root="f.darwinConfigurations.entropy"
       ;;
     *)
-      printf >&2 'unsupported nix-config dendritic shell target system: %s\n' "$target_system"
+      printf >&2 'unsupported dendritic shell target system: %s\n' "$target_system"
       exit 1
       ;;
   esac
@@ -52,15 +54,6 @@ nu=$(resolve_bin DENDRITIC_NU_BIN nushell nu)
 bash_bin=$(resolve_bin DENDRITIC_BASH_BIN bashInteractive bash)
 zsh=$(resolve_bin DENDRITIC_ZSH_BIN zsh zsh)
 fish=$(resolve_bin DENDRITIC_FISH_BIN fish fish)
-
-# The Darwin-resolved binaries are aarch64-darwin. Running them on a
-# non-Darwin host (e.g. x86_64-linux build host) requires emulation. If
-# the user wants to run this test from Linux, point DENDRITIC_*_BIN at
-# native shells already on PATH (or skip the test on non-Darwin hosts).
-if [[ "$(uname -m)" != "arm64" && -z "${DENDRITIC_NU_BIN:-}${DENDRITIC_BASH_BIN:-}${DENDRITIC_ZSH_BIN:-}${DENDRITIC_FISH_BIN:-}" ]]; then
-  printf 'dendritic-shells=SKIP (host arch %s cannot run aarch64-darwin shells without emulation)\n' "$(uname -m)"
-  exit 0
-fi
 
 test "$("$nu" -c 'print nu-ok')" = nu-ok
 test "$("$bash_bin" -c 'printf bash-ok')" = bash-ok

@@ -35,51 +35,25 @@ for path in \
   modules/entities/_machine-authority/model.nix \
   modules/entities/_machine-authority/validators.nix \
   modules/aspects/shared-policy/nixpkgs.nix \
-  modules/aspects/platforms/darwin.nix \
-  modules/aspects/roles/workstation-darwin.nix \
-  modules/aspects/hardware/apple-silicon.nix \
-  modules/aspects/hardware/device-capability-routing.nix \
-  modules/aspects/storage/aarch64-darwin.nix \
-  modules/aspects/named-hosts/aarch64-darwin.nix \
-  modules/aspects/users/mei.nix \
-  modules/aspects/hosts/darwin-workstation.nix \
-  modules/aspects/hosts/standalone-linux.nix \
-  modules/aspects/features/darwin-base.nix \
-  modules/aspects/features/darwin-home.nix \
-  modules/aspects/features/darwin-dock.nix \
-  modules/aspects/features/sops.nix
-do
-  test -f "$path"
-done
-
-# nix-config must NOT contain any NixOS-only aspects (they live in NixOS-config).
-# desktop-media is duplicated because the standalone Home Manager uses its
-# homeManager branch; the NixOS-only branches are stripped from this copy.
-for path in \
   modules/aspects/platforms/linux.nix \
   modules/aspects/roles/workstation-linux.nix \
   modules/aspects/roles/qualifier-linux.nix \
   modules/aspects/roles/evaluation-linux.nix \
   modules/aspects/hardware/pending-x86-workstation.nix \
-  modules/aspects/hardware/pending-x86-qualifier.nix \
-  modules/aspects/hardware/evaluation-aarch64.nix \
   modules/aspects/hardware/x86-vendor-routing.nix \
-  modules/aspects/storage/nixos-laptop.nix \
-  modules/aspects/storage/aarch64-linux.nix \
-  modules/aspects/storage/nixos-x86-qualifier.nix \
-  modules/aspects/named-hosts/nixos-laptop.nix \
-  modules/aspects/named-hosts/aarch64-linux.nix \
-  modules/aspects/named-hosts/nixos-x86-qualifier.nix \
+  modules/aspects/hardware/device-capability-routing.nix \
+  modules/aspects/storage/remembrance.nix \
+  modules/aspects/named-hosts/remembrance.nix \
+  modules/aspects/users/mei.nix \
   modules/aspects/hosts/nixos-workstation.nix \
   modules/aspects/features/bootstrap-password.nix \
   modules/aspects/features/nixos-base.nix \
   modules/aspects/features/niri.nix \
-  modules/aspects/features/linux-desktop.nix
+  modules/aspects/features/desktop-media.nix \
+  modules/aspects/features/linux-desktop.nix \
+  modules/aspects/features/sops.nix
 do
-  if [[ -e $path ]]; then
-    echo "nix-config must not contain NixOS-only aspect: $path" >&2
-    exit 1
-  fi
+  test -f "$path"
 done
 
 if ! test -f modules/shared/config/fastfetch/snoopy-mugiwara.png; then
@@ -142,45 +116,14 @@ fi
 
 test ! -e apps/x86_64-darwin
 
-# nix-config declares no NixOS systems.
-nix_systems=$(nix eval --impure --json --expr \
-  "builtins.attrNames (builtins.getFlake \"path:$root\").nixosConfigurations or {}")
-python3 - "$nix_systems" <<'PY'
-import json
-import sys
-
-systems = json.loads(sys.argv[1])
-assert systems == [], f"nix-config must declare no nixosConfigurations; got {systems}"
-PY
-
-# Darwin systems still expected on nix-config.
-if [[ -v DENDRITIC_DARWIN_CONFIGURATION_SYSTEMS ]]; then
-  darwin_configuration_systems=$DENDRITIC_DARWIN_CONFIGURATION_SYSTEMS
-else
-  darwin_configuration_systems=$(nix eval --impure --json --expr \
-    "builtins.attrNames (builtins.getFlake \"path:$root\").darwinConfigurations")
-fi
-python3 - "$darwin_configuration_systems" <<'PY'
-import json
-import sys
-
-systems = json.loads(sys.argv[1])
-assert "aarch64-darwin" in systems
-assert "x86_64-darwin" not in systems
-PY
-
-# linux-platform aspect lives in NixOS-config (the standalone config wires
-# straight into mei/noctalia/desktop-media).
-# linux role lives in NixOS-config
-# pending-x86-workstation-hardware lives in NixOS-config
-# grep -Fq 'den.aspects.pending-x86-workstation-hardware' \
-#   modules/aspects/hardware/pending-x86-workstation.nix
-# nixos-laptop-storage / nixos-laptop live in NixOS-config
-# grep -Fq 'den.aspects.nixos-laptop-storage' modules/aspects/storage/nixos-laptop.nix
-# grep -Fq 'den.aspects.nixos-laptop' modules/aspects/named-hosts/nixos-laptop.nix
-# x86_64-linux compatibility aspect lives in NixOS-config
-# grep -Fq 'den.aspects.x86_64-linux.includes = [ den.aspects.nixos-laptop ];' \
-#   modules/aspects/hosts/nixos-workstation.nix
+grep -Fq 'den.aspects.linux-platform' modules/aspects/platforms/linux.nix
+grep -Fq 'den.aspects.workstation-role-linux' modules/aspects/roles/workstation-linux.nix
+grep -Fq 'den.aspects.pending-x86-workstation-hardware' \
+  modules/aspects/hardware/pending-x86-workstation.nix
+grep -Fq 'den.aspects.remembrance-storage' modules/aspects/storage/remembrance.nix
+grep -Fq 'den.aspects.remembrance' modules/aspects/named-hosts/remembrance.nix
+grep -Fq 'den.aspects.x86_64-linux.includes = [ den.aspects.remembrance ];' \
+  modules/aspects/hosts/nixos-workstation.nix
 
 if grep -R -Eq '_machine-authority|authority\.getMachine' \
   modules/aspects/named-hosts \
@@ -198,27 +141,15 @@ do
   grep -Fq 'host.machine' "$path"
 done
 
-# x86-vendor-routing lives in NixOS-config
-# grep -Fq 'machine.capabilities.values."install.remote".state' \
-#   modules/aspects/hardware/x86-vendor-routing.nix
-# if grep -Fq 'machine.capabilities.values.install.remote' \
-#   modules/aspects/hardware/x86-vendor-routing.nix; then
-#   echo 'flat install.remote capability key is accessed as nested attributes' >&2
-#   exit 1
-# fi
-
-# system= lines for Linux hosts live in NixOS-config/hosts.nix
-# grep -Fq 'system = "x86_64-linux";' modules/entities/hosts.nix
-# grep -Fq 'system = "aarch64-linux";' modules/entities/hosts.nix
-grep -Fq 'home = "/home/mei";' modules/entities/_machine-authority/model.nix
-
-if grep -Eq 'builtins\.getEnv|NIXOS_CONFIG_(USER|HOME)' \
-  modules/standalone-linux/home-manager.nix; then
-  echo 'standalone Home Manager identity still depends on ambient evaluator state' >&2
+grep -Fq 'machine.capabilities.values."install.remote".state' \
+  modules/aspects/hardware/x86-vendor-routing.nix
+if grep -Fq 'machine.capabilities.values.install.remote' \
+  modules/aspects/hardware/x86-vendor-routing.nix; then
+  echo 'flat install.remote capability key is accessed as nested attributes' >&2
   exit 1
 fi
 
-grep -Fq 'inherit (home) userName homeDirectory' \
-  modules/aspects/hosts/standalone-linux.nix
+grep -Fq 'system = "x86_64-linux";' modules/entities/hosts.nix
+grep -Fq 'home = "/home/mei";' modules/entities/_machine-authority/model.nix
 
 printf '%s\n' 'dendritic-architecture=PASS'

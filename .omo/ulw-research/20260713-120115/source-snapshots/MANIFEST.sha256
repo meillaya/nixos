@@ -1,6 +1,0 @@
-fa119f113a192c9623c60b604a752ff8c0a97f262b1cf557e1ceaaa2a1233019  ./lib/nixpkgs.nix
-c660c8e4333cdf400d675dfda21213be6d736421cfc1a6a9f00bfb36d18c72f9  ./modules/linux/config/niri/config.kdl
-2d2c32ad8543668c0907b816c9187f588735c09427af3ece39c1768acf45659d  ./modules/linux/home-manager.nix
-312a6be940c5344f474913dc243e87c763f7b0bcf38ea8284a594cebb32b235b  ./modules/nixos/disk-config.nix
-e916386c456aec59c9d462a1a65c4766412c5b71a354e04e62fe51fbc243c34f  ./modules/nixos/system.nix
-f84064b551f965b754d26a589a92f16d0116222df43caf936b24260e0ae1e76a  ./modules/standalone-linux/config/mako/config

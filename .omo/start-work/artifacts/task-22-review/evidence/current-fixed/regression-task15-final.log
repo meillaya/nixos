@@ -1,9 +1,0 @@
-fixture:F01-deterministic-intake-patch
-fixture_rc=0
-fixture:F03-network-capability-branches
-fixture_rc=0
-negative:N20-model-parity-boundaries
-rejected_rc=0
-negative:N21-rfc6902-array-add
-rejected_rc=0
-TASK15 REGRESSION PASS

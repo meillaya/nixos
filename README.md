@@ -1,92 +1,111 @@
-# nix-config
+# nixos
 
-Personal Nix config for **macOS** (via `nix-darwin`) and **standalone Linux**
-machines (via Determinate Nix + Home Manager). NixOS configurations
-live in the sibling `~/NixOS-config/` repo.
+Personal NixOS configuration: workstation hosts on NixOS and macOS.
+Each host shares the same Den-based aspect architecture as
+`~/nixos/` and lives behind the same machine authority schema.
 
 ## Hosts
 
-- `darwinConfigurations.aarch64-darwin` — Apple Silicon Mac
-  (`aarch64-darwin`).
-- `homeConfigurations.standalone-linux` — generic Linux
-  (x86_64) with Determinate Nix.
-- `homeConfigurations.standalone-linux-aarch64` — generic Linux
-  (aarch64) with Determinate Nix.
+- `nixosConfigurations.remembrance` — NixOS workstation (this PC).
+- `nixosConfigurations.antagony` — NixOS workstation (ThinkPad P52).
+- `darwinConfigurations.entropy` — macOS workstation (Mac mini).
+- `homeConfigurations.standalone-linux` — standalone Linux Home-Manager host (massive, CachyOS).
 
-The `mei` user account on every managed host is declared by
-`modules/aspects/users/mei.nix`.
+The NixOS hosts share the same `mei` user account via
+`modules/aspects/users/mei.nix` and the same NixOS desktop feature stack
+(Niri, Noctalia, Helium/Spicetify, Noctalia Cachix setup).
 
-## macOS
-
-```bash
-nix run .#build-switch       # real sudo darwin-rebuild switch
-nix run .#build              # build only
-nix run .#clean              # delete generations older than 7 days
-nix run .#update             # flake inputs
-nix run .#search-pkgs -- <query>
-nix run .#nh -- os switch --hostname aarch64-darwin
-```
-
-On the first switch, native Darwin build, activation, relogin, rollback,
-and TCC checks remain **NOT VERIFIED** until the first real switch.
-Build before switching, and if the activation goes wrong roll back with
-`sudo darwin-rebuild rollback`.
-
-`raycast` is installed as a Spotlight replacement via
-`modules/darwin/packages.nix`. After the first switch, enable it as
-the default launcher (System Settings → Keyboard → Spotlight, or via
-the Raycast UI itself) and install extensions interactively.
-Per-machine extension/keymap state lives in
-`~/Library/Application Support/com.raycast.macos/` and is not vendored.
-
-## Standalone Linux
-
-Install Determinate Nix first:
+## Build, switch, clean
 
 ```bash
-curl -fsSL https://install.determinate.systems/nix | sh -s -- install
+nix run .#build              # dry-run toplevel build
+nix run .#build-switch       # build + sudo nixos-rebuild switch (defaults to x86_64-linux)
+nix run .#clean              # delete system generations older than 7 days
 ```
 
-Then switch the standalone home:
+All configured systems get the flake app surface: on Linux `build`,
+`build-switch`, `clean`, `home-news`, `home-switch`, `nh`, `search-pkgs`,
+`update`; on Darwin `build`, `build-switch`, `clean`, `search-pkgs`,
+`update`.
+
+## Install
+
+Installation is ISO-driven. Build a per-host installer ISO, boot it on
+the target, then run `nixos-anywhere` to install the flake.
 
 ```bash
-nix run .#home-switch                              # defaults to standalone-linux on x86_64
-nix run .#home-switch -- --target standalone-linux-aarch64
-nix run .#nh -- home switch --hostname standalone-linux-aarch64
+nix build .#iso.<host>
 ```
 
-Subsequent updates:
+(`.#iso.<host>` is shorthand for
+`.#nixosConfigurations.<host>.config.system.build.isoImage`.) Boot the
+ISO on the target (e.g. a Proxmox VM), then run nixos-anywhere:
 
 ```bash
-home-manager switch --flake .#standalone-linux
-home-manager switch --flake .#standalone-linux-aarch64
+nix run github:nix-community/nixos-anywhere -- --flake '.#<host>' --target-host <ip>
 ```
 
-To read Home Manager news:
+nixos-anywhere auto-detects the installer and skips kexec. The
+four-enrollment gate (`boot.state=uefi`,
+`storage.profile=single-gpt-btrfs`, `publicTrust.state=enrolled`,
+`secretTrust.state=enrolled`) is the trust boundary. Git history records
+who enrolled what.
+
+See `docs/service-notes/nixos-anywhere-iso-install.md` for the full
+procedure.
+
+## Update
 
 ```bash
-nix run .#home-news
+nix run .#update               # flake inputs + local source pins
+nix run .#update -- nixpkgs home-manager
 ```
 
-Standalone identity is part of the Den home entity declaration. To
-support a different user or home directory, add a distinct typed home
-entity and output instead of relying on ambient environment overrides.
+## Tooling flakes
 
-See `docs/service-notes/wsl-standalone-home-manager.md` for WSL notes.
+The flake registers four extras beyond the default Den + flake-parts
+inputs (see `flake.nix`):
+
+- **`stylix`** — declarative system-wide theming
+  (`github:danth/stylix`). Aspect wired into
+  `modules/aspects/features/stylix.nix`, gated by
+  `stylix.enable = false` until you pick a palette + font in
+  `stylix.targets.<host>.colors` / `.fonts` per host.
+- **`nix-direnv`** — `github:nix-community/nix-direnv`. Aspect in
+  `modules/aspects/features/nix-direnv.nix` imports
+  `inputs.nix-direnv.nixosModules.default` and enables
+  `programs.nix-direnv` on every NixOS host. The `use flake` line in
+  `.envrc` pairs with this.
+- **`nh`** — `github:viperML/nh` (viperML/nh 4.4.2). Drop-in
+  replacement for `nixos-rebuild` / `home-manager` with built-in diff
+  review and `flake.lock` awareness. Exposed as a flake app:
+
+  ```bash
+  nix run .#nh -- os switch                  # build + activate on this host
+  nix run .#nh -- os switch --hostname remembrance
+  nix run .#nh -- home switch --hostname standalone-linux
+  nix run .#nh -- os dry-build              # see the activation diff
+  ```
+
+  `build-switch` and `apps/<system>/build-switch` now delegate to
+  `nh os switch` internally, so `nix run .#build-switch` picks up the
+  same diff-review flow.
+
+- **`preservation`** — `github:nix-community/preservation`. Aspect in
+  `modules/aspects/features/preservation.nix` (wired into
+  `modules/aspects/platforms/linux.nix`). Preserves `/etc/machine-id`,
+  `/etc/ssh`, `/var/lib`, `/var/db`, `/var/log`, `/srv`, `/home`,
+  `/root` against rebuild churn via bind mounts. NixOS-only — skipped
+  on the Darwin side because `preservation` is NixOS-flavored.
 
 ## Secrets
 
 Only `sops-nix` is wired. The five coding-agent API keys
 (`OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `GEMINI_API_KEY`,
 `OPENROUTER_API_KEY`, `GITHUB_TOKEN`) are evaluated from
-`secrets/coding-agents.yaml` for both Darwin and standalone-Linux
-hosts. The recipient policy is `.sops.yaml` at the repo root.
-
-The ignored local `secrets/` directory holds `coding-agents.yaml`
-(tracked, sops-encrypted) and operator-local runtime files such as
-`calibre/`. Those plaintext files are not ingested by Home Manager or
-referenced from a Nix path; they are installed manually per the
-per-service notes in `docs/service-notes/`.
+`secrets/coding-agents.yaml` for both Linux hosts via the
+`den.aspects.sops` chain. The recipient policy is `.sops.yaml` at the
+repo root.
 
 ## Coding agents
 
@@ -97,23 +116,6 @@ are removed. `lazycodex` is installed manually via
 `npx lazycodex-ai install`. The shared `codex-wrapped` shim injects
 provider keys from the sops file at runtime.
 
-## Tooling flakes
-
-The flake registers the same four extras as `~/NixOS-config/`
-(see `flake.nix`): `stylix`, `nix-direnv`, `nh`, `preservation`.
-`stylix` and `preservation` are NixOS-only and not wired here
-(`preservation` is declared as a flake input for lockfile symmetry;
-see the comment in `modules/aspects/platforms/darwin.nix`).
-`nix-direnv` ships in `modules/shared/packages.nix`, and `.envrc`
-contains `use flake` so the flake's dev shell activates automatically.
-
-`nh` (viperML/nh 4.4.2) is exposed as a flake app:
-
-```bash
-nix run .#nh -- os switch --hostname aarch64-darwin
-nix run .#nh -- home switch --hostname standalone-linux
-```
-
 ## Layout
 
 ```
@@ -123,35 +125,33 @@ lib/nixpkgs.nix               unfree-allowlist policy
 modules/
   entities/                   host + machine authority
   aspects/
-    features/                 leaf capability aspects (darwin-*, noctalia, sops)
-    platforms/                OS-level chains (darwin.nix)
-    roles/                    workstation-darwin role
+    features/                 leaf capability aspects (niri, noctalia, etc.)
+    platforms/                OS-level chains (linux.nix)
+    roles/                    workstation
     hardware/                 vendor + capability routing
-    storage/                  storage policy (Darwin stub)
+    storage/                  storage policy (Disko wiring)
     named-hosts/              hostname + identity projection
     hosts/                    host aggregates
     users/mei.nix             user + Home Manager projection
     shared-policy/nixpkgs.nix nixpkgs config overlay
   flake/                      flake-parts wiring (dendritic, checks, packages, apps, etc.)
-  darwin/                     Darwin implementation modules
-  standalone-linux/           standalone Home Manager config + packages + files
+  nixos/                      NixOS implementation modules
   shared/                     cross-platform package + file surfaces
-  linux/                      standalone Linux desktop surface (also used by NixOS)
-apps/aarch64-darwin/          Darwin build/switch/clean/update/search-pkgs scripts
-pkgs/                         repo-local derivations (omniwm is Darwin-only)
-secrets/                      sops-encrypted secrets
-tests/                        architecture + config-eval + package-policy tests
-docs/                         service notes (Darwin + standalone Linux)
-config/                       unfree package exceptions
+  linux/                      NixOS Linux desktop surface (also used by standalone-linux)
+pkgs/                         repo-local derivations
+secrets/                       sops-encrypted secrets
+tests/                        architecture + config-eval + package-policy + readiness tests
+scripts/                      hardware intake + readiness tasks
+config/                       hardware intake + install sandbox schemas
+docs/                         service notes + machine audits
 ```
 
-The NixOS tree (`modules/nixos/`, NixOS-specific hardware/storage/aspect
-modules, NixOS-named hosts) lives in the sibling `~/NixOS-config/`
-repo. Shared modules (`modules/shared/`, `modules/linux/`, the `mei`
-user aspect, the `noctalia` and `sops` aspects, the `mei` `codex-wrapped`
-shim, and `modules/standalone-linux/config/noctalia/config.toml`)
-are duplicated bit-for-bit into both repos so neither depends on the
-other — changes that touch a shared file must be applied to both.
+The Darwin (`modules/darwin/`) and standalone Linux
+(`modules/standalone-linux/`) trees live in this single repo. Shared
+modules (`modules/shared/`, `modules/linux/`, the `mei` user aspect,
+the `noctalia` and `sops` aspects, and
+`modules/standalone-linux/config/noctalia/config.toml`) are used by
+both trees from this one repo.
 
 ## Verification
 
@@ -163,3 +163,7 @@ bash tests/dendritic-apps.sh
 nix-instantiate --eval --strict --expr 'import ./tests/dendritic-config-eval.nix {}'
 bash tests/package-policy.sh
 ```
+
+Disk and first-install password behaviour have separate destructive-risk
+tests under `tests/bootstrap-password-*`; run every one of them after
+changing NixOS aspects or installation documentation.

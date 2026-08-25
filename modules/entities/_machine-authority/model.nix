@@ -1,14 +1,10 @@
 let
   validators = import ./validators.nix;
 
-  # This repo owns the aarch64-darwin machine and re-declares the laptop and
-  # aarch64-linux machines so the standalone Linux Home Manager entities
-  # (which live in this repo) have machine data to attach. The duplicate
-  # records must stay in sync with ~/NixOS-config.
   machines = {
-    nixos-laptop = {
-      hostId = "nixos-laptop";
-      target = "nixosConfigurations.x86_64-linux";
+    remembrance = {
+      hostId = "remembrance";
+      target = "nixosConfigurations.remembrance";
       system = "x86_64-linux";
       role = "workstation";
       identity = {
@@ -43,11 +39,11 @@ let
       platformExpectations.kind = "none";
     };
 
-    aarch64-linux = {
-      hostId = "aarch64-linux";
-      target = "nixosConfigurations.aarch64-linux";
-      system = "aarch64-linux";
-      role = "evaluation";
+    antagony = {
+      hostId = "antagony";
+      target = "nixosConfigurations.antagony";
+      system = "x86_64-linux";
+      role = "workstation";
       identity = {
         name = "mei";
         home = "/home/mei";
@@ -80,9 +76,9 @@ let
       platformExpectations.kind = "none";
     };
 
-    aarch64-darwin = {
-      hostId = "aarch64-darwin";
-      target = "darwinConfigurations.aarch64-darwin";
+    entropy = {
+      hostId = "entropy";
+      target = "darwinConfigurations.entropy";
       system = "aarch64-darwin";
       role = "workstation";
       identity = {
@@ -144,8 +140,7 @@ let
           packageSetDigest = "6662492dd57de092f1be5a1672cec45aa8be07564b6d61c5abe0527a94c260e1";
         };
       };
-    };
-  };
+    };  };
 
   machineIds = builtins.attrNames machines;
   getMachine =

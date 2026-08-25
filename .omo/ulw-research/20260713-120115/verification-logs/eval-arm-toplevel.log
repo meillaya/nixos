@@ -1,2 +1,0 @@
-warning: Using 'builtins.derivation' to create a derivation named 'options.json' that references the store path '/nix/store/ifpab9hxqmk2biwy594da8ipxzsp3y4s-source' without a proper context. The resulting derivation will not have a correct store reference, so this is unreliable and may stop working in the future.
-/nix/store/1vfrlw263xl9mfqcay2al1pj7c5cbmll-nixos-system-nixos-aarch64-26.11.20260705.d407951

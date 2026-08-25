@@ -1,0 +1,45 @@
+{
+  "todo": 3,
+  "plan": "consolidate-nixos-repo",
+  "title": "Union-add sibling working tree into this repo (fresh-root commit)",
+  "status": "complete",
+  "timestamp": "2026-08-23",
+  "source_repo": "/home/mei/nix-config",
+  "dest_repo": "/home/mei/NixOS-config",
+  "method": "union-add of B's tracked files (git ls-files) into A; never overwrote existing A files",
+  "exclusions_honored": [".git/", ".omo/", ".codegraph/", "__pycache__/", "result/", "result-*", "*.py[cod]", "secrets/* except coding-agents.yaml + README.md"],
+  "b_tracked_count": 796,
+  "union_add_stats": { "added": 0, "existed": 93, "skipped": 703 },
+  "note": "added=0 on the counter-corrected run because the first run (broken ++ counters) already performed the copies; second run found them existing. 93 existed = A's pre-existing files + files copied in first run.",
+  "key_files_present": {
+    "modules/darwin/": true,
+    "modules/standalone-linux/": true,
+    "apps/aarch64-darwin/": true,
+    "pkgs/omniwm.nix": true,
+    ".gitignore": true,
+    ".sops.yaml": true
+  },
+  "a_pre_existing_files_unchanged": {
+    "modules/linux/home-manager.nix": "559790b8ecf3a8b7cd921424e1c6f2653b5c73550781e574a7a881db9e9d9c3a",
+    "modules/entities/_machine-authority/model.nix": "719d4c732ff72b2f279fcc59abd996c3e2adf365cec32ffd26ee098cdab627b4",
+    "modules/entities/hosts.nix": "37bbf05b1f03db901f5c723e9652182591e0cca9c43a5303ed71368799b45875"
+  },
+  "no_nested_git_repo": true,
+  "fresh_root_commit": {
+    "hash": "4c18cd64764cbcd14db48f8649bd42e18a65cfb4",
+    "message": "build(nixos): merge sibling repo as fresh root (union-add)",
+    "parent_count": 0,
+    "branch": "main",
+    "files_changed": 286
+  },
+  "pushed": false,
+  "qa": {
+    "modules_darwin_present": true,
+    "modules_standalone_linux_present": true,
+    "apps_aarch64_darwin_present": true,
+    "pkgs_omniwm_nix_present": true,
+    "gitignore_present": true,
+    "a_pre_existing_files_identical_to_pre_merge": true,
+    "working_tree_clean": true
+  }
+}

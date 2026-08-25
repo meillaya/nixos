@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+set -euo pipefail
+root=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)
+PYTHONPATH=$root PYTHONDONTWRITEBYTECODE=1 LC_ALL=C exec python3 -B "$root/scripts/hardware/cli.py" "$@"

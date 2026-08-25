@@ -1,0 +1,41 @@
+{
+  "todo": 5,
+  "plan": "consolidate-nixos-repo",
+  "title": "Union the 5 divergent files per-file (NOT bit-for-bit)",
+  "status": "complete",
+  "timestamp": "2026-08-23",
+  "files": {
+    "modules/linux/home-manager.nix": {
+      "decision": "take B's NEWER version (removed Sweet-Dark theme + sweet pkg refs)",
+      "method": "cp B over A",
+      "verified": "diff A vs B empty (identical)"
+    },
+    "config/package-exceptions.json": {
+      "decision": "union BOTH exception sets; drop aarch64-linux (host removed in todo 14)",
+      "method": "start from B (superset incl. darwin/raycast), remove all aarch64-linux entries",
+      "entries": 22,
+      "systems": ["aarch64-darwin", "x86_64-linux"],
+      "verified": "valid JSON; raycast present; 0 aarch64-linux refs"
+    },
+    "modules/aspects/features/desktop-media.nix": {
+      "decision": "take B's version (uses homeManagerModules.spicetify; no nixos branch inputs arg)",
+      "method": "cp B over A",
+      "verified": "diff A vs B empty (identical); config-eval line 169 nixos.programs.spicetify.enable passed"
+    },
+    "modules/aspects/hardware/device-capability-routing.nix": {
+      "decision": "keep A's version (superset: linuxRouting for NixOS hosts + darwinRouting for darwin host)",
+      "method": "no change; B's version only has darwin routing, A's has both",
+      "verified": "A has 6 linuxRouting/darwinRouting refs; darwin assertions identical to B"
+    },
+    "tests/dendritic-*.sh": {
+      "decision": "keep A's versions (todo 7 rewrites them)",
+      "method": "no change",
+      "verified": "git diff --stat empty (untouched)"
+    }
+  },
+  "qa": {
+    "flake_eval": "nix-instantiate getFlake path:/home/mei/NixOS-config -> nixosConfigurations = [aarch64-linux nixos-x86-qualifier x86_64-linux] (flake/nix files merge cleanly)",
+    "config_eval": "FAILS at line 203 apps assertion (expected: todo 7 rewrites config-eval; merged flake now has nh app, A's test expects 7 apps)",
+    "note": "config-eval failure is the documented todo-7 concern, NOT a merge error"
+  }
+}

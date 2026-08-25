@@ -1,4 +1,0 @@
-warning: Nix search path entry '/home/mei/.nix-defexpr/channels' does not exist, ignoring
-this derivation will be built:
-  /nix/store/rbn2vrm39ivdmg5gm3mh0vhdz08snx0b-home-switch.drv
-building '/nix/store/rbn2vrm39ivdmg5gm3mh0vhdz08snx0b-home-switch.drv'...

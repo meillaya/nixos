@@ -1,7 +1,0 @@
-Problem opening /dev/%DISK% for reading! Error is 2.
-The specified file does not exist!
-Information: Creating fresh partition table; will override earlier problems!
-Caution! Secondary header was placed beyond the disk's limits! Moving the
-header, but other problems may occur!
-Unable to open device '' for writing! Errno is 2! Aborting write!
-rc=4

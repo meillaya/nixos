@@ -63,7 +63,7 @@ let
       hostId = lib.mkOption { type = lib.types.str; };
       target = lib.mkOption { type = lib.types.str; };
       system = lib.mkOption {
-        type = lib.types.enum [ "x86_64-linux" "aarch64-linux" "aarch64-darwin" ];
+        type = lib.types.enum [ "x86_64-linux" "aarch64-darwin" ];
       };
       role = lib.mkOption {
         type = lib.types.enum [ "workstation" "qualifier" "evaluation" ];

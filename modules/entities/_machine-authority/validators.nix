@@ -407,26 +407,20 @@ let
   validKnownRouting =
     machine:
     (
-      machine.hostId == "nixos-laptop"
-      && machine.target == "nixosConfigurations.x86_64-linux"
+      machine.hostId == "remembrance"
+      && machine.target == "nixosConfigurations.remembrance"
       && machine.system == "x86_64-linux"
       && machine.role == "workstation"
     )
     || (
-      machine.hostId == "nixos-x86-qualifier"
-      && machine.target == "nixosConfigurations.nixos-x86-qualifier"
+      machine.hostId == "antagony"
+      && machine.target == "nixosConfigurations.antagony"
       && machine.system == "x86_64-linux"
-      && machine.role == "qualifier"
+      && machine.role == "workstation"
     )
     || (
-      machine.hostId == "aarch64-linux"
-      && machine.target == "nixosConfigurations.aarch64-linux"
-      && machine.system == "aarch64-linux"
-      && machine.role == "evaluation"
-    )
-    || (
-      machine.hostId == "aarch64-darwin"
-      && machine.target == "darwinConfigurations.aarch64-darwin"
+      machine.hostId == "entropy"
+      && machine.target == "darwinConfigurations.entropy"
       && machine.system == "aarch64-darwin"
       && machine.role == "workstation"
     );
@@ -446,7 +440,6 @@ let
     machine:
     let
       isDarwin = machine.system == "aarch64-darwin";
-      isEvaluation = machine.role == "evaluation";
       isPendingX86 = machine.system == "x86_64-linux" && machine.cpuVendor == "pending";
       isInstallable =
         machine.system == "x86_64-linux"
@@ -470,16 +463,7 @@ let
     in
     validKnownRouting machine
     && (
-      if isEvaluation then
-        machine.system == "aarch64-linux"
-        && machine.cpuVendor == "pending"
-        && machine.firmware == "disabled"
-        && machine.kernel == "disabled"
-        && machine.gpu == "disabled"
-        && machine.network == "disabled"
-        && machine.platformExpectations.kind == "none"
-        && operationallyDisabled machine
-      else if isDarwin then
+      if isDarwin then
         machine.cpuVendor == "Apple"
         && machine.firmware == "apple"
         && machine.kernel == "disabled"
@@ -542,7 +526,7 @@ let
         ++ optional (!(topClosed && matches "[a-z][a-z0-9-]{0,63}" machine.hostId)) "invalid hostId"
         ++ optional (!(topClosed && isString machine.target)) "invalid target"
         ++ optional (
-          !(topClosed && enum [ "x86_64-linux" "aarch64-linux" "aarch64-darwin" ] machine.system)
+          !(topClosed && enum [ "x86_64-linux" "aarch64-darwin" ] machine.system)
         ) "invalid system"
         ++ optional (
           !(topClosed && enum [ "workstation" "qualifier" "evaluation" ] machine.role)

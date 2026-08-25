@@ -1,2 +1,0 @@
-warning: Nix search path entry '/home/mei/.nix-defexpr/channels' does not exist, ignoring
-home-switch: unsupported target 'unsupported' (choose standalone-linux or standalone-linux-aarch64)

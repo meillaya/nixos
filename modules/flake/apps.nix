@@ -12,40 +12,10 @@ let
       exec ${self}/apps/${system}/${scriptName} "$@"
     '')}/bin/${scriptName}";
   };
-  mkScriptBackedApp =
-    scriptName: system:
-    {
-      runtimeInputs ? [ ],
-      extraEnv ? { },
-      scriptPath ? "${self}/apps/${system}/${scriptName}",
-    }:
-    let
-      pkgs = nixpkgs.legacyPackages.${system};
-      pathExport = lib.optionalString (runtimeInputs != [ ]) ''
-        export PATH=${lib.makeBinPath runtimeInputs}:$PATH
-      '';
-      envExport = lib.concatStringsSep "\n"
-        (lib.mapAttrsToList
-          (name: value: "export ${name}=${lib.escapeShellArg value}")
-          extraEnv);
-    in {
-      type = "app";
-      program = "${(pkgs.writeShellScriptBin scriptName ''
-        set -euo pipefail
-        ${pathExport}
-        ${envExport}
-        exec ${scriptPath} "$@"
-      '')}/bin/${scriptName}";
-    };
   mkSearchPkgsApp = system:
     let
       pkgs = nixpkgs.legacyPackages.${system};
-    in if system == "aarch64-linux" then mkScriptBackedApp "search-pkgs" system {
-      runtimeInputs = [
-        pkgs.jq
-        pkgs.nix
-      ];
-    } else {
+    in {
       type = "app";
       program = "${(pkgs.writeShellScriptBin "search-pkgs" ''
         set -euo pipefail
@@ -134,21 +104,8 @@ EOF
   mkHomeSwitchApp = system:
     let
       pkgs = nixpkgs.legacyPackages.${system};
-      defaultTarget =
-        if system == "x86_64-linux"
-        then "standalone-linux"
-        else "standalone-linux-aarch64";
-    in if system == "aarch64-linux" then mkScriptBackedApp "home-switch" system {
-      runtimeInputs = [
-        pkgs.coreutils
-        home-manager.packages.${system}.home-manager
-        pkgs.nix
-      ];
-      extraEnv = {
-        NIX_CONFIG_DEFAULT_HOME_TARGET = defaultTarget;
-        NIX_CONFIG_FLAKE_REF = toString self;
-      };
-    } else {
+      defaultTarget = "standalone-linux";
+    in {
       type = "app";
       program = "${(pkgs.writeShellScriptBin "home-switch" ''
         set -euo pipefail
@@ -173,7 +130,6 @@ Usage: nix run .#home-switch -- [--target HOME] [home-manager args...]
 
 Defaults:
   x86_64-linux -> standalone-linux
-  aarch64-linux -> standalone-linux-aarch64
   backup extension -> hm-backup-<timestamp>
 
 Examples:
@@ -207,19 +163,8 @@ EOF
   mkHomeNewsApp = system:
     let
       pkgs = nixpkgs.legacyPackages.${system};
-      defaultTarget =
-        if system == "x86_64-linux"
-        then "standalone-linux"
-        else "standalone-linux-aarch64";
-    in if system == "aarch64-linux" then mkScriptBackedApp "home-news" system {
-      runtimeInputs = [
-        home-manager.packages.${system}.home-manager
-      ];
-      extraEnv = {
-        NIX_CONFIG_DEFAULT_HOME_TARGET = defaultTarget;
-        NIX_CONFIG_FLAKE_REF = toString self;
-      };
-    } else {
+      defaultTarget = "standalone-linux";
+    in {
       type = "app";
       program = "${(pkgs.writeShellScriptBin "home-news" ''
         set -euo pipefail
@@ -239,7 +184,6 @@ Usage: nix run .#home-news -- [--target HOME] [extra home-manager news args...]
 
 Defaults:
   x86_64-linux -> standalone-linux
-  aarch64-linux -> standalone-linux-aarch64
 
 Examples:
   nix run .#home-news
@@ -384,20 +328,7 @@ PY
         + ''
           run_local_updater linux-home-sources ${nixpkgs.lib.escapeShellArg (toString (nixpkgs.lib.getExe linuxHomeSourcesUpdater))}
         '';
-    in if system == "aarch64-linux" then mkScriptBackedApp "update" system {
-      runtimeInputs = [
-        pkgs.curl
-        pkgs.git
-        pkgs.jq
-        pkgs.nix
-        pkgs.python3
-      ];
-      extraEnv = {
-        NIX_CONFIG_LOCAL_UPDATER_MAP = validUpdaterMap;
-        NIX_CONFIG_VALID_UPDATERS = nixpkgs.lib.concatStringsSep " " validUpdaterNames;
-        NIX_CONFIG_VALID_UPDATERS_TEXT = validUpdaterNamesText;
-      };
-    } else {
+    in {
       type = "app";
       program = "${(pkgs.writeShellScriptBin "update" ''
         set -euo pipefail
@@ -523,7 +454,9 @@ EOF
       '')}/bin/update";
     };
   mkLinuxApps = system:
-    {
+    let
+      nhPkg = inputs.nh.packages.${system}.default or null;
+    in {
       "build" = mkApp "build" system;
       "home-news" = mkHomeNewsApp system;
       "home-switch" = mkHomeSwitchApp system;
@@ -531,28 +464,22 @@ EOF
       "update" = mkUpdateApp system;
       "build-switch" = mkApp "build-switch" system;
       "clean" = mkApp "clean" system;
-    };
-  mkDarwinApps = system:
-    let
-      nhPkg = inputs.nh.packages.${system}.default or null;
-    in {
-      "build" = mkApp "build" system;
-      "search-pkgs" = mkSearchPkgsApp system;
-      "build-switch" = mkApp "build-switch" system;
-      "clean" = mkApp "clean" system;
-      "update" = mkUpdateApp system;
     } // lib.optionalAttrs (nhPkg != null) {
       "nh" = {
         type = "app";
         program = "${nhPkg}/bin/nh";
       };
     };
+  mkDarwinApps = system:
+    {
+      "build" = mkApp "build" system;
+      "search-pkgs" = mkSearchPkgsApp system;
+      "build-switch" = mkApp "build-switch" system;
+      "clean" = mkApp "clean" system;
+      "update" = mkUpdateApp system;
+    };
 in {
   perSystem = { system, ... }: {
-    # nix-config declares only aarch64-darwin as a target system. Other
-    # systems would only produce empty app sets here, so skip them.
-    apps =
-      if system == "aarch64-darwin" then mkDarwinApps system
-      else { };
+    apps = if system == "aarch64-darwin" then mkDarwinApps system else mkLinuxApps system;
   };
 }

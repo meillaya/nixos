@@ -1,4 +1,0 @@
-first_rc=143 target_exists_after_interrupt=0 backup_exists=1 backup_bytes=old-user-secret
-retry_rc=1 target_exists_after_retry=0
-Activating consumeRuntimeSecrets
-consumeRuntimeSecrets: refusing to overwrite existing backup /tmp/task22-interrupt-record.JZeJa5/home/Documents/Kavita/config/appsettings.json.hm-backup

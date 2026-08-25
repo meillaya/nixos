@@ -1,0 +1,52 @@
+{
+  "todo": 14,
+  "plan": "consolidate-nixos-repo",
+  "date": "2026-08-23",
+  "summary": "Dropped the nixos-x86-qualifier and aarch64-linux evaluation hosts across the machine authority, aspects, flake wiring, apps, python routing tables, tests, and docs. Pinned systems.nix to [x86_64-linux aarch64-darwin].",
+  "changes": [
+    "model.nix: removed nixos-x86-qualifier + aarch64-linux machine records (machines now remembrance/antagony/entropy)",
+    "validators.nix: removed qualifier + aarch64-linux validKnownRouting branches, isEvaluation closure, and aarch64-linux from the system enum",
+    "hosts.nix: removed qualifier/linuxArm bindings + den.hosts.x86_64-linux.nixos-x86-qualifier + den.hosts.aarch64-linux block",
+    "deleted aspects: named-hosts/{nixos-x86-qualifier,aarch64-linux}.nix, storage/{nixos-x86-qualifier,aarch64-linux}.nix, hardware/{pending-x86-qualifier,evaluation-aarch64}.nix",
+    "module routing: removed nixos-x86-qualifier/aarch64-linux from device-capability-routing.nix + x86-vendor-routing.nix",
+    "systems.nix pinned to [x86_64-linux aarch64-darwin]",
+    "defaults.nix system enum narrowed to [x86_64-linux aarch64-darwin]",
+    "outputs.nix configurationEvaluationPaths = [nixosConfigurations.remembrance darwinConfigurations.entropy]",
+    "apps.nix: removed 4 if system == aarch64-linux branches + standalone-linux-aarch64 help text + dead mkScriptBackedApp helper; defaultTarget = standalone-linux",
+    "apps/: deleted apps/aarch64-linux dir; build: removed aarch64 uname case; build-switch: default host remembrance",
+    "package-exceptions.json: verified 0 aarch64-linux entries (was already clean)",
+    "contracts.py: _ROUTES -> {remembrance, aarch64-darwin}; pending/vendor sets -> {remembrance}; removed aarch64-linux evaluatulation closure branch",
+    "collector.py: ROUTES -> {remembrance}",
+    "tests: dendritic-config-eval.nix rewritten (nixosConfigurations/antagony/remembrance, darwin/entropy, homes/standalone-linux, machineIds, apps darwin set); architecture/apps/shells updated; task15 F02 remapped to Intel/AMD vendor-variant closures on remembrance; task15 model_parity aarch64-linux invalids replaced with darwin-route false closure; task17 model removed qualifier host + aarch64-linux system branch and production entry",
+    "README.md + dendritic.md + wsl-standalone-home-manager.md: removed qualifier/aarch64-linux/standalone-linux-aarch64 references; hosts list now remembrance/antagony/entropy"
+  ],
+  "verification": {
+    "grep_nixos-x86-qualifier_aarch64-linux": "0 matches across product files (modules/ scripts/ apps/ tests/ docs/ config/); remaining hits only under .omo/ plan+evidence history",
+    "systems_nix": "[x86_64-linux aarch64-darwin]",
+    "nixosConfigurations": "[\"antagony\",\"remembrance\"]",
+    "darwinConfigurations": "[\"entropy\"]",
+    "homeConfigurations": "[\"standalone-linux\"]",
+    "apps.x86_64-linux": "[build build-switch clean home-news home-switch nh search-pkgs update]",
+    "apps.aarch64-*": "[build, build-switch, clean, search-pkgs, update]",
+    "machineAuthority machines": "[\"antagony\",\"entropy\",\"remembrance\"]",
+    "configurationEvaluationPaths": "[\"nixosConfigurations.remembrance\",\"darwinConfigurations.entropy\"]",
+    "tests": {
+      "dendritic-config-eval": "PASS",
+      "dendritic-architecture": "PASS",
+      "dendritic-boundaries": "PASS",
+      "dendritic-apps": "PASS",
+      "dendritic-shells": "PASS",
+      "package-policy": "PASS",
+      "readiness task15 fixture": "PASS",
+      "readiness task15 negative": "PASS",
+      "readiness task17 fixture (NIXOS_REPO_ROOT=/home/mei/nixos)": "PASS",
+      "readiness task17 negative": "PASS"
+    }
+  },
+  "notes": [
+    "aarch64-darwin system + entropy host kept (not dropped).",
+    "dendritic-apps.sh previously asserted aarch64-darwin apps dir absent; flipped to positive since systems.nix now includes aarch64-darwin and apps.aarch64-darwin exists.",
+    "readiness task17 F03 requires NIXOS_REPO_ROOT env (pre-existing harness requirement unset by runner; pre-existing debt, not from this todo).",
+    "tests/readiness/task17/run-case.sh diff is todo-9 working-tree state, not modified here."
+  ]
+}

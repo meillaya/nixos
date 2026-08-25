@@ -1,0 +1,22 @@
+{
+  "task": "consolidate-nixos-repo todo 17",
+  "date": "2026-08-23",
+  "targets": {
+    "remembrance": "/nix/store/b1al5gzs389pbqkgb6v1zqn7rd0pi516-nixos-26.11.20260818.0ae2bc1-x86_64-linux.iso",
+    "antagony": "/nix/store/qjk8ajvb4xsg7c6zs0ys2wsyx84kp86c-nixos-26.11.20260818.0ae2bc1-x86_64-linux.iso"
+  },
+  "implementation": {
+    "file": "modules/flake/iso-images.nix",
+    "output": "flake.iso",
+    "builder": "nixosConfigurations.<host>.extendModules { boot.initrd.enable = mkForce true; }.config.system.build.images.iso",
+    "note": "Hosts set boot.initrd.enable=false (pending-x86-workstation aspect, boot.state disabled) which breaks iso-image.nix (needs system.build.initialRamdisk); ISO variant re-enables initrd"
+  },
+  "verified": {
+    "iso_outputs_resolve": "nix eval ... .iso.{remembrance,antagony} -> /nix/store/*.iso derivations",
+    "flake_evaluates": "nixosConfigurations == [antagony remembrance]; flake ? iso == true",
+    "manifest_schema": "config/install/manifest.schema.json requires isoArtifactSizeBytes (int>=2048, multipleOf 2048) + isoSha256 (^[0-9a-f]{64}$)",
+    "contracts_py": "scripts/readiness/task7/contracts.py lines 776-777 (required fields), 821, 840 (iso_size int > 0, % 2048)"
+  },
+  "not_built": true,
+  "iso_build_deferred_to_qa": true
+}

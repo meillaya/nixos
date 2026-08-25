@@ -1,0 +1,24 @@
+{
+  "todo": 12,
+  "task": "Map massive -> standalone-linux Home-Manager host (re-add den.homes block)",
+  "status": "PASS",
+  "edited_files": [
+    "modules/entities/hosts.nix"
+  ],
+  "den_homes": {
+    "x86_64-linux.standalone-linux": {
+      "machine": "laptop (machineFor \"remembrance\")",
+      "userName": "laptop.identity.name",
+      "homeDirectory": "laptop.identity.home"
+    }
+  },
+  "verification": {
+    "homeConfigurations_keys": ["standalone-linux"],
+    "nixosConfigurations_keys": ["aarch64-linux", "antagony", "nixos-x86-qualifier", "remembrance"],
+    "standalone-linux_identity": {
+      "username": "mei",
+      "homeDirectory": "/home/mei"
+    },
+    "no_massive_machine_created": true
+  }
+}

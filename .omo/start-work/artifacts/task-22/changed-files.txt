@@ -1,7 +1,0 @@
-Task 22 changed-files manifest
-Final follow-up commit: 787e84f fix(home-manager): recover pending secret transactions
-
-modules/standalone-linux/home-manager.nix
-tests/readiness/task22/run.sh
-
-Earlier Task22 chain: 89eaead, 4410118, f172395.

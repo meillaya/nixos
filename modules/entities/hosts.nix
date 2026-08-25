@@ -3,17 +3,31 @@ let
   authority = import ./_machine-authority/model.nix;
   machineFor = authority.getMachine;
 
-  laptop = machineFor "nixos-laptop";
-  linuxArm = machineFor "aarch64-linux";
-  darwinArm = machineFor "aarch64-darwin";
+  laptop = machineFor "remembrance";
+  antagony = machineFor "antagony";
+  darwinArm = machineFor "entropy";
 in
-assert laptop.target == "nixosConfigurations.x86_64-linux";
-assert linuxArm.target == "nixosConfigurations.aarch64-linux";
-assert darwinArm.target == "darwinConfigurations.aarch64-darwin";
+assert laptop.target == "nixosConfigurations.remembrance";
+assert antagony.target == "nixosConfigurations.antagony";
+assert darwinArm.target == "darwinConfigurations.entropy";
 {
   den.hosts = {
+    x86_64-linux = {
+      remembrance = {
+        system = "x86_64-linux";
+        hostName = laptop.hostId;
+        machine = laptop;
+        users.${laptop.identity.name}.identity = laptop.identity;
+      };
+      antagony = {
+        system = "x86_64-linux";
+        hostName = antagony.hostId;
+        machine = antagony;
+        users.${antagony.identity.name}.identity = antagony.identity;
+      };
+    };
     aarch64-darwin = {
-      aarch64-darwin = {
+      entropy = {
         system = "aarch64-darwin";
         hostName = darwinArm.hostId;
         machine = darwinArm;
@@ -21,17 +35,11 @@ assert darwinArm.target == "darwinConfigurations.aarch64-darwin";
       };
     };
   };
-
   den.homes = {
     x86_64-linux.standalone-linux = {
       machine = laptop;
       userName = laptop.identity.name;
       homeDirectory = laptop.identity.home;
-    };
-    aarch64-linux.standalone-linux-aarch64 = {
-      machine = linuxArm;
-      userName = linuxArm.identity.name;
-      homeDirectory = linuxArm.identity.home;
     };
   };
 }

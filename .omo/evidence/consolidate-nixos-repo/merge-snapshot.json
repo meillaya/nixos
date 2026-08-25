@@ -1,0 +1,8 @@
+{
+  "b_origin_url": "https://github.com/meillaya/nix-config.git",
+  "b_head_before": "e9540aac18d5c95057b8e78b306c71bf5408a838",
+  "b_head_after": "eec721dc0745d0033f70d3012ee659a6c22c318e",
+  "dirty_files": ["modules/linux/home-manager.nix"],
+  "decision": "commit",
+  "timestamp": "2026-08-23T00:00:00Z"
+}

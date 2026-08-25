@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+host=""
+
+usage() {
+  cat <<'EOF'
+Usage: build-switch [--host HOST] [nh arguments...]
+
+Builds and activates the selected NixOS toplevel (switch) via nh
+(github:viperML/nh). Defaults to the remembrance host. Requires
+a live NixOS machine; activation runs via sudo.
+
+Examples:
+  build-switch                                # default host
+  build-switch --host remembrance             # different host
+  build-switch -- --dry-build                 # pass-through to nh
+EOF
+}
+
+while (( $# > 0 )); do
+  case "$1" in
+    --host=*)
+      host=${1#*=}
+      shift
+      ;;
+    --host)
+      if (( $# < 2 )); then
+        echo 'build-switch: --host requires a value' >&2
+        usage >&2
+        exit 2
+      fi
+      host=$2
+      shift 2
+      ;;
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    *)
+      shift
+      ;;
+  esac
+done
+
+if [[ -z "$host" ]]; then
+  host="remembrance"
+fi
+
+exec nh os switch --hostname "${host}" "$@"

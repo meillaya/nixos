@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+set -euo pipefail
+root=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)
+[[ $# -eq 2 && $1 == --fixture && $2 != -* ]] || { printf '%s\n' 'usage: nix-config-hardware-collector --fixture CANONICAL-FIXTURE.json' >&2; exit 64; }
+PYTHONPATH=$root PYTHONDONTWRITEBYTECODE=1 LC_ALL=C exec python3 -B "$root/scripts/hardware/cli.py" collect "$2"

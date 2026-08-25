@@ -1,0 +1,1 @@
+{"prerequisites":[{"name":"gpu-gaming","status":"satisfied"},{"name":"i2c","status":"satisfied"},{"name":"keyring","status":"satisfied"},{"name":"nix","status":"satisfied"},{"name":"pipewire","status":"satisfied"},{"name":"polkit","status":"satisfied"},{"name":"portals","status":"satisfied"},{"name":"system","status":"satisfied"}],"schemaVersion":1}

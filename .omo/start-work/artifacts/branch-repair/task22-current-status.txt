@@ -1,9 +1,0 @@
-## HEAD (no branch)
- M modules/aspects/features/noctalia.nix
- M modules/aspects/features/secrets.nix
- M modules/entities/hosts.nix
- M modules/flake/apps.nix
- M modules/standalone-linux/home-manager.nix
- M modules/standalone-linux/packages.nix
- M tests/readiness/adapters/task-22.sh
-?? tests/readiness/task22/

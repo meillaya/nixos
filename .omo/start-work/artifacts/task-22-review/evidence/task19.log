@@ -1,6 +1,0 @@
-===task19-fixture===
-warning: Nix search path entry '/home/mei/.nix-defexpr/channels' does not exist, ignoring
-TASK 19 FIXTURE PASS
-===task19-negative===
-warning: Nix search path entry '/home/mei/.nix-defexpr/channels' does not exist, ignoring
-TASK 19 NEGATIVE PASS

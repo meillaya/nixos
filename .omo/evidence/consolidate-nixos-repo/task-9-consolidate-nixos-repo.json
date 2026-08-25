@@ -1,0 +1,35 @@
+{
+  "task": 9,
+  "plan": "consolidate-nixos-repo",
+  "date": "2026-08-23",
+  "summary": "Rewrote all REPO-NAME references (NixOS-config / nix-config / nixos-config) to nixos across the merged tree. Script names (bin/nix-config-*), runtime paths (/run/nix-config-device/, var/lib/nix-config/, var/db/nix-config/, nix-config-install-staging), schema $ids (nix-config.invalid), and external URLs (dustinlyons/nixos-config) intentionally kept.",
+  "renamed": [
+    "modules/aspects/platforms/darwin.nix:11 — ~/NixOS-config/ → ~/nixos/",
+    "modules/aspects/users/mei.nix:55 — NixOS-config/secrets → nixos/secrets",
+    "modules/nixos/system.nix:35 — nixPath nixos-config=.../nixos-config → nixos=.../nixos",
+    "modules/standalone-linux/home-manager.nix:23 — nix-config/secrets → nixos/secrets",
+    "README.md:1,5,182 — title # NixOS-config → # nixos; ~/nix-config/ → ~/nixos/",
+    "docs/architecture/dendritic.md:134 — cd ~/nix-config → cd ~/nixos",
+    "docs/service-notes/nixos-anywhere-disko-install.md:114 — ~/nix-config/ + NixOS-config only → nixos",
+    "tests/dendritic-apps.sh:64-65 — NixOS-config/~/nix-config → nixos/~/nixos",
+    "tests/readiness/task17/run-case.sh:8,11,22,27,28 — nix_config_root/NIX_CONFIG_REPO_ROOT/nix-config → nixos_root/NIXOS_REPO_ROOT/nixos",
+    "tests/readiness/task22/run-case.sh:8,9,15,32 — same",
+    "docs/service-notes/calibre.md:60 — NIX_CONFIG_REPO_ROOT → NIXOS_REPO_ROOT",
+    ".codegraph/source.json — /home/mei/NixOS-config → /home/mei/nixos",
+    ".codegraph/daemon.log + daemon.pid — /home/mei/NixOS-config → /home/mei/nixos"
+  ],
+  "deleted": [
+    "All __pycache__/*.pyc files (10 dirs, 33 files) — they embed the old name; regenerate on next import"
+  ],
+  "codegraph_daemon": "Restarted with --path /home/mei/nixos (old pid 969027 stopped, new pid 1004155). daemon.log + daemon.pid regenerated with new socket path.",
+  "acceptance_grep": "grep -R -n --exclude-dir=.git --exclude-dir=.omo -E 'NixOS-config|nix-config|nixos-config' .",
+  "remaining_matches": [
+    "bin/install-direct:5 + bin/install-remote:5 — reference bin/nix-config-install (SCRIPT NAME, kept; deleted in todo 18)",
+    "bin/nix-config-* + scripts/hardware/* + config/hosts/intake/README.md — script names (kept)",
+    "scripts/readiness/task7/* + tests/readiness/task7,23 + config/install/tool-sandbox.json — runtime paths /run/nix-config-device/, var/lib/nix-config/, var/db/nix-config/, nix-config-install-staging (kept)",
+    "config/hosts/intake.schema.json + config/install/manifest.schema.json — $id https://nix-config.invalid/... (schema id, kept)",
+    "modules/shared/config/emacs/config.org + init.el — github.com/dustinlyons/nixos-config (external URL, different repo, kept)",
+    "scripts/readiness/home_preflight.py + tests/package-policy.sh — nix-config-home-preflight (script name, kept)"
+  ],
+  "result": "0 repo-name matches remain; only script-name/runtime-path/schema-id/external-URL matches remain (expected and correct)."
+}

@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+green='\033[1;32m'
+yellow='\033[1;33m'
+reset='\033[0m'
+
+if [[ ${1:-} == "--help" || ${1:-} == "-h" ]]; then
+  printf '%s\n' 'Usage: clean - Deletes system generations older than seven days.'
+  exit 0
+fi
+
+printf '%b\n' "${yellow}Cleaning up old system generations...${reset}"
+sudo nix-collect-garbage --delete-older-than 7d
+printf '%b\n' "${green}Cleanup complete.${reset}"

@@ -1,0 +1,31 @@
+{
+  "task": "consolidate-nixos-repo todo 18",
+  "date": "2026-08-23",
+  "deleted": [
+    "bin/nix-config-install",
+    "bin/nix-config-enroll",
+    "bin/install-direct",
+    "bin/install-remote",
+    "bin/nixos-anywhere-bootstrap-password.sh",
+    "bin/nixos-anywhere-bootstrap-password.fish"
+  ],
+  "kept": [
+    "bin/nix-config-hardware-collector",
+    "bin/nix-config-hardware-intake",
+    "bin/setup-noctalia-cachix.sh"
+  ],
+  "command": "git rm bin/nix-config-install bin/nix-config-enroll bin/install-direct bin/install-remote bin/nixos-anywhere-bootstrap-password.sh bin/nixos-anywhere-bootstrap-password.fish",
+  "git_status": "D staged for all 6; bin/ still has the 3 kept scripts (git-untracked hardware scripts + setup-noctalia-cachix.sh, all present on disk)",
+  "flake_app_references": "grep --include='*.nix' modules/ flake.nix apps/ -> 0 matches",
+  "grep_deleted_scripts": {
+    "command": "grep -R -n --exclude-dir=.git --exclude-dir=.omo -E 'bin/nix-config-install|bin/nix-config-enroll|bin/install-direct|bin/install-remote|bin/nixos-anywhere-bootstrap-password' .",
+    "matches_outside_evidence": [
+      "docs/service-notes/nixos-anywhere-disko-install.md (lines 6, 55, 66, 76, 79, 88, 92, 99, 100)"
+    ],
+    "note": "Doc is a pre-existing residual, already tracked in learnings as 'todo 20 docs rewrite will fix'; NOT modified by this todo (instructions forbid editing other files)"
+  },
+  "qa": {
+    "happy": "6 files deleted, 3 kept exist",
+    "residual": "docs/service-notes/nixos-anywhere-disko-install.md still documents the deleted scripts; belongs to todo 20 docs rewrite"
+  }
+}

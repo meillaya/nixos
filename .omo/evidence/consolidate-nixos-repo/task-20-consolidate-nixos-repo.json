@@ -1,0 +1,63 @@
+{
+  "todo": 20,
+  "title": "Wire nixos-anywhere into the ISO flow (no-kexec) + verify the enrollment writer",
+  "date": "2026-08-23",
+  "status": "complete",
+  "acceptance": {
+    "iso_install_doc_created": true,
+    "disko_doc_scrubbed": true,
+    "variant_id_installer_documented": true,
+    "enrollment_writer_validate_exit_0": true,
+    "deleted_script_grep_zero": true
+  },
+  "docs": {
+    "created": "docs/service-notes/nixos-anywhere-iso-install.md",
+    "scrubbed": "docs/service-notes/nixos-anywhere-disko-install.md",
+    "iso_flow": {
+      "build": "nix build .#iso.<host>  (remembrance, antagony; shorthand for .#nixosConfigurations.<host>.config.system.build.isoImage)",
+      "boot": "Proxmox VM, OVMF/UEFI firmware, >=4GB RAM, whole-device disk",
+      "variant": "VARIANT_ID=installer in /etc/os-release (NixOS 23.05+) -> nixos-anywhere auto-detects installer and SKIPS kexec",
+      "install": "nix run github:nix-community/nixos-anywhere -- --flake '.#<host>' --target-host root@<ip>",
+      "gate": ["boot.state=uefi", "storage.profile=single-gpt-btrfs", "publicTrust.state=enrolled", "secretTrust.state=enrolled"],
+      "day2": "deploy-rs (todo 19): deploy.nodes.{remembrance,antagony,entropy,massive}"
+    }
+  },
+  "enrollment_writer_verification": {
+    "cli_surface": "bin/nix-config-hardware-intake collect|create|validate  (NO --fixture flag on intake)",
+    "commands_run": [
+      "bin/nix-config-hardware-intake collect source.json -> candidate-cli.json  (exit 0)",
+      "bin/nix-config-hardware-intake create base.json candidate-cli.json operator 2026-08-23T12:00:00Z -> intake-cli.json  (exit 0)",
+      "bin/nix-config-hardware-intake validate base.json intake-cli.json -> validated.json  (exit 0)"
+    ],
+    "fixture_files": ".omo/evidence/consolidate-nixos-repo/task-20-fixtures/{source,base,candidate-cli,intake-cli,validated}.json",
+    "intake_shape": {
+      "schemaVersion": 1,
+      "hostId": "remembrance",
+      "inputDeclarationDigest": "sha256 of canonical base declaration",
+      "patch": "31 RFC-6902 ops (full enrollment: boot/storage/publicTrust/secretTrust + cpuVendor/firmware/kernel/gpu/network/devices/capabilities/ddcConnectors)",
+      "patchSha256": "sha256 of canonical patch",
+      "outputDeclarationDigest": "sha256 of validated candidate",
+      "reviewedBy": "operator",
+      "appliedAt": "2026-08-23T12:00:00Z"
+    },
+    "validated_record": {
+      "hostId": "remembrance",
+      "boot.state": "uefi",
+      "storage.profile": "single-gpt-btrfs",
+      "publicTrust.state": "enrolled",
+      "secretTrust.state": "enrolled",
+      "cpuVendor": "GenuineIntel",
+      "firmware": "redistributable",
+      "kernel": "nixpkgs-default",
+      "gpu": "generic-vulkan",
+      "network": "networkmanager",
+      "devices.state": "enrolled",
+      "capabilities.state": "enrolled"
+    },
+    "host_choice_note": "The task's literal fixture spec used hostId 'antagony', but antagony is deliberately NOT in the routing allowlist (contracts.py _ROUTES = {remembrance, aarch64-darwin}; todo-14 decision). Empirically confirmed: validate_declaration on an antagony record rejects with 'routing'. The enrollment-writer acceptance test therefore uses remembrance, the canonical routed x86 host, which is the same host the existing task15 fixtures exercise."
+  },
+  "verification": {
+    "test_static": "bash tests/readiness/task7/test-static.sh -> TASK 7 STATIC PASS (ERASE contract + disk-config.nix guarantees intact after scrub)",
+    "grep": "grep -R -n --exclude-dir=.git --exclude-dir=.omo -E 'bin/nix-config-install|bin/nix-config-enroll|bin/install-direct|bin/install-remote|bin/nixos-anywhere-bootstrap-password' . -> 0 matches"
+  }
+}

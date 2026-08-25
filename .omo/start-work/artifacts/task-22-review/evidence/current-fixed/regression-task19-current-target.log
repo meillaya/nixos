@@ -1,4 +1,0 @@
-fixture:F01-portal-config-bytes
-portal mapping byte exact PASS sha256=e948ddcd8fc6033132ac01bfab1923ad76b17bd6a64eae6c0c11d1c0a7e0ce70
-fixture:F02-dbus-interface-contract
-TASK19 F02-dbus-interface-contract FAIL: Command '['nix', 'eval', '--offline', '--raw', 'nixpkgs#xdg-desktop-portal-gtk.outPath']' timed out after 45 seconds

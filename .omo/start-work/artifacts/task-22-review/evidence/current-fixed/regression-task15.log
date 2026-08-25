@@ -1,6 +1,0 @@
-fixture:F01-deterministic-intake-patch
-fixture_rc=0
-fixture:F03-network-capability-branches
-fixture_rc=0
-negative:N20-model-parity-boundaries
-unexpected_rc=0

@@ -1,4 +1,0 @@
-task3_fixture_exit=1
-task3_fixture_pass_markers=0
-task3_negative_exit=1
-task3_negative_pass_markers=0

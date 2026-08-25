@@ -5,7 +5,7 @@
       dendritic-architecture = pkgs.runCommand "dendritic-architecture" {
         nativeBuildInputs = [ pkgs.bash pkgs.fastfetch pkgs.gnugrep pkgs.python3 ];
         DENDRITIC_DARWIN_CONFIGURATION_SYSTEMS =
-          builtins.toJSON (builtins.attrNames inputs.self.darwinConfigurations);
+          builtins.toJSON (builtins.attrNames (inputs.self.darwinConfigurations or { }));
         src = inputs.self;
       } ''
         cp -R "$src" source

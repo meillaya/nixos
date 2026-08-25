@@ -1,5 +1,5 @@
 {
-  description = "Personal Nix config: macOS via nix-darwin, and standalone Linux via Determinate Nix + Home Manager";
+  description = "Personal NixOS config: workstation hosts on NixOS and macOS";
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
     emacs-overlay = {
@@ -13,6 +13,10 @@
     home-manager.url = "github:nix-community/home-manager";
     darwin = {
       url = "github:LnL7/nix-darwin/master";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    disko = {
+      url = "github:nix-community/disko";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     zen-browser = {
@@ -50,6 +54,7 @@
       inputs.nixpkgs-lib.follows = "nixpkgs";
     };
     import-tree.url = "github:vic/import-tree";
+    deploy-rs.url = "github:serokell/deploy-rs";
   };
   outputs = inputs:
     inputs.flake-parts.lib.mkFlake { inherit inputs; } (inputs.import-tree ./modules/flake);

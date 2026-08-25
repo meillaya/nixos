@@ -1,0 +1,88 @@
+{
+  "todo": 13,
+  "task": "Map aarch64-darwin -> entropy (darwin host)",
+  "status": "PASS",
+  "edited_files": [
+    "modules/entities/_machine-authority/model.nix",
+    "modules/entities/_machine-authority/validators.nix",
+    "modules/aspects/named-hosts/aarch64-darwin.nix",
+    "modules/aspects/storage/aarch64-darwin.nix",
+    "modules/aspects/hardware/device-capability-routing.nix",
+    "modules/entities/hosts.nix",
+    "modules/aspects/hosts/darwin-workstation.nix"
+  ],
+  "renamed": {
+    "modules/aspects/named-hosts/aarch64-darwin.nix": "modules/aspects/named-hosts/entropy.nix",
+    "modules/aspects/storage/aarch64-darwin.nix": "modules/aspects/storage/entropy.nix"
+  },
+  "entropy_record": {
+    "hostId": "entropy",
+    "target": "darwinConfigurations.entropy",
+    "system": "aarch64-darwin",
+    "role": "workstation",
+    "identity": {
+      "name": "mei",
+      "home": "/Users/mei",
+      "uid": 501,
+      "gid": 20
+    },
+    "location": {
+      "timeZone": "America/New_York",
+      "locale": "en_US.UTF-8",
+      "keymap": "us",
+      "xkb": "us"
+    },
+    "display.scale": "2/1",
+    "boot.state": "disabled",
+    "storage.profile": "none",
+    "publicTrust.state": "disabled",
+    "secretTrust.state": "disabled",
+    "cpuVendor": "Apple",
+    "firmware": "apple",
+    "kernel": "disabled",
+    "gpu": "apple-metal",
+    "network": "native-darwin",
+    "devices.state": "disabled",
+    "capabilities.state": "disabled",
+    "ddcConnectors": [],
+    "remoteInstall": false,
+    "platformExpectations.kind": "darwin",
+    "platformExpectations.networkServiceClass": "wifi",
+    "platformExpectations.requiredTccServices": ["accessibility", "screen"],
+    "managedApps": ["net.kovidgoyal.kitty", "org.gnu.Emacs"]
+  },
+  "validKnownRouting": {
+    "hostId": "entropy",
+    "target": "darwinConfigurations.entropy",
+    "system": "aarch64-darwin",
+    "role": "workstation"
+  },
+  "aspects": {
+    "den.aspects.entropy": {
+      "includes": [
+        "den.aspects.entropy-storage",
+        "den.aspects.entropy-device-capability-routing"
+      ],
+      "role": "workstation"
+    },
+    "den.aspects.entropy-storage": {
+      "includes": ["den.aspects.apple-silicon-hardware"]
+    },
+    "den.aspects.entropy-device-capability-routing": "darwinRouting"
+  },
+  "hosts": {
+    "den.hosts.aarch64-darwin.entropy": {
+      "system": "aarch64-darwin",
+      "hostName": "entropy (darwinArm.hostId)",
+      "machine": "darwinArm",
+      "users.mei.identity": "darwinArm.identity"
+    },
+    "assert": "darwinArm.target == \"darwinConfigurations.entropy\""
+  },
+  "verification": {
+    "darwinConfigurations_keys": ["entropy"],
+    "nixosConfigurations_keys": ["aarch64-linux", "antagony", "nixos-x86-qualifier", "remembrance"],
+    "grep_entropy_model": true,
+    "aarch64_darwin_system_name_retained": true
+  }
+}

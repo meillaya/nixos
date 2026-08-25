@@ -2,15 +2,43 @@
 let
   policy = import ../lib/nixpkgs.nix { inputs = flake.inputs; };
   policyConfig = policy.config;
-  darwin = flake.darwinConfigurations."aarch64-darwin".config;
-  standalone = flake.homeConfigurations."standalone-linux".config;
-  standaloneArm = flake.homeConfigurations."standalone-linux-aarch64".config;
+  policyLinuxPkgs = policy.mkPkgs "x86_64-linux";
+  nixos = flake.nixosConfigurations.remembrance.config;
+  nixosFiles = import ../modules/nixos/files.nix {
+    homeDirectory = nixos.home-manager.users.mei.home.homeDirectory;
+  };
   authority = flake.machineAuthority;
+  validators = import ../modules/entities/_machine-authority/validators.nix;
   shellName = shell: shell.pname or shell.name or (builtins.baseNameOf (toString shell));
-  expectedDarwinApps = [
-    "build" "build-switch" "clean" "search-pkgs" "update"
+  expectedLinuxApps = [
+    "build" "build-switch" "clean" "home-news" "home-switch" "nh" "search-pkgs" "update"
   ];
   hasShell = name: shells: builtins.any (shell: shellName shell == name) shells;
+  remoteCapabilityValues = builtins.listToAttrs (
+    map
+      (name: {
+        inherit name;
+        value =
+          if builtins.elem name [ "install.remote" "network.ethernet" ] then
+            { state = "present"; }
+          else
+            {
+              state = "absent";
+              reason = "deferred";
+            };
+      })
+      validators.capabilityKeys
+  );
+  remoteCapableEnrolledFixture = {
+    remoteInstall = true;
+    capabilities = {
+      state = "enrolled";
+      values = remoteCapabilityValues;
+    };
+  };
+  remoteInstallCapabilityPresent = machine:
+    machine.capabilities.state == "enrolled"
+    && machine.capabilities.values."install.remote".state == "present";
   hasInfix = flake.inputs.nixpkgs.lib.hasInfix;
   countExactLine = expected: text:
     builtins.length (
@@ -19,6 +47,7 @@ let
         (flake.inputs.nixpkgs.lib.splitString "\n" text)
     );
   packageName = package: package.pname or package.name or (builtins.baseNameOf (toString package));
+  tryDrvPath = package: builtins.tryEval package.drvPath;
   hasPackages = names: packages:
     let present = map packageName packages;
     in builtins.all (name: builtins.elem name present) names;
@@ -29,32 +58,33 @@ let
     builtins.any
       (file: builtins.any (name: hasInfix name file) names)
       (builtins.attrNames files);
+  homeFileBySuffix = suffix: files:
+    let
+      matches = builtins.filter
+        (name: flake.inputs.nixpkgs.lib.hasSuffix suffix name)
+        (builtins.attrNames files);
+    in
+    if matches == [ ] then
+      throw "missing home.file entry ending in ${suffix}"
+    else
+      files.${builtins.head matches};
+  nixosNiriConfig = homeFileBySuffix ".config/niri/config.kdl"
+    nixos.home-manager.users.mei.home.file;
+  nixosNoctaliaConfig = homeFileBySuffix ".config/noctalia/config.toml"
+    nixos.home-manager.users.mei.home.file;
+  nixosKonsoleProfile = homeFileBySuffix ".local/share/konsole/Garuda.profile"
+    nixos.home-manager.users.mei.home.file;
   noctaliaServiceCount = services:
     builtins.length (
       builtins.filter
         (name: hasInfix "noctalia" name)
         (builtins.attrNames services)
     );
-  noctaliaSettings = standalone.programs.noctalia.settings;
-  standaloneKdePortalUnit =
-    standalone.xdg.configFile."systemd/user/plasma-xdg-desktop-portal-kde.service".source;
+  noctaliaSettings = nixos.programs.noctalia.settings or null;
   requiredLinuxApplications = [
     "calibre" "devenv" "gimp" "ghostty" "helium" "kitty" "obsidian"
     "ollama" "qbittorrent" "noctalia" "zen-beta"
   ];
-  expectedDarwinShellActivation = ''
-    desired_shell=/run/current-system/sw/bin/nu
-    if [[ ! -x "$systemConfig/sw/bin/nu" ]]; then
-      printf >&2 'error: configured Nushell is not executable: %s\n' "$systemConfig/sw/bin/nu"
-      exit 1
-    fi
-
-    current_shell=$(/usr/bin/dscl . -read /Users/mei UserShell)
-    current_shell="''${current_shell#UserShell: }"
-    if [[ "$current_shell" != "$desired_shell" ]]; then
-      /usr/bin/dscl . -create /Users/mei UserShell "$desired_shell"
-    fi
-  '';
   assertHm = hm:
     assert hm.programs.nushell.enable;
     assert hm.programs.nushell.settings.show_hints;
@@ -89,79 +119,135 @@ let
       hm.xdg.configFile."tmux/tmux.conf".text == 1;
     true;
 in
-assert builtins.attrNames (flake.nixosConfigurations or { }) == [ ];
-assert builtins.attrNames flake.darwinConfigurations == [ "aarch64-darwin" ];
-assert builtins.attrNames flake.homeConfigurations == [ "standalone-linux" "standalone-linux-aarch64" ];
+assert builtins.attrNames flake.nixosConfigurations == [ "antagony" "remembrance" ];
+assert builtins.attrNames (flake.darwinConfigurations or { }) == [ "entropy" ];
+assert builtins.attrNames (flake.homeConfigurations or { }) == [ "standalone-linux" ];
 assert builtins.attrNames (flake.overlays or { }) == [ ];
 assert flake.configurationEvaluationPaths == [
-  "darwinConfigurations.aarch64-darwin"
-  "homeConfigurations.standalone-linux"
-  "homeConfigurations.standalone-linux-aarch64"
+  "nixosConfigurations.remembrance"
+  "darwinConfigurations.entropy"
 ];
 assert authority.machineIds == [
-  "aarch64-darwin"
-  "aarch64-linux"
-  "nixos-laptop"
+  "antagony"
+  "entropy"
+  "remembrance"
 ];
+assert (authority.getMachine "remembrance").target == "nixosConfigurations.remembrance";
+assert builtins.attrNames remoteCapabilityValues == validators.capabilityKeys;
+assert remoteInstallCapabilityPresent remoteCapableEnrolledFixture;
+assert remoteCapableEnrolledFixture.remoteInstall
+  == (remoteCapableEnrolledFixture.capabilities.values."install.remote".state == "present");
 assert !(policyConfig ? allowBroken);
 assert !(policyConfig ? permittedInsecurePackages);
 assert !(policyConfig ? allowUnfree);
 assert policyConfig.allowInsecure == true;
 assert policyConfig ? allowUnfreePredicate;
-assert builtins.attrNames flake.apps.aarch64-darwin == expectedDarwinApps;
-assert builtins.attrNames (flake.apps.x86_64-linux or { }) == [ ];
-assert builtins.attrNames (flake.apps.aarch64-linux or { }) == [ ];
-assert darwin.system.stateVersion == 5;
-assert darwin.system.primaryUser == "mei";
-assert shellName darwin.users.users.mei.shell == "nushell";
-assert hasShell "nu" darwin.environment.shells;
-assert hasShell "bash" darwin.environment.shells;
-assert hasShell "zsh" darwin.environment.shells;
-assert hasShell "fish" darwin.environment.shells;
-assert hasPackages [ "kitty" ] darwin.environment.systemPackages;
-assert !(hasPackages [ "obsidian" ] darwin.environment.systemPackages);
-assert flake.inputs.nixpkgs.lib.hasInfix expectedDarwinShellActivation
-  darwin.system.activationScripts.postActivation.text;
-assert assertHm darwin.home-manager.users.mei;
-assert standalone.home.username == "mei";
-assert standalone.home.homeDirectory == "/home/mei";
-assert standaloneArm.home.username == "mei";
-assert standaloneArm.home.homeDirectory == "/home/mei";
-assert standalone.home.stateVersion == "25.11";
-assert hasPackages requiredLinuxApplications standalone.home.packages;
-assert !(hasAnyPackage [ "mako" "swaybg" "swaylock" "waybar" "wlogout" ] standalone.home.packages);
-assert !(hasAnyPackage [ "mako" "swaybg" "swaylock" "waybar" "wlogout" ] standaloneArm.home.packages);
-assert !(hasAnyHomeFile [ ".config/mako/" ".config/waybar/" ".config/wlogout/" ] standalone.home.file);
-assert !(hasAnyHomeFile [ ".config/mako/" ".config/waybar/" ".config/wlogout/" ] standaloneArm.home.file);
-assert hasInfix "xdg-desktop-portal-kde" (toString standaloneKdePortalUnit);
-assert flake.inputs.nixpkgs.lib.hasSuffix
-  "/share/systemd/user/plasma-xdg-desktop-portal-kde.service"
-  (toString standaloneKdePortalUnit);
-assert hasPackages [ "obsidian" ] standalone.home.packages;
-assert !(hasPackages [ "heroic" ] standalone.home.packages);
-assert !(hasPackages [ "steam" ] standalone.home.packages);
-assert standalone.programs.noctalia.enable;
-assert standalone.programs.spicetify.enable;
-assert hasPackages [ "helium" ] standalone.home.packages;
-assert standalone.programs.noctalia.systemd.enable;
-assert standalone.programs.noctalia.validateConfig;
-assert standalone.programs.noctalia.settings.shell.launch_apps_as_systemd_services;
-assert packageName standalone.xdg.configFile."noctalia/config.toml".source
-  == "noctalia-config";
-assert noctaliaServiceCount standalone.systemd.user.services == 1;
-assert standalone.systemd.user.services.noctalia.Unit.X-SwitchMethod == "keep-old";
-assert standalone.systemd.user.services.noctalia.Install.WantedBy == [ "graphical-session.target" ];
-assert standalone.systemd.user.services.noctalia.Service.Restart == "on-failure";
-assert builtins.any (hasInfix "/bin/noctalia")
-  standalone.systemd.user.services.noctalia.Service.ExecStart;
-assert standaloneArm.programs.noctalia.enable;
-assert !standaloneArm.programs.spicetify.enable;
-assert !(hasPackages [ "helium" ] standaloneArm.home.packages);
-assert standaloneArm.programs.noctalia.validateConfig;
-assert standaloneArm.programs.noctalia.settings.shell.launch_apps_as_systemd_services;
-assert noctaliaServiceCount standaloneArm.systemd.user.services == 1;
-assert standaloneArm.systemd.user.services.noctalia.Unit.X-SwitchMethod == "keep-old";
-assert assertHm standalone;
-assert assertHm standaloneArm;
-assert hasInfix "/bin/nu --login" standalone.home.file.".config/ghostty/config".text;
+assert (tryDrvPath policyLinuxPkgs.google-chrome).success;
+assert (tryDrvPath policyLinuxPkgs.obsidian).success;
+assert !(tryDrvPath policyLinuxPkgs.steam).success;
+assert builtins.attrNames flake.apps.x86_64-linux == expectedLinuxApps;
+assert builtins.attrNames (flake.apps.aarch64-darwin or { }) == [
+  "build" "build-switch" "clean" "search-pkgs" "update"
+];
+assert nixos.networking.hostName == "remembrance";
+assert nixos.system.stateVersion == "21.05";
+assert nixos.programs.niri.enable;
+assert nixos.xdg.portal.enable;
+assert nixos.services.displayManager.defaultSession == "niri";
+assert nixos.services.displayManager.sessionData.sessionNames == [ "niri" ];
+assert !nixos.services.xserver.windowManager.bspwm.enable;
+assert nixos.networking.networkmanager.enable;
+assert nixos.hardware.enableRedistributableFirmware;
+assert nixos.hardware.wirelessRegulatoryDatabase;
+assert nixos.programs.noctalia.enable;
+assert nixos.programs.spicetify.enable;
+assert nixos.programs.noctalia.systemd.enable;
+assert nixos.programs.noctalia.recommendedServices.enable;
+assert nixos.hardware.bluetooth.enable;
+assert nixos.services.upower.enable;
+assert nixos.services.power-profiles-daemon.enable;
+assert hasPackages [ "noctalia" ] nixos.environment.systemPackages;
+assert hasPackages requiredLinuxApplications (
+  nixos.home-manager.users.mei.home.packages ++ nixos.environment.systemPackages
+);
+assert !(hasAnyPackage [
+  "awww"
+  "dunst"
+  "i3lock"
+  "i3lock-fancy-rapid"
+  "mako"
+  "picom"
+  "polybar"
+  "rofi"
+  "rofi-calc"
+  "waybar"
+  "swaybg"
+  "swaylock"
+  "wlogout"
+] (
+  nixos.home-manager.users.mei.home.packages ++ nixos.environment.systemPackages
+));
+assert hasPackages [ "obsidian" ] (
+  nixos.home-manager.users.mei.home.packages ++ nixos.environment.systemPackages
+);
+assert hasPackages [ "heroic" ] (
+  nixos.home-manager.users.mei.home.packages ++ nixos.environment.systemPackages
+);
+assert !(hasPackages [ "steam" ] (
+  nixos.home-manager.users.mei.home.packages ++ nixos.environment.systemPackages
+));
+assert noctaliaServiceCount nixos.systemd.user.services == 1;
+assert noctaliaServiceCount nixos.home-manager.users.mei.systemd.user.services == 0;
+assert nixos.systemd.user.services.noctalia.wantedBy == [ "graphical-session.target" ];
+assert nixos.systemd.user.services.noctalia.serviceConfig.Restart == "on-failure";
+assert hasInfix "/bin/noctalia" nixos.systemd.user.services.noctalia.serviceConfig.ExecStart;
+assert noctaliaSettings == null || (
+  noctaliaSettings.shell.launch_apps_as_systemd_services
+  && noctaliaSettings.bar.main.enabled
+  && noctaliaSettings.notification.enable_daemon
+  && noctaliaSettings.wallpaper.enabled
+);
+assert !nixos.services.picom.enable;
+assert !nixos.home-manager.users.mei.services.dunst.enable;
+assert !nixos.home-manager.users.mei.services.polybar.enable;
+assert !nixos.home-manager.users.mei.services.screen-locker.enable;
+assert builtins.attrNames nixosFiles == [
+  ".config/niri/config.kdl"
+  ".config/noctalia/config.toml"
+];
+assert !(hasAnyHomeFile [
+  ".config/bspwm/"
+  ".config/mako/"
+  ".config/polybar/"
+  ".config/rofi/"
+  ".config/sxhkd/"
+  ".config/waybar/"
+] nixos.home-manager.users.mei.home.file);
+assert !hasInfix ''spawn-at-startup "noctalia"'' nixosNiriConfig.text;
+assert !hasInfix "awww" nixosNiriConfig.text;
+assert !hasInfix "mako" nixosNiriConfig.text;
+assert !hasInfix "picom" nixosNiriConfig.text;
+assert !hasInfix "swaybg" nixosNiriConfig.text;
+assert !hasInfix "swww" nixosNiriConfig.text;
+assert !hasInfix "waybar" nixosNiriConfig.text;
+assert hasInfix ''spawn-sh "noctalia msg screen-lock"'' nixosNiriConfig.text;
+assert nixos.users.users.mei.hashedPasswordFile == "/var/lib/nixos-bootstrap/mei-password.hash";
+assert nixos.users.users.mei.isNormalUser;
+assert nixos.users.users.mei.uid == 1000;
+assert nixos.users.groups.users.gid == 100;
+assert nixos.users.users.mei.home == "/home/mei";
+assert builtins.all (group: builtins.elem group nixos.users.users.mei.extraGroups) [
+  "wheel"
+  "networkmanager"
+  "docker"
+  "i2c"
+  "video"
+];
+assert shellName nixos.users.users.mei.shell == "nushell";
+assert hasShell "nushell" nixos.environment.shells;
+assert hasShell "bash" nixos.environment.shells;
+assert hasShell "zsh" nixos.environment.shells;
+assert hasShell "fish" nixos.environment.shells;
+assert assertHm nixos.home-manager.users.mei;
+assert hasInfix "/bin/nu --login" nixosKonsoleProfile.text;
 "dendritic-config-eval=PASS"

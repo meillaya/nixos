@@ -1,0 +1,41 @@
+{
+  "todo": 10,
+  "task": "Remap nixos-laptop -> remembrance (machine authority + named-hosts/storage/hardware)",
+  "status": "PASS",
+  "renamed_files": [
+    "modules/aspects/named-hosts/nixos-laptop.nix -> modules/aspects/named-hosts/remembrance.nix",
+    "modules/aspects/storage/nixos-laptop.nix -> modules/aspects/storage/remembrance.nix"
+  ],
+  "edited_files": [
+    "modules/entities/_machine-authority/model.nix",
+    "modules/entities/_machine-authority/validators.nix",
+    "modules/aspects/named-hosts/remembrance.nix",
+    "modules/aspects/storage/remembrance.nix",
+    "modules/aspects/hardware/device-capability-routing.nix",
+    "modules/aspects/hardware/x86-vendor-routing.nix",
+    "modules/aspects/hosts/nixos-workstation.nix",
+    "modules/entities/hosts.nix",
+    "modules/flake/outputs.nix",
+    "scripts/hardware/contracts.py",
+    "scripts/hardware/collector.py",
+    "tests/dendritic-config-eval.nix",
+    "tests/dendritic-architecture.sh",
+    "tests/readiness/task15/fixtures.py",
+    "tests/readiness/task15/extended_negatives.py",
+    "tests/readiness/task17/model.py"
+  ],
+  "verification": {
+    "grep_nixos_laptop_matches": 0,
+    "machineAuthority_machines_keys": ["aarch64-linux", "nixos-x86-qualifier", "remembrance"],
+    "remembrance_machine": {
+      "hostId": "remembrance",
+      "target": "nixosConfigurations.remembrance",
+      "role": "workstation",
+      "system": "x86_64-linux"
+    },
+    "dendritic-config-eval": "PASS",
+    "dendritic-architecture": "PASS",
+    "dendritic-boundaries": "PASS",
+    "task15_N11_route_binding": "PASS"
+  }
+}

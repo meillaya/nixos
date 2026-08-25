@@ -1,7 +1,0 @@
-no_args	2	0	task runner invalid: task must be numeric 
-non_numeric	2	0	task runner invalid: task must be numeric 
-unregistered	2	0	task runner invalid: task is not registered 
-missing_mode	2	0	task runner invalid: mode must be fixture, negative, or status 
-forbidden_subject	2	0	task runner invalid: fixture/negative subject forbidden 
-invalid_status_task3	2	0	task runner invalid: status subject is not registered 
-invalid_status_subject	2	0	task runner invalid: status subject is not registered 

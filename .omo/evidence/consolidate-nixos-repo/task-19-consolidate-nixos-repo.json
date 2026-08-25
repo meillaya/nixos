@@ -1,0 +1,47 @@
+{
+  "todo": 19,
+  "title": "Wire deploy-rs (deploy.nodes.<host> + deployChecks)",
+  "date": "2026-08-23",
+  "changes": [
+    {
+      "file": "flake.nix",
+      "change": "Added deploy-rs input `deploy-rs.url = \"github:serokell/deploy-rs\";` after import-tree"
+    },
+    {
+      "file": "modules/flake/deploy-rs.nix",
+      "action": "created",
+      "content": "flake-parts module exposing flake.deploy.nodes.{remembrance,antagony,entropy,massive} + flake.checks (deployChecks), auto-loaded via import-tree",
+      "patterns": {
+        "module-args": "{ inputs, lib, ... } with `inherit (inputs) self deploy-rs;` (repo convention: self via inputs.self)",
+        "top-level-output": "flake.deploy.nodes.<host> (freeform flake submodule) + flake.checks (transposed per-system checks option)"
+      }
+    },
+    {
+      "file": "flake.lock",
+      "action": "updated",
+      "detail": "Added deploy-rs github:serokell/deploy-rs/1690127 (2026-08-10) + its flake-compat/nixpkgs/utils inputs"
+    }
+  ],
+  "deploy_configuration": {
+    "remembrance": { "hostname": "remembrance", "profile": "system", "user": "root", "activator": "deploy-rs.lib.x86_64-linux.activate.nixos self.nixosConfigurations.remembrance" },
+    "antagony": { "hostname": "antagony", "profile": "system", "user": "root", "activator": "deploy-rs.lib.x86_64-linux.activate.nixos self.nixosConfigurations.antagony" },
+    "entropy": { "hostname": "entropy", "profile": "system", "user": "root", "activator": "deploy-rs.lib.aarch64-darwin.activate.darwin self.darwinConfigurations.entropy" },
+    "massive": { "hostname": "massive", "profile": "home", "user": "mei", "activator": "deploy-rs.lib.x86_64-linux.activate.home-manager self.homeConfigurations.standalone-linux" }
+  },
+  "acceptance": {
+    "deploy_nodes_keys": ["antagony", "entropy", "massive", "remembrance"],
+    "deploy_nodes_keys_eval_command": "nix eval --impure --json --expr 'builtins.attrNames (builtins.getFlake \"path:/home/mei/nixos\").deploy.nodes'",
+    "deploy_nodes_keys_result": "[\"antagony\",\"entropy\",\"massive\",\"remembrance\"]",
+    "massive_is_home_only": true,
+    "deploy_checks_registered": { "x86_64-linux": ["deploy-schema", "deploy-activate"], "aarch64-darwin": ["deploy-schema", "deploy-activate"] },
+    "all_deploy_check_drvs_evaluate": true,
+    "all_deploy_node_paths_evaluate_drvPath_and_outPath": true
+  },
+  "pre_existing_issue_not_from_this_todo": {
+    "check_failing": "nixosConfigurations.antagony",
+    "error": "The option `home-manager.users.mei.home.stateVersion' was accessed but has no value defined. Try setting the option.",
+    "triggered_via": "system.build.toplevel -> assertions -> nixos/common.nix -> modules/programs/aerospace.nix (nixpkgs HMi module pulling config.home.homeDirectory)",
+    "proven_pre_existing": "Removing modules/flake/deploy-rs.nix (keeping the deploy-rs input) still fails nix flake check --all-systems --no-build identically on nixosConfigurations.antagony; the deploy-rs wiring is not the cause",
+    "scope": "Explicitly out of todo-19 scope (Do NOT modify machine authority or host aspects). antagony toplevel.drvPath/outPath and config.home-manager.users.mei.home.stateVersion all eval correctly in isolation — the failure only manifests during flake-check's full system.build.toplevel/assertions walk."
+  }
+}

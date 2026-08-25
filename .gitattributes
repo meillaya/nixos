@@ -1,0 +1,5 @@
+# Exclude every language except Nix from GitHub language statistics.
+# Any path that is not a *.nix file is marked non-detectable, so GitHub
+# attributes this repository to Nix only.
+* -linguist-detectable
+*.nix linguist-detectable=true

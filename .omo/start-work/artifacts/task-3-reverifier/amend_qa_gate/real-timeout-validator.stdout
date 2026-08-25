@@ -1,2 +1,0 @@
-Schema validation errors were encountered.
-  /tmp/nix-config-task-3.nC4GCYo8/result::$.secretCapture.processCount: 0 is less than the minimum of 1
