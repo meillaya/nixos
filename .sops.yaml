@@ -7,3 +7,8 @@ creation_rules:
       - age:
           - *admin
           - *recovery
+  - path_regex: secrets/remembrance-keys\.yaml$
+    key_groups:
+      - age:
+          - *admin
+          - *recovery
