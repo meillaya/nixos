@@ -1,43 +1,16 @@
 let
   validators = import ./validators.nix;
 
+  # remembrance is enrolled: the machine declaration is the reviewed
+  # hardware-intake artifact (config/hosts/intake/remembrance.json) emitted by
+  # `bin/nix-config-hardware-intake create` + `validate`. Importing it here makes
+  # the committed enrollment the single source of truth; re-enrollment replaces
+  # the file and the build-time record follows automatically. antagony and
+  # entropy remain pending/disabled below.
   machines = {
-    remembrance = {
-      hostId = "remembrance";
-      target = "nixosConfigurations.remembrance";
-      system = "x86_64-linux";
-      role = "workstation";
-      identity = {
-        name = "mei";
-        home = "/home/mei";
-        uid = 1000;
-        gid = 100;
-      };
-      location = {
-        timeZone = "America/New_York";
-        locale = "en_US.UTF-8";
-        keymap = "us";
-        xkb = "us";
-      };
-      display.scale = {
-        numerator = 1;
-        denominator = 1;
-      };
-      boot.state = "disabled";
-      storage.profile = "none";
-      publicTrust.state = "disabled";
-      secretTrust.state = "disabled";
-      cpuVendor = "pending";
-      firmware = "disabled";
-      kernel = "disabled";
-      gpu = "disabled";
-      network = "disabled";
-      devices.state = "disabled";
-      capabilities.state = "disabled";
-      ddcConnectors = [ ];
-      remoteInstall = false;
-      platformExpectations.kind = "none";
-    };
+    remembrance = builtins.fromJSON (
+      builtins.readFile ../../../config/hosts/intake/remembrance.json
+    );
 
     antagony = {
       hostId = "antagony";

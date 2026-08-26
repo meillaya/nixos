@@ -150,6 +150,8 @@ if grep -Fq 'machine.capabilities.values.install.remote' \
 fi
 
 grep -Fq 'system = "x86_64-linux";' modules/entities/hosts.nix
-grep -Fq 'home = "/home/mei";' modules/entities/_machine-authority/model.nix
+grep -Fq '"home":"/home/mei"' config/hosts/intake/remembrance.json
+grep -Fq 'den.aspects.enrolled-x86-storage' modules/aspects/storage/enrolled-x86.nix
+grep -Fq 'den.aspects.enrolled-x86-workstation-hardware' modules/aspects/hardware/enrolled-x86-workstation.nix
 
 printf '%s\n' 'dendritic-architecture=PASS'
