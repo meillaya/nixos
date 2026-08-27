@@ -179,8 +179,13 @@ stage_install() {
 }
 
 stage_verify() {
-  echo "stage verify: not implemented yet" >&2
-  exit 70
+  # -H is required: without it nh defaults the hostname to the --target-host
+  # value, which would try to build a config named <ip>.
+  if ! nh os switch . -H "$host" --target-host "$target_host"; then
+    echo "error: post-install nh os switch failed for $host; the system was installed but the verification switch did not complete" >&2
+    exit 1
+  fi
+  echo "post-install verification passed for $host"
 }
 
 if [[ "$dry_run" == true ]]; then
