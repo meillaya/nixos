@@ -30,29 +30,60 @@ All configured systems get the flake app surface: on Linux `build`,
 
 ## Install
 
-Installation is ISO-driven. Build a per-host installer ISO, boot it on
-the target, then run `nixos-anywhere` to install the flake.
+Installation is ISO-driven and wrapped by one operator-side command,
+`bin/host-install.sh`. Run it from a machine holding this repo, against
+the target booted into the installer ISO:
+
+```bash
+bin/host-install.sh --target-host <ip> --yes
+```
+
+Three prerequisites stay human. Build the per-host installer ISO:
 
 ```bash
 nix build .#iso.<host>
 ```
 
 (`.#iso.<host>` is shorthand for
-`.#nixosConfigurations.<host>.config.system.build.isoImage`.) Boot the
-ISO on the target (e.g. a Proxmox VM), then run nixos-anywhere:
+`.#nixosConfigurations.<host>.config.system.build.isoImage`.) Write it
+to a USB stick and boot the target from it (e.g. a Proxmox VM). Then
+know the target's IP. The script does not build the ISO, boot the
+target, or guess the address.
+
+With `--target-host <ip> --yes`, the script runs the whole flow in
+order:
+
+1. Generates the canonical `trust.json` from repo facts.
+2. Uploads it to the target and triggers the ISO's `hardware-enroll`
+   oneshot.
+3. Retrieves the enrollment artifacts from `/root/enroll/`.
+4. Commits them: the intake config into `config/hosts/intake/` and the
+   re-encrypted sops host key into `secrets/`.
+5. Runs a pre-flight `nh os build` gate on the refreshed flake.
+6. Installs via `nixos-anywhere` (partition + first activation).
+7. Verifies post-install with `nh os switch`.
+
+Tool roles are fixed: `nixos-anywhere` is the installer; `nh` is the
+pre-flight build gate and the day-2 switch tool. `nh` never installs.
+
+Modes:
 
 ```bash
-nix run github:nix-community/nixos-anywhere -- --flake '.#<host>' --target-host <ip>
+bin/host-install.sh --target-host <ip> --skip-install   # enroll + commit only, no install
+bin/host-install.sh --target-host <ip> --dry-run        # print the exact command plan, execute nothing
+bin/host-install.sh --target-host <ip> --yes --skip-verify  # skip the post-install nh switch
 ```
 
-nixos-anywhere auto-detects the installer and skips kexec. The
-four-enrollment gate (`boot.state=uefi`,
+`--host` defaults to `remembrance`; pass `--host <host>` for the other
+NixOS hosts. The install path is gated behind `--yes`.
+
+The four-enrollment gate (`boot.state=uefi`,
 `storage.profile=single-gpt-btrfs`, `publicTrust.state=enrolled`,
 `secretTrust.state=enrolled`) is the trust boundary. Git history records
 who enrolled what.
 
 See `docs/service-notes/nixos-anywhere-iso-install.md` for the full
-procedure.
+manual procedure the script wraps.
 
 ## Update
 
