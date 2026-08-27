@@ -75,6 +75,7 @@ done
 tmpdir="${TMPDIR:-/tmp}/host-install.$$"
 
 print_plan() {
+  echo "0. PYTHONPATH=${root} python3 scripts/hardware/gen_trust.py --host ${host} -o ${tmpdir}/trust.json"
   echo "1. ssh root@${target_host} 'mkdir -p /root/enroll'"
   echo "2. scp trust.json root@${target_host}:/root/enroll/"
   echo "3. ssh root@${target_host} 'systemctl start hardware-enroll'"
@@ -97,8 +98,31 @@ print_plan() {
 }
 
 stage_enroll() {
-  echo "stage enroll: not implemented yet" >&2
-  exit 70
+  mkdir -p "$tmpdir"
+
+  if ! PYTHONPATH="$root" python3 scripts/hardware/gen_trust.py --host "$host" -o "$tmpdir/trust.json"; then
+    echo "error: failed to generate canonical trust fixture (scripts/hardware/gen_trust.py --host $host)" >&2
+    exit 1
+  fi
+
+  # The ISO oneshot only creates /root/enroll when it runs, so it must exist
+  # before the trust fixture is pushed.
+  ssh root@"$target_host" 'mkdir -p /root/enroll'
+  scp "$tmpdir/trust.json" "root@$target_host:/root/enroll/trust.json"
+  ssh root@"$target_host" 'systemctl start hardware-enroll'
+  scp -r "root@$target_host:/root/enroll/." "$tmpdir/"
+
+  # The oneshot ends with '|| true', so its exit code is meaningless; the
+  # presence of the three artifacts is the real enrollment gate.
+  missing=()
+  for artifact in "${host}.json" "${host}.intake.json" "${host}.host-key"; do
+    [[ -f "$tmpdir/$artifact" ]] || missing+=("$artifact")
+  done
+  if [[ ${#missing[@]} -gt 0 ]]; then
+    echo "error: enrollment incomplete; missing artifact(s) in $tmpdir: ${missing[*]}" >&2
+    echo "       hardware-enroll oneshot masks failures with '|| true'; check 'journalctl -u hardware-enroll' on the target, then re-run." >&2
+    exit 1
+  fi
 }
 
 stage_fold() {
