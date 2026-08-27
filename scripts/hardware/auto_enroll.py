@@ -9,10 +9,15 @@
 #       --trust /root/enroll/trust.json \
 #       --out /root/enroll
 #
-# Auto-detects the real hardware of the machine it runs on, merges the
-# operator-supplied trust, sanitizes it through the collector, diffs it against
-# the build-time base declaration, and writes the reviewed candidate + RFC-6902
-# intake document (idempotently overwriting any prior artifact for the host).
+# Auto-detects the real hardware of the machine it runs on (including the target
+# disk), generates a fresh host SSH identity per install, merges the operator
+# trust, sanitizes through the collector, diffs against the build-time base
+# declaration, and writes the reviewed candidate + RFC-6902 intake document
+# (idempotently overwriting any prior artifact for the host).
+#
+# The target disk is auto-discovered, preferring the disk already bound in the
+# base when it is still present; pass --disk to pin an exact whole-device
+# basename when several equivalent internal disks exist.
 #
 # Fail-closed: refuses to run without operator trust (no synthetic enrollment)
 # and re-validates the applied intake before writing anything.
@@ -32,6 +37,7 @@ def _parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument("--trust", required=True, help="path to operator trust fixture JSON")
     parser.add_argument("--out", default="/root/enroll", help="output directory for the enrollment artifacts")
     parser.add_argument("--reviewer", default="iso-installer", help="reviewer principal recorded in the intake")
+    parser.add_argument("--disk", default=None, help="pin a target whole-device by-id basename")
     return parser.parse_args(argv)
 
 
@@ -50,6 +56,7 @@ def main(argv: list[str]) -> int:
             trust_path=trust_path,
             out_dir=out_dir,
             reviewer=args.reviewer,
+            disk_by_id=args.disk,
         )
     except Exception as error:  # ContractError subclasses
         print(f"INVALID HARDWARE INTAKE: {error}", file=sys.stderr)

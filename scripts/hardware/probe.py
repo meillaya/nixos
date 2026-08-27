@@ -16,6 +16,7 @@
 from __future__ import annotations
 
 import hashlib
+import os
 import re
 import subprocess
 from pathlib import Path
@@ -117,6 +118,63 @@ def _storage_expected(disk_by_id: str) -> JsonObject:
         "modelSha256": _sha256(model),
         "serialSha256": _sha256(serial),
     }
+
+
+def _is_candidate_block(name: str) -> bool:
+    # Whole internal block devices only. Skip loop/ram/zram/dm/sr/fd/md and any
+    # device attached over USB — that covers the installer media the ISO booted
+    # from and external USB drives, leaving internal NVMe/SATA/SCSI as targets.
+    if name.startswith(("loop", "ram", "zram", "dm-", "sr", "fd", "md")):
+        return False
+    sys_block = Path("/sys/block") / name
+    if not sys_block.is_dir():
+        return False
+    device_path = os.path.realpath(sys_block / "device")
+    if "/usb" in device_path:
+        return False
+    return True
+
+
+def _whole_device_ids() -> dict[str, tuple[str, int]]:
+    # Maps resolved block-device name -> (canonical by-id basename, sizeBytes).
+    candidates: dict[str, tuple[str, int]] = {}
+    by_id = Path("/dev/disk/by-id")
+    if not by_id.is_dir():
+        return candidates
+    for entry in by_id.iterdir():
+        name = entry.name
+        if name.endswith(("-part", "-part1")) or re.search(r"-part\d+$", name):
+            continue
+        # Skip synthetic aliases (wwn-/eui-/... duplicates of the same device);
+        # keep the vendor/model names which are stable whole-device basenames.
+        if re.search(r"^(wwn-|eui-|nvme-eui-|scsi-|pci-|usb-|ata-|nvme-)", name) is None:
+            continue
+        if not entry.is_symlink():
+            continue
+        device = entry.resolve()
+        dev_name = device.name
+        if dev_name not in candidates and _is_candidate_block(dev_name):
+            sectors = int((Path("/sys/block") / dev_name / "size").read_text().strip())
+            logical = int((Path("/sys/block") / dev_name / "queue" / "logical_block_size").read_text().strip())
+            candidates[dev_name] = (name, sectors * logical)
+    return candidates
+
+
+def discover_target_disk(preferred: str | None = None) -> str:
+    """Auto-select the target whole-device disk basename.
+
+    If a preferred basename is given and it names a present candidate, it wins
+    (safe deterministic reinstall of the same disk). Otherwise the largest
+    candidate is chosen; ties break lexicographically.
+    """
+    candidates = _whole_device_ids()
+    if not candidates:
+        raise ContractError("probe: no candidate target disk found")
+    present = {name for name, _ in candidates.values()}
+    if preferred and preferred in present:
+        return preferred
+    best = max(candidates.values(), key=lambda item: (item[1], item[0]))
+    return best[0]
 
 
 def _pci_devices() -> list[tuple[str, str, str]]:
@@ -293,14 +351,18 @@ def _power_daemon() -> str | None:
     return None
 
 
-def probe_fixture(base: JsonObject, disk_by_id: str, trust: JsonObject) -> JsonObject:
+def probe_fixture(base: JsonObject, trust: JsonObject, disk_by_id: str | None = None) -> JsonObject:
     """Build the typed attended fixture from the real hardware of this machine.
 
     `base` is the current build-time machine declaration (provides hostId,
-    target, system, role, identity, location, display). `disk_by_id` is the
-    attended whole-device basename to enroll. `trust` is the operator-supplied
-    public/secret trust fixture.
+    target, system, role, identity, location, display). `trust` is the
+    operator-supplied public/secret trust fixture. `disk_by_id` is an optional
+    whole-device basename; when omitted the target disk is auto-discovered,
+    preferring the disk already bound in `base` when it is still present.
     """
+    if disk_by_id is None:
+        preferred = base.get("storage", {}).get("diskById")
+        disk_by_id = discover_target_disk(preferred if isinstance(preferred, str) else None)
     vendor = _cpu_vendor()
     secure_boot = _secure_boot()
     storage_expected = _storage_expected(disk_by_id)
