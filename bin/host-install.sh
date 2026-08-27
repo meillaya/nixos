@@ -126,8 +126,30 @@ stage_enroll() {
 }
 
 stage_fold() {
-  echo "stage fold: not implemented yet" >&2
-  exit 70
+  # The fold verifies the key against config/hosts/intake/$host.json on disk,
+  # so the intake copies must land before it runs.
+  cp "$tmpdir/$host.json" "config/hosts/intake/$host.json"
+  cp "$tmpdir/$host.intake.json" "config/hosts/intake/$host.intake.json"
+
+  if ! bin/nix-config-host-key-enroll "$tmpdir/$host.host-key" "$host"; then
+    echo "error: host-key fold failed for $host; the retrieved key does not match the committed enrollment record (or sops re-encryption failed). Nothing was committed; aborting before build/install." >&2
+    exit 1
+  fi
+
+  # Commit only after the fold: the sops file now embeds the folded host key,
+  # and a clean checkout must carry it.
+  git add config/hosts/intake/ secrets/remembrance-keys.yaml
+  git commit -m "enroll: refresh $host"
+
+  # A partial `git add` would silently omit a path from the commit.
+  if ! git diff-tree --no-commit-id --name-only -r HEAD | grep -q "secrets/remembrance-keys.yaml"; then
+    echo "error: commit HEAD does not contain secrets/remembrance-keys.yaml; a clean checkout would miss the folded host key." >&2
+    exit 1
+  fi
+  if ! git diff-tree --no-commit-id --name-only -r HEAD | grep -q "config/hosts/intake/$host.json"; then
+    echo "error: commit HEAD does not contain config/hosts/intake/$host.json; a clean checkout would miss the enrollment record." >&2
+    exit 1
+  fi
 }
 
 stage_build_gate() {
