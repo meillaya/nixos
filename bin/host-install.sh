@@ -153,8 +153,14 @@ stage_fold() {
 }
 
 stage_build_gate() {
-  echo "stage build_gate: not implemented yet" >&2
-  exit 70
+  # Local build gate only: confirm the refreshed flake evaluates and builds
+  # before the destructive install. No --target-host here; remote activation
+  # is stage_verify's job.
+  if ! nh os build . -H "$host"; then
+    echo "error: pre-install nh os build failed for $host; refusing to install a flake that does not build" >&2
+    exit 1
+  fi
+  echo "pre-flight build gate passed for $host"
 }
 
 stage_install() {
