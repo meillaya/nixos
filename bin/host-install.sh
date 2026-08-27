@@ -164,8 +164,18 @@ stage_build_gate() {
 }
 
 stage_install() {
-  echo "stage install: not implemented yet" >&2
-  exit 70
+  # Defense in depth: the main flow only reaches this stage when not
+  # --skip-install, but the destructive act itself re-checks the flag.
+  if [[ "$assume_yes" != true ]]; then
+    echo "refusing to install; pass --yes" >&2
+    exit 1
+  fi
+
+  if ! nix run github:nix-community/nixos-anywhere -- --flake ".#${host}" --target-host "root@${target_host}"; then
+    echo "error: nixos-anywhere install failed for $host; the target may be left partially partitioned" >&2
+    exit 1
+  fi
+  echo "install completed for $host"
 }
 
 stage_verify() {
