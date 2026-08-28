@@ -4,7 +4,7 @@ let
   identity = host.machine.identity;
   user = identity.name;
   home = identity.home;
-  keys = [ "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOk8iAnIaa1deoc7jw8YACPNVka1ZFJxhnU4G74TmS+p" ];
+  keys = [ "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPoWsO0x+p0FKVKOrfHPc0xeZuOZyMapMt8LxPbWHtb5" ];
 in
 {
   # Use the systemd-boot EFI boot loader.
