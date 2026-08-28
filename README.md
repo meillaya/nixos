@@ -82,8 +82,11 @@ The four-enrollment gate (`boot.state=uefi`,
 `secretTrust.state=enrolled`) is the trust boundary. Git history records
 who enrolled what.
 
-See `docs/service-notes/nixos-anywhere-iso-install.md` for the full
-manual procedure the script wraps.
+For the step-by-step walkthrough on a new machine — including the secret
+backups a fresh clone needs and the single-machine variant — see
+[`docs/service-notes/new-machine-ssh-install.md`](docs/service-notes/new-machine-ssh-install.md).
+The full manual procedure the script wraps is in
+`docs/service-notes/nixos-anywhere-iso-install.md`.
 
 ## Update
 
