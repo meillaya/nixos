@@ -21,4 +21,9 @@ in
   ".config/ghostty/config.ghostty".text = ghosttyConfig;
   ".config/fastfetch/config.jsonc".source = ../shared/config/fastfetch/config.jsonc;
   ".config/fastfetch/snoopy-mugiwara.png".source = ../shared/config/fastfetch/snoopy-mugiwara.png;
+
+  # Expose the nix JDK where IDE toolchain scanners look: IntelliJ/Android
+  # Studio scan ~/.jdks regardless of the launching environment, so
+  # GUI-launched Studio finds the Java 21 toolchain without shell env.
+  ".jdks/openjdk-21".source = "${pkgs.openjdk.home}";
 }
