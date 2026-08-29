@@ -16,6 +16,9 @@ let
     hash = "sha256-TzovzmfrUuaSrtpKCQxyXcih7cKSBhBtMpZLVwY/ScA=";
   };
 
+  # Vendored: upstream removed the theme over gtk-engine-murrine (#549887)
+  sweet = pkgs.callPackage ../../pkgs/sweet.nix { };
+
   dolphinEnv = "QT_STYLE_OVERRIDE=kvantum QT_QUICK_CONTROLS_STYLE=org.kde.desktop XDG_MENU_PREFIX=plasma-";
   dolphinBin = "${pkgs.kdePackages.dolphin}/bin/dolphin";
   okularBin = "${pkgs.kdePackages.okular}/bin/okular";
@@ -468,12 +471,9 @@ let
 in
 {
   home.packages = with pkgs; [
-    # `sweet` was removed in upstream nixpkgs (its dependency on the
-    # unmaintained `gtk-engine-murrine` against GTK 2). Dropped per Phase 0
-    # Option C of the autonomous-install plan: the system picks a default
-    # theme from the desktop environment at activation time. Re-add a
-    # replacement theme here (e.g. `orchis-theme` or `catppuccin-gtk-theme`)
-    # if a specific look-and-feel is needed.
+    # `sweet` was removed upstream over gtk-engine-murrine (#549887) and is
+    # vendored again at pkgs/sweet.nix (murrine-free); the Sweet-Dark theme
+    # files ship via the dataFile entry below and gtk-settings reference it.
     kdePackages.xdg-desktop-portal-kde
     xdg-desktop-portal-gnome
     xdg-desktop-portal-gtk
@@ -641,9 +641,13 @@ in
         source = candyIconsSrc;
         force = true;
       };
-      # `themes/Sweet-Dark` removed (Phase 0 Option C): the system picks
-      # its default theme from the desktop environment at activation.
-      # Add a replacement entry here if a specific theme is desired.
+      # Vendored sweet (pkgs/sweet.nix): upstream dropped the theme over the
+      # gtk-engine-murrine deprecation (nixpkgs #549887); the GTK3/GTK4 theme
+      # builds and renders without that engine.
+      "themes/Sweet-Dark" = {
+        source = "${sweet}/share/themes/Sweet-Dark";
+        force = true;
+      };
       "plasma/desktoptheme/Dr460nized" = {
         source = "${garudaDr460nized}/usr/share/plasma/desktoptheme/Dr460nized";
         force = true;
@@ -845,9 +849,9 @@ in
     $DRY_RUN_CMD "$kwrite" --file qt6ct/qt6ct.conf --group Interface --key dialog_buttons_have_icons 1
     $DRY_RUN_CMD "$kwrite" --file qt6ct/qt6ct.conf --group Interface --key menus_have_icons true
 
-    # gtk-theme removed (Phase 0 Option C); re-add with a specific theme
-    # name if needed.
-    $DRY_RUN_CMD ${pkgs.glib}/bin/gsettings set org.gnome.desktop.interface gtk-theme Adwaita-dark 2>/dev/null || true
+    # Sweet-Dark restored (vendored pkgs/sweet.nix): matches the
+    # gtk-theme-name already declared in gtk-3.0/gtk-4.0 settings.ini.
+    $DRY_RUN_CMD ${pkgs.glib}/bin/gsettings set org.gnome.desktop.interface gtk-theme Sweet-Dark 2>/dev/null || true
     $DRY_RUN_CMD ${pkgs.glib}/bin/gsettings set org.gnome.desktop.interface icon-theme BeautyLine 2>/dev/null || true
     $DRY_RUN_CMD ${pkgs.glib}/bin/gsettings set org.gnome.desktop.interface color-scheme prefer-dark 2>/dev/null || true
     $DRY_RUN_CMD ${pkgs.python3}/bin/python3 - <<'PY'
