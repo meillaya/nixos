@@ -68,6 +68,10 @@ with pkgs;
   yaak
   zathura
   sublime4
+
+  # Android development (android-studio is unfree: package-exceptions.json)
+  android-studio
+  android-tools
 ]
 ++ lib.optionals (stdenv.hostPlatform.system == "x86_64-linux") [
   hoppscotch
