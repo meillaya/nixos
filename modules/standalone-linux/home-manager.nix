@@ -11,6 +11,20 @@ in
 {
   imports = [ ../linux/home-manager.nix ];
 
+  # Trust the binary-cache union at the user level so `nix run .#home-switch`
+  # substitutes from signed caches instead of rebuilding. `mei` is a daemon
+  # trusted-user (`/etc/nix/nix.custom.conf`), so a trusted user's
+  # `extra-substituters` in the user config is honored. The CachyOS host runs
+  # Determinate Nix; ~/.config/nix/nix.conf is its user-level config.
+  # xdg.configFile (not home.file) so HM resolves the path instead of creating
+  # a literal `~` directory.
+  xdg.configFile."nix/nix.conf".text = ''
+    # BEGIN nix-caching-zen-browser: binary-cache union (managed by HM)
+    extra-substituters = https://noctalia.cachix.org https://nix-community.cachix.org https://cache.nixos.org
+    extra-trusted-public-keys = noctalia.cachix.org-1:pCOR47nnMEo5thcxNDtzWpOxNFQsBRglJzxWPp3dkU4= nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs= cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=
+    # END nix-caching-zen-browser
+  '';
+
   home = {
     enableNixpkgsReleaseCheck = false;
     username = lib.mkDefault userName;
