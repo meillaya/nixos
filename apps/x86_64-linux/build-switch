@@ -14,7 +14,7 @@ a live NixOS machine; activation runs via sudo.
 Examples:
   build-switch                                # default host
   build-switch --host remembrance             # different host
-  build-switch -- --dry-build                 # pass-through to nh
+  build-switch -- --dry                       # pass-through to nh (build only)
 EOF
 }
 
@@ -47,4 +47,8 @@ if [[ -z "$host" ]]; then
   host="remembrance"
 fi
 
-exec nh os switch --hostname "${host}" "$@"
+# Flake root is two levels up from this script (apps/<system>/build-switch).
+# nh only falls back to /etc/nixos on its own, which does not exist here.
+flake_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd -P)"
+
+exec nh os switch "path:${flake_root}" --hostname "${host}" "$@"

@@ -3,15 +3,22 @@ let
   inherit (inputs) self home-manager nixpkgs;
   mkConfiguredPkgs = (import ../../lib/nixpkgs.nix { inherit inputs; }).mkPkgs;
   localUpdaterNamesFor = _system: [ ];
-  mkApp = scriptName: system: {
-    type = "app";
-    program = "${(nixpkgs.legacyPackages.${system}.writeScriptBin scriptName ''
-      #!/usr/bin/env bash
-      PATH=${nixpkgs.legacyPackages.${system}.git}/bin:$PATH
-      echo "Running ${scriptName} for ${system}"
-      exec ${self}/apps/${system}/${scriptName} "$@"
-    '')}/bin/${scriptName}";
-  };
+  # pathDeps are prepended to the wrapper's PATH. Used for scripts that shell
+  # out to flake-provided tools that no module installs into the host
+  # environment (build-switch needs nh from inputs.nh).
+  mkApp = scriptName: system: { pathDeps ? [ ] }:
+    let
+      pkgs = nixpkgs.legacyPackages.${system};
+      runtimePath = lib.makeBinPath ([ pkgs.git ] ++ pathDeps);
+    in {
+      type = "app";
+      program = "${(pkgs.writeScriptBin scriptName ''
+        #!/usr/bin/env bash
+        PATH=${runtimePath}:$PATH
+        echo "Running ${scriptName} for ${system}"
+        exec ${self}/apps/${system}/${scriptName} "$@"
+      '')}/bin/${scriptName}";
+    };
   mkSearchPkgsApp = system:
     let
       pkgs = nixpkgs.legacyPackages.${system};
@@ -457,13 +464,15 @@ EOF
     let
       nhPkg = inputs.nh.packages.${system}.default or null;
     in {
-      "build" = mkApp "build" system;
+      "build" = mkApp "build" system { };
       "home-news" = mkHomeNewsApp system;
       "home-switch" = mkHomeSwitchApp system;
       "search-pkgs" = mkSearchPkgsApp system;
       "update" = mkUpdateApp system;
-      "build-switch" = mkApp "build-switch" system;
-      "clean" = mkApp "clean" system;
+      "build-switch" = mkApp "build-switch" system {
+        pathDeps = lib.optionals (nhPkg != null) [ nhPkg ];
+      };
+      "clean" = mkApp "clean" system { };
     } // lib.optionalAttrs (nhPkg != null) {
       "nh" = {
         type = "app";
@@ -472,10 +481,10 @@ EOF
     };
   mkDarwinApps = system:
     {
-      "build" = mkApp "build" system;
+      "build" = mkApp "build" system { };
       "search-pkgs" = mkSearchPkgsApp system;
-      "build-switch" = mkApp "build-switch" system;
-      "clean" = mkApp "clean" system;
+      "build-switch" = mkApp "build-switch" system { };
+      "clean" = mkApp "clean" system { };
       "update" = mkUpdateApp system;
     };
 in {
