@@ -67,7 +67,6 @@ with pkgs;
   wireshark
   yaak
   zathura
-  sublime4
 
   # Vendored: removed upstream over gtk-engine-murrine (nixpkgs #549887)
   (pkgs.callPackage ../../pkgs/sweet.nix { })

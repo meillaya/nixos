@@ -101,7 +101,7 @@ let
     "image/gif" = "okularApplication_kimgio.desktop";
     "image/tiff" = "okularApplication_tiff.desktop";
 
-    "text/plain" = "sublime_text.desktop";
+    "text/plain" = "dev.zed.Zed.desktop";
     "video/mp4" = "mpv.desktop";
     "video/x-matroska" = "mpv.desktop";
     "video/webm" = "mpv.desktop";
@@ -134,7 +134,7 @@ let
     "application/xhtml+xml" = [ "zen-beta.desktop" ];
     "x-scheme-handler/http" = [ "zen-beta.desktop" ];
     "x-scheme-handler/https" = [ "zen-beta.desktop" ];
-    "text/markdown" = [ "okularApplication_md.desktop" "sublime_text.desktop" "dev.zed.Zed.desktop" "micro.desktop" ];
+    "text/markdown" = [ "okularApplication_md.desktop" "dev.zed.Zed.desktop" "micro.desktop" ];
     "application/epub+zip" = [ "okularApplication_epub.desktop" "calibre-ebook-viewer.desktop" "calibre-gui.desktop" ];
     "application/vnd.comicbook+zip" = [ "okularApplication_comicbook.desktop" ];
     "application/vnd.comicbook-rar" = [ "okularApplication_comicbook.desktop" ];
@@ -144,7 +144,7 @@ let
     "image/gif" = [ "okularApplication_kimgio.desktop" "gimp.desktop" ];
     "image/tiff" = [ "okularApplication_tiff.desktop" "okularApplication_kimgio.desktop" "gimp.desktop" ];
 
-    "text/plain" = [ "sublime_text.desktop" "dev.zed.Zed.desktop" "micro.desktop" "okularApplication_txt.desktop" ];
+    "text/plain" = [ "dev.zed.Zed.desktop" "micro.desktop" "okularApplication_txt.desktop" ];
     "video/mp4" = [ "mpv.desktop" ];
     "video/x-matroska" = [ "mpv.desktop" ];
     "video/webm" = [ "mpv.desktop" ];

@@ -200,28 +200,6 @@
       "version": "2.4.9"
     },
     {
-      "expiresAt": "2026-10-22",
-      "maxTtlDays": 90,
-      "output": "homeConfigurations.standalone-linux",
-      "owner": "mei",
-      "pname": "sublimetext4",
-      "reason": "requested-desktop-application",
-      "reviewedAt": "2026-07-24",
-      "system": "x86_64-linux",
-      "version": "4200"
-    },
-    {
-      "expiresAt": "2026-10-22",
-      "maxTtlDays": 90,
-      "output": "nixosConfigurations.x86_64-linux",
-      "owner": "mei",
-      "pname": "sublimetext4",
-      "reason": "requested-desktop-application",
-      "reviewedAt": "2026-07-24",
-      "system": "x86_64-linux",
-      "version": "4200"
-    },
-    {
       "expiresAt": "2026-10-25",
       "maxTtlDays": 90,
       "output": "nixosConfigurations.x86_64-linux",
