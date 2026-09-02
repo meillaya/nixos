@@ -1,8 +1,9 @@
 # Shared declarative Zen Browser configuration.
 #
 # One fragment drives identical spaces, pinned tabs, settings, policies, and
-# shortcuts on every host that selects the `zen-browser` aspect (NixOS, macOS,
-# and standalone Linux). Cross-machine parity comes from declaring the SAME
+# shortcuts on every host whose home is the `mei` user (NixOS, macOS, and
+# standalone Linux), wired there through the mei user aspect's homeManager.
+# Cross-machine parity comes from declaring the SAME
 # stable space/pin UUIDs here — never from copying a browser profile folder
 # (profiles are machine-InstallID-bound and fragile to copy).
 #
