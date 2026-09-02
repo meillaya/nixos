@@ -44,7 +44,7 @@
     };
     nix-direnv.url = "github:nix-community/nix-direnv";
     nh = {
-      url = "github:viperML/nh";
+      url = "github:nix-community/nh";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     preservation.url = "github:nix-community/preservation";
