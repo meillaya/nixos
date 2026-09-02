@@ -142,15 +142,25 @@
         };
       };
 
-      # Bookmarks (Menu materialize on every rebuild).
+      # Bookmarks (toolbar materializes on every rebuild).
       bookmarks = {
         force = true;
-        settings = {
-          "Bookmarks Toolbar" = {
-            "NixOS Packages" = "https://search.nixos.org/packages";
-            "Zen Docs" = "https://docs.zen-browser.app";
-          };
-        };
+        settings = [
+          {
+            name = "Toolbar";
+            toolbar = true;
+            bookmarks = [
+              {
+                name = "NixOS Packages";
+                url = "https://search.nixos.org/packages";
+              }
+              {
+                name = "Zen Docs";
+                url = "https://docs.zen-browser.app";
+              }
+            ];
+          }
+        ];
       };
     };
   };
