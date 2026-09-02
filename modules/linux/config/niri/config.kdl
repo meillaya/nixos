@@ -122,6 +122,10 @@ binds {
     Super+CTRL+SHIFT+WHEELSCROLLDOWN { move-column-right; }
     Super+CTRL+SHIFT+WHEELSCROLLUP { move-column-left; }
 
+    // Plain Shift + wheel pans columns horizontally; the bare wheel still scrolls app content.
+    SHIFT+WHEELSCROLLDOWN { focus-column-right; }
+    SHIFT+WHEELSCROLLUP { focus-column-left; }
+
     Super+1 { focus-workspace 1; }
     Super+2 { focus-workspace 2; }
     Super+3 { focus-workspace 3; }
