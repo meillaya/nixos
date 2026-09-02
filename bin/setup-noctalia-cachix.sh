@@ -1,8 +1,25 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-cache_url=https://noctalia.cachix.org
-cache_key='noctalia.cachix.org-1:pCOR47nnMEo5thcxNDtzWpOxNFQsBRglJzxWPp3dkU4='
+# The binary-cache union this script keeps trusted on the Nix daemon:
+# {noctalia, nix-community, cache.nixos.org}. URLs and keys are parallel
+# arrays indexed identically; a key must not contain whitespace.
+cache_urls_arr=(
+  "https://noctalia.cachix.org"
+  "https://nix-community.cachix.org"
+  "https://cache.nixos.org"
+)
+cache_keys_arr=(
+  "noctalia.cachix.org-1:pCOR47nnMEo5thcxNDtzWpOxNFQsBRglJzxWPp3dkU4="
+  "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
+  "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
+)
+cache_urls=''
+cache_keys=''
+for __i in "${!cache_urls_arr[@]}"; do
+  cache_urls="$cache_urls${cache_urls:+ }${cache_urls_arr[$__i]}"
+  cache_keys="$cache_keys${cache_keys:+ }${cache_keys_arr[$__i]}"
+done
 managed_begin='# BEGIN setup-noctalia-cachix (managed)'
 managed_end='# END setup-noctalia-cachix (managed)'
 
@@ -26,7 +43,7 @@ warn() {
 }
 
 activation_failure() {
-  printf 'ERROR: Noctalia cache configuration was written, but daemon activation was not confirmed: %s\n' "$*" >&2
+  printf 'ERROR: binary-cache union configuration was written, but daemon activation was not confirmed: %s\n' "$*" >&2
   printf '%s\n' \
     'RECOVERY: fix the reported Nix/systemd error, run `sudo systemctl restart nix-daemon.service`, then rerun `sudo bin/setup-noctalia-cachix.sh`; if the daemon still cannot start, restore a known-good /etc/nix configuration before retrying.' >&2
   exit 1
@@ -75,8 +92,8 @@ update_file() {
   awk \
     -v add_sub="$add_substituter" \
     -v add_key="$add_key" \
-    -v wanted_sub="$cache_url" \
-    -v wanted_key="$cache_key" \
+    -v wanted_sub="$cache_urls" \
+    -v wanted_key="$cache_keys" \
     -v begin="$managed_begin" \
     -v end="$managed_end" '
     function setting_key(line, stripped) {
@@ -114,11 +131,13 @@ update_file() {
     END {
       if (add_sub) {
         key = "extra-substituters"
-        if (!seen[key SUBSEP wanted_sub]++) merged[key] = merged[key] (merged[key] ? " " : "") wanted_sub
+        nw = split(wanted_sub, ws, /[[:space:]]+/)
+        for (i = 1; i <= nw; i++) if (ws[i] != "" && !seen[key SUBSEP ws[i]]++) merged[key] = merged[key] (merged[key] ? " " : "") ws[i]
       }
       if (add_key) {
         key = "extra-trusted-public-keys"
-        if (!seen[key SUBSEP wanted_key]++) merged[key] = merged[key] (merged[key] ? " " : "") wanted_key
+        nk = split(wanted_key, ks, /[[:space:]]+/)
+        for (i = 1; i <= nk; i++) if (ks[i] != "" && !seen[key SUBSEP ks[i]]++) merged[key] = merged[key] (merged[key] ? " " : "") ks[i]
       }
 
       in_managed = 0
@@ -142,8 +161,18 @@ update_file() {
       need_block = (add_sub && !occurrences["extra-substituters"]) || (add_key && !occurrences["extra-trusted-public-keys"])
       if (need_block) {
         print begin
-        if (add_sub && !occurrences["extra-substituters"]) print "extra-substituters = " wanted_sub
-        if (add_key && !occurrences["extra-trusted-public-keys"]) print "extra-trusted-public-keys = " wanted_key
+        if (add_sub && !occurrences["extra-substituters"]) {
+          out = "extra-substituters = "
+          nw = split(wanted_sub, ws, /[[:space:]]+/)
+          for (i = 1; i <= nw; i++) if (ws[i] != "") out = out ws[i] " "
+          print out
+        }
+        if (add_key && !occurrences["extra-trusted-public-keys"]) {
+          out = "extra-trusted-public-keys = "
+          nk = split(wanted_key, ks, /[[:space:]]+/)
+          for (i = 1; i <= nk; i++) if (ks[i] != "") out = out ks[i] " "
+          print out
+        }
         print end
       }
     }
@@ -161,25 +190,30 @@ update_file() {
 }
 
 verify_files() {
-  local files=("$@") file combined
+  local files=("$@") file combined missing=''
   combined=$(mktemp)
   for file in "${files[@]}"; do
     [[ -f $file ]] && cat "$file" >>"$combined"
   done
-  if ! awk -v url="$cache_url" -v key="$cache_key" '
-    /^[[:space:]]*#/ { next }
-    /^extra-substituters[[:space:]]*=/ && index($0, url) { have_url = 1 }
-    /^extra-trusted-public-keys[[:space:]]*=/ && index($0, key) { have_key = 1 }
-    END { exit !(have_url && have_key) }
-  ' "$combined"; then
-    rm -f "$combined"
-    die 'written configuration does not contain the required Noctalia cache URL and key'
-  fi
+  local i url key
+  for i in "${!cache_urls_arr[@]}"; do
+    url=${cache_urls_arr[$i]}
+    key=${cache_keys_arr[$i]}
+    if ! awk -v url="$url" -v key="$key" '
+      /^[[:space:]]*#/ { next }
+      /^extra-substituters[[:space:]]*=/ && index($0, url) { have_url = 1 }
+      /^extra-trusted-public-keys[[:space:]]*=/ && index($0, key) { have_key = 1 }
+      END { exit !(have_url && have_key) }
+    ' "$combined"; then
+      missing="$missing $url"
+    fi
+  done
   rm -f "$combined"
+  [[ -z $missing ]] || die "written configuration does not contain the required binary-cache union URLs/keys:$missing"
 }
 
 validate_effective_config() {
-  local output
+  local output missing=''
   if ! command -v "$nix_cmd" >/dev/null 2>&1; then
     warn 'nix is unavailable; skipped effective-config validation.'
     return 1
@@ -190,15 +224,23 @@ validate_effective_config() {
       return 1
     }
   fi
-  if printf '%s\n' "$output" | awk -v url="$cache_url" -v key="$cache_key" '
-    /^(extra-)?substituters[[:space:]]*=/ && index($0, url) { have_url = 1 }
-    /^(extra-)?trusted-public-keys[[:space:]]*=/ && index($0, key) { have_key = 1 }
-    END { exit !(have_url && have_key) }
-  '; then
-    printf 'Validated Noctalia URL and key in the effective Nix configuration.\n'
+  local i url key
+  for i in "${!cache_urls_arr[@]}"; do
+    url=${cache_urls_arr[$i]}
+    key=${cache_keys_arr[$i]}
+    if ! printf '%s\n' "$output" | awk -v url="$url" -v key="$key" '
+      /^(extra-)?substituters[[:space:]]*=/ && index($0, url) { have_url = 1 }
+      /^(extra-)?trusted-public-keys[[:space:]]*=/ && index($0, key) { have_key = 1 }
+      END { exit !(have_url && have_key) }
+    '; then
+      missing="$missing $url"
+    fi
+  done
+  if [[ -z $missing ]]; then
+    printf 'Validated the binary-cache union in the effective Nix configuration.\n'
     return 0
   fi
-  warn 'effective Nix configuration does not expose the Noctalia URL and key.'
+  warn "effective Nix configuration does not expose the binary-cache union URLs/keys:$missing"
   return 1
 }
 
@@ -258,7 +300,7 @@ printf 'Restarted nix-daemon.service.\n'
   activation_failure 'nix-daemon.service is not active after restart'
 printf 'Confirmed nix-daemon.service is active.\n'
 
-validate_effective_config || activation_failure 'post-restart effective configuration does not contain the Noctalia cache URL and key'
+validate_effective_config || activation_failure 'post-restart effective configuration does not contain the binary-cache union URL and key'
 
 if command -v "$nix_cmd" >/dev/null 2>&1 && "$nix_cmd" store ping --store daemon >/dev/null 2>&1; then
   printf 'Validated that the restarted Nix daemon is reachable.\n'

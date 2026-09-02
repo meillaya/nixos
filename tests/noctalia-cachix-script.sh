@@ -5,6 +5,9 @@ repo_root=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 script="$repo_root/bin/setup-noctalia-cachix.sh"
 cache_url=https://noctalia.cachix.org
 cache_key='noctalia.cachix.org-1:pCOR47nnMEo5thcxNDtzWpOxNFQsBRglJzxWPp3dkU4='
+# Full binary-cache union the widened script must trust and verify.
+union_urls="https://noctalia.cachix.org https://nix-community.cachix.org https://cache.nixos.org"
+union_keys='noctalia.cachix.org-1:pCOR47nnMEo5thcxNDtzWpOxNFQsBRglJzxWPp3dkU4= nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs= cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY='
 tmp_root=$(mktemp -d)
 trap 'rm -rf "$tmp_root"' EXIT
 
@@ -48,7 +51,7 @@ printf 'nix %s\\n' "\$*" >>"\${MOCK_LOG:?}"
 if [[ \${1:-} == config && \${2:-} == show ]] || [[ \${1:-} == show-config ]]; then
   case \${MOCK_NIX_CONFIG:-success} in
     success)
-      printf '%s\\n' 'extra-substituters = $cache_url' 'extra-trusted-public-keys = $cache_key'
+      printf '%s\\n' 'extra-substituters = $union_urls' 'extra-trusted-public-keys = $union_keys'
       ;;
     missing)
       printf '%s\\n' 'substituters = https://cache.nixos.org'
@@ -119,8 +122,8 @@ max-jobs = auto
 EOF
 run_script "$case1"
 assert_contains 'trusted-users = root mei' "$case1/nix.conf"
-assert_contains 'extra-substituters = https://cache.example.test https://noctalia.cachix.org # keep this cache' "$case1/nix.custom.conf"
-assert_contains "extra-trusted-public-keys = $cache_key" "$case1/nix.custom.conf"
+assert_contains "extra-substituters = https://cache.example.test $union_urls # keep this cache" "$case1/nix.custom.conf"
+assert_contains "extra-trusted-public-keys = $union_keys" "$case1/nix.custom.conf"
 [[ $(active_count extra-substituters "$case1/nix.custom.conf") == 1 ]] || fail 'duplicate substituter setting after Determinate update'
 before=$(sha256sum "$case1/nix.conf" "$case1/nix.custom.conf")
 run_script "$case1"
@@ -139,8 +142,8 @@ EOF
 run_script "$case2"
 [[ ! -e $case2/nix.custom.conf ]] || fail 'fallback unexpectedly created nix.custom.conf'
 assert_contains 'sandbox = true' "$case2/nix.conf"
-assert_contains "$cache_url" "$case2/nix.conf"
-assert_contains "extra-trusted-public-keys = cache.example.test-1:abc= cache.other.test-1:def= $cache_key" "$case2/nix.conf"
+assert_contains "extra-substituters = $union_urls" "$case2/nix.conf"
+assert_contains "extra-trusted-public-keys = cache.example.test-1:abc= cache.other.test-1:def= $union_keys" "$case2/nix.conf"
 [[ $(active_count extra-trusted-public-keys "$case2/nix.conf") == 1 ]] || fail 'duplicate key setting was not consolidated'
 before=$(sha256sum "$case2/nix.conf")
 run_script "$case2"
@@ -157,8 +160,8 @@ extra-substituters = https://cache.example.test
 EOF
 printf '%s\n' 'connect-timeout = 10' >"$case3/nix.custom.conf"
 run_script "$case3"
-assert_contains "extra-substituters = https://cache.example.test $cache_url" "$case3/nix.conf"
-assert_contains "extra-trusted-public-keys = $cache_key" "$case3/nix.custom.conf"
+assert_contains "extra-substituters = https://cache.example.test $union_urls" "$case3/nix.conf"
+assert_contains "extra-trusted-public-keys = $union_keys" "$case3/nix.custom.conf"
 [[ $(active_count extra-substituters "$case3/nix.custom.conf") == 0 ]] || fail 'split-owner update introduced a cross-file duplicate'
 
 # Refuse an already ambiguous cross-file duplicate rather than add another
@@ -209,7 +212,7 @@ EOF
 run_activation_script "$case5" >"$case5/output" 2>&1 || fail 'fully confirmed activation did not succeed'
 assert_contains 'Restarted nix-daemon.service.' "$case5/output"
 assert_contains 'Confirmed nix-daemon.service is active.' "$case5/output"
-assert_contains 'Validated Noctalia URL and key in the effective Nix configuration.' "$case5/output"
+assert_contains 'Validated the binary-cache union in the effective Nix configuration.' "$case5/output"
 assert_contains 'Validated that the restarted Nix daemon is reachable.' "$case5/output"
 assert_contains 'systemctl cat nix-daemon.service' "$mock_log"
 assert_contains 'systemctl restart nix-daemon.service' "$mock_log"
@@ -225,7 +228,7 @@ mkdir -p "$case6"
 if run_activation_script "$case6" present fail >"$case6/output" 2>&1; then
   fail 'failed daemon restart unexpectedly succeeded'
 fi
-assert_contains "$cache_url" "$case6/nix.conf"
+assert_contains "$union_urls" "$case6/nix.conf"
 assert_contains 'daemon activation was not confirmed: nix-daemon.service restart failed' "$case6/output"
 assert_contains 'RECOVERY: fix the reported Nix/systemd error' "$case6/output"
 assert_not_contains 'nix config show' "$mock_log"
@@ -259,7 +262,7 @@ mkdir -p "$case9"
 if run_activation_script "$case9" present success success missing >"$case9/output" 2>&1; then
   fail 'missing effective cache configuration unexpectedly succeeded'
 fi
-assert_contains 'post-restart effective configuration does not contain the Noctalia cache URL and key' "$case9/output"
+assert_contains 'post-restart effective configuration does not contain the binary-cache union URL and key' "$case9/output"
 assert_contains 'RECOVERY:' "$case9/output"
 assert_not_contains 'nix store ping --store daemon' "$mock_log"
 
