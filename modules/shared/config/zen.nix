@@ -1,168 +1,233 @@
-# Shared declarative Zen Browser configuration.
+# Shared declarative Zen Browser configuration — GENERATED from the live
+# profile at ~/.config/zen/wqidnanv.Default Profile (zen-sessions.jsonlz4 + prefs.js).
 #
-# One fragment drives identical spaces, pinned tabs, settings, policies, and
-# shortcuts on every host whose home is the `mei` user (NixOS, macOS, and
-# standalone Linux), wired there through the mei user aspect's homeManager.
-# Cross-machine parity comes from declaring the SAME
-# stable space/pin UUIDs here — never from copying a browser profile folder
-# (profiles are machine-InstallID-bound and fragile to copy).
+# This reproduces the REAL spaces, pinned tabs, and settings across machines via
+# the mei user aspect -> inputs.zen-browser.homeModules.beta. It does NOT copy
+# open/non-pinned tabs (per-plan guardrail: spaces+pins declarative sync only).
 #
-# The UUIDs below are placeholders: edit them if you want to adopt an existing
-# Zen profile's real space/pin ids. Keep each id stable once set — changing a
-# space/pin id re-creates it (and with spacesForce/pinsForce the old entry is
-# deleted).
-#
-# Canonical ids (generated once, reused across spaces/pins):
-#   Personal space : df914405-a213-458f-ace7-164dd9c9087f
-#   Work    space : 4105f787-3509-4cde-ab73-cee43dc30410
-#   Email   pin   : b5a563f3-bea4-4239-9813-f7f269f36641
-#   GitHub  pin   : ed1ec24f-f999-4845-a239-34caa788b179
-#   News    pin   : 88dcd04b-498b-42eb-a9ce-1e2c31d01056
-#   DevDocs pin   : 85a8262e-ba3c-46c7-af1c-e35c6519be9b
+# Space ids (stable, from the live profile):
+#   Personal: 66b75881-fbf4-40c5-95de-ac8041642aad
+#   Dev: d46a1a4d-05e0-42a1-aa6e-999f43d3c90f
+#   Work: cf68abf2-8397-4a1a-9304-f3d0c5354597
+# Pin identity is the live zenSyncId (timestamp form), matching each real pinned tab.
 { ... }:
 {
   programs.zen-browser = {
     enable = true;
 
-    # Enforced machine policy (policies.json). Privacy-minimal baseline.
+    # Privacy baseline (matches the plan’s minimal policy set).
     policies = {
-      DisableAppUpdate = true;
-      DisableFeedbackCommands = true;
-      DisableFirefoxStudies = true;
-      DisablePocket = true;
       DisableTelemetry = true;
-      DontCheckDefaultBrowser = true;
-      # NoDefaultBookmarks is intentionally absent: home-manager's firefox
-      # module derives it from the declared profiles.*.bookmarks below.
-      OfferToSaveLogins = false;
-      EnableTrackingProtection = {
-        Value = true;
-        Locked = true;
-        Cryptomining = true;
-        Fingerprinting = true;
-      };
-      # Purge private data on shutdown while keeping history/bookmarks/pins.
-      SanitizeOnShutdown = {
-        Cache = true;
-        Cookies = true;
-        Sessions = true;
-        OfflineApps = true;
-        SiteSettings = false;
-      };
+      DisableFirefoxStudies = true;
+      EnableTrackingProtection = { Value = true; Locked = true; Cryptomining = true; Fingerprinting = true; };
     };
 
     profiles.default = {
-      # User prefs (prefs.js) — Zen + browser defaults.
+      # Target the real browser profile dir (not a fresh "default").
+      path = "wqidnanv.Default Profile";
+
+      # Live settings (from prefs.js).
       settings = {
-        "browser.startup.homepage" = "about:home";
-        "browser.newtabpage.activity-stream.showSponsored" = false;
-        "browser.shell.checkDefaultBrowser" = false;
-        "zen.urlbar.behavior" = "float";
-        "zen.view.compact.hide-tabbar" = true;
+        "browser.newtabpage.activity-stream.showSearch" = false;
+        "browser.urlbar.placeholderName" = "DuckDuckGo";
+        "zen.view.compact.enable-at-startup" = true;
         "zen.welcome-screen.seen" = true;
       };
 
-      # Declared spaces. spacesForce deletes anything not declared here, so a
-      # rebuild from any host yields exactly these workspaces.
+      # Real spaces (spacesForce reproduces exactly these workspaces everywhere).
       spacesForce = true;
       spaces = {
         "Personal" = {
-          id = "df914405-a213-458f-ace7-164dd9c9087f";
-          position = 1000;
-          icon = "🏠";
+          id = "66b75881-fbf4-40c5-95de-ac8041642aad";
+          icon = "chrome://browser/skin/zen-icons/selectable/water.svg";
+        };
+        "Dev" = {
+          id = "d46a1a4d-05e0-42a1-aa6e-999f43d3c90f";
+          icon = "chrome://browser/skin/zen-icons/selectable/code.svg";
         };
         "Work" = {
-          id = "4105f787-3509-4cde-ab73-cee43dc30410";
-          position = 2000;
-          icon = "💼";
+          id = "cf68abf2-8397-4a1a-9304-f3d0c5354597";
+          icon = "chrome://browser/skin/zen-icons/selectable/briefcase.svg";
         };
       };
 
-      # Pinned tabs. pinsForceAction = "demote" demotes an undeclared pinned
-      # tab to a normal tab instead of removing it, so pins are idempotent
-      # and lossless across hosts.
+      # Real pinned tabs, each tied to its real space by workspace id.
+      # pinsForce + demote: reproduces all 28 real pins; any future undeclared
+      # pin is kept as a normal tab rather than deleted (lossless parity).
       pinsForce = true;
       pinsForceAction = "demote";
       pins = {
-        "Email" = {
-          id = "b5a563f3-bea4-4239-9813-f7f269f36641";
-          url = "https://mail.protonmail.com";
-          position = 100;
-          isEssential = true;
+        "P01" = {
+          id = "1784424664279-59";
+          url = "https://x.com/home";
+          workspace = "d46a1a4d-05e0-42a1-aa6e-999f43d3c90f";  # Dev
+          # Home / X
         };
-        "GitHub" = {
-          id = "ed1ec24f-f999-4845-a239-34caa788b179";
-          url = "https://github.com";
-          position = 200;
-          workspace = "df914405-a213-458f-ace7-164dd9c9087f"; # Personal
+        "P02" = {
+          id = "1784256692792-100";
+          url = "https://www.kimi.ai/design";
+          workspace = "d46a1a4d-05e0-42a1-aa6e-999f43d3c90f";  # Dev
+          # Kimi Design | From idea to artifact
         };
-        "News" = {
-          id = "88dcd04b-498b-42eb-a9ce-1e2c31d01056";
-          url = "https://news.ycombinator.com";
-          position = 300;
-          workspace = "df914405-a213-458f-ace7-164dd9c9087f"; # Personal
+        "P03" = {
+          id = "1784256692822-24";
+          url = "https://chatgpt.com/c/6a57f3bd-41ac-83ea-9631-fdf12b055781";
+          workspace = "d46a1a4d-05e0-42a1-aa6e-999f43d3c90f";  # Dev
+          # Embedded Systems Project
         };
-        "DevDocs" = {
-          id = "85a8262e-ba3c-46c7-af1c-e35c6519be9b";
-          url = "https://devdocs.io";
-          position = 400;
-          workspace = "4105f787-3509-4cde-ab73-cee43dc30410"; # Work
+        "P04" = {
+          id = "1784256692822-13";
+          url = "https://auth.primeintellect.ai/u/login/identifier?state=hKFo2SBoeWFIbGJWQzZ2SDRhMXg1ZlJnX2cxYVZaOXh5ZUQ4dqFur3VuaXZlcnNhbC1sb2dpbqN0aWTZIDVQZHR4eHhRN2VFV1UwOGdobjJaRUhfRElXYVEyQXoxo2NpZNkgY3ZLTGdJZ1B0SnNtcGJWSVYwQUlaUmdtMVpseFFwdlA";
+          workspace = "d46a1a4d-05e0-42a1-aa6e-999f43d3c90f";  # Dev
+          # Log in | Compute Platform
+        };
+        "P05" = {
+          id = "1784256692823-11";
+          url = "https://modal.com/endpoints/meillaya/main";
+          workspace = "d46a1a4d-05e0-42a1-aa6e-999f43d3c90f";  # Dev
+          # Endpoints - meillaya | Modal
+        };
+        "P06" = {
+          id = "1784256692823-22";
+          url = "https://openrouter.ai/settings/credits";
+          workspace = "d46a1a4d-05e0-42a1-aa6e-999f43d3c90f";  # Dev
+          # Credits | OpenRouter
+        };
+        "P07" = {
+          id = "1784390348270-52";
+          url = "https://opencode.ai/workspace/wrk_01KE7J3E0BFJH07NZS8W196DPJ/keys";
+          workspace = "d46a1a4d-05e0-42a1-aa6e-999f43d3c90f";  # Dev
+          # opencode
+        };
+        "P08" = {
+          id = "1785433327846-43";
+          url = "https://signin.aws.amazon.com/signin?redirect_uri=https%3A%2F%2Fus-east-1.console.aws.amazon.com%2Fconsole%2Fhome%3Fca-oauth-flow-id%3Da646%26hashArgs%3D%2523%26isauthcode%3Dtrue%26region%3Dus-east-1%26state%3DhashArgsFromTB_us-east-1_ea01366d57b9911c&client_id=arn%3Aaws%3Asignin%3A%3A%3Aconsole%2Fcanvas&forceMobileApp=0&oauth_region=us-east-1&code_challenge=8iMHqjk1eNhBM5Sviy99ARmztSz55gquaA1Yl-YOaCI&code_challenge_method=SHA-256";
+          workspace = "d46a1a4d-05e0-42a1-aa6e-999f43d3c90f";  # Dev
+          # Amazon Web Services Sign-In
+        };
+        "P09" = {
+          id = "1784426068478-18";
+          url = "https://chat.deepseek.com/a/chat/s/3ca1a216-9eb3-4f1a-8cd4-dc41ae235b54";
+          workspace = "d46a1a4d-05e0-42a1-aa6e-999f43d3c90f";  # Dev
+          # Cordless PC Build Guide - DeepSeek
+        };
+        "P10" = {
+          id = "1785173192338-79";
+          url = "https://huggingface.co/";
+          workspace = "d46a1a4d-05e0-42a1-aa6e-999f43d3c90f";  # Dev
+          # Hugging Face – The AI community building the future.
+        };
+        "P11" = {
+          id = "1788346200558-52";
+          url = "https://app.machine0.io/images";
+          workspace = "d46a1a4d-05e0-42a1-aa6e-999f43d3c90f";  # Dev
+          # machine0
+        };
+        "P12" = {
+          id = "1784265461859-89";
+          url = "https://app.tuta.com/mail/Olwds23-1s-9/OvbckSR--3-9?mail";
+          workspace = "66b75881-fbf4-40c5-95de-ac8041642aad";  # Personal
+          # illiandre@tuta.com - Tuta Mail: Login & Sign up for free
+        };
+        "P13" = {
+          id = "1784265502295-61";
+          url = "https://mail.proton.me/u/1/inbox/0t63lr3YN46cOr5fM4JscMpSscyvi1YAGzpafCnk-THJYxYJXumWreHEToIpvpyTeqM98kPqMsneQegPgO787g==#category=primary";
+          workspace = "66b75881-fbf4-40c5-95de-ac8041642aad";  # Personal
+          # (2) Inbox | desilute@proton.me | Proton Mail
+        };
+        "P14" = {
+          id = "1785475399569-66";
+          url = "https://play.google.com/books";
+          workspace = "66b75881-fbf4-40c5-95de-ac8041642aad";  # Personal
+          # Google Play Books
+        };
+        "P15" = {
+          id = "1788170823590-87";
+          url = "https://annas-archive.gl/";
+          workspace = "66b75881-fbf4-40c5-95de-ac8041642aad";  # Personal
+          # Anna’s Archive: LibGen (Library Genesis), Sci-Hub, Z-Library in one place - Anna’s Archive
+        };
+        "P16" = {
+          id = "1788356396589-79";
+          url = "about:blank";
+          workspace = "66b75881-fbf4-40c5-95de-ac8041642aad";  # Personal
+        };
+        "P17" = {
+          id = "1788251317428-54";
+          url = "https://duckduckgo.com/?t=ffab&q=yeston+sakura&ia=web";
+          workspace = "66b75881-fbf4-40c5-95de-ac8041642aad";  # Personal
+          # yeston sakura at DuckDuckGo
+        };
+        "P18" = {
+          id = "1788251170193-96";
+          url = "https://duckduckgo.com/?t=ffab&q=Nollie+8&ia=web";
+          workspace = "66b75881-fbf4-40c5-95de-ac8041642aad";  # Personal
+          # Nollie 8 at DuckDuckGo
+        };
+        "P19" = {
+          id = "1788251260200-11";
+          url = "https://starforgesystems.com/collections/plate-lights";
+          workspace = "66b75881-fbf4-40c5-95de-ac8041642aad";  # Personal
+          # Platelight Panels– Starforge Systems
+        };
+        "P20" = {
+          id = "1788250961375-45";
+          url = "https://ca.pcpartpicker.com/user/Xcryus/saved/";
+          workspace = "66b75881-fbf4-40c5-95de-ac8041642aad";  # Personal
+          # Xcryus - Saved Part Lists - PCPartPicker
+        };
+        "P21" = {
+          id = "1787112234472-19";
+          url = "https://ca.pcpartpicker.com/products/memory/#sort=-rating&page=1";
+          workspace = "66b75881-fbf4-40c5-95de-ac8041642aad";  # Personal
+          # Choose Memory - PCPartPicker
+        };
+        "P22" = {
+          id = "1788346833594-79";
+          url = "https://duckduckgo.com/?t=ffab&q=custom+loop+pc+build&ia=web";
+          workspace = "66b75881-fbf4-40c5-95de-ac8041642aad";  # Personal
+          # custom loop pc build at DuckDuckGo
+        };
+        "P23" = {
+          id = "1784257380111-76";
+          url = "https://www.overleaf.com/project";
+          workspace = "cf68abf2-8397-4a1a-9304-f3d0c5354597";  # Work
+          # Your projects - Overleaf, Online LaTeX Editor
+        };
+        "P24" = {
+          id = "1784257391388-70";
+          url = "https://foxinthetruck.com/login";
+          workspace = "cf68abf2-8397-4a1a-9304-f3d0c5354597";  # Work
+          # Fox In The Truck - Construction Waste Management
+        };
+        "P25" = {
+          id = "1784257413980-86";
+          url = "https://railway.com/dashboard";
+          workspace = "cf68abf2-8397-4a1a-9304-f3d0c5354597";  # Work
+          # Railway
+        };
+        "P26" = {
+          id = "1784262078147-100";
+          url = "https://github.com/meillaya/nixos";
+          workspace = "cf68abf2-8397-4a1a-9304-f3d0c5354597";  # Work
+          # meillaya/nixos: Multi-system Nix/NixOS configs.
+        };
+        "P27" = {
+          id = "1786302197909-72";
+          url = "https://resend.com/emails/b1fa5858-d5f2-497a-a654-0c1daa31fd3a";
+          workspace = "cf68abf2-8397-4a1a-9304-f3d0c5354597";  # Work
+          # foxinthetruck@gmail.com · Emails · Resend
+        };
+        "P28" = {
+          id = "1787066076673-74";
+          url = "https://hiraeth.up.railway.app/publishers/unnamed-press";
+          workspace = "cf68abf2-8397-4a1a-9304-f3d0c5354597";  # Work
+          # Publisher · Hiraeth
         };
       };
 
-      # Keyboard shortcut overrides. Version protection surfaces breaking
-      # schema changes after Zen updates instead of silently failing.
-      keyboardShortcuts = [
-        {
-          id = "zen-compact-mode-toggle";
-          key = "c";
-          modifiers.control = true;
-        }
-        {
-          id = "zen-toggle-sidebar";
-          key = "x";
-          modifiers.control = true;
-        }
-      ];
-      keyboardShortcutsVersion = 17;
-
-      # Search engines with usable shortcuts.
-      search = {
-        force = true;
-        default = "ddg";
-        engines = {
-          mynixos = {
-            name = "My NixOS";
-            urls = [
-              {
-                template = "https://mynixos.com/search?q={searchTerms}";
-              }
-            ];
-            definedAliases = [ "@nx" ];
-          };
-        };
-      };
-
-      # Bookmarks (toolbar materializes on every rebuild).
-      bookmarks = {
-        force = true;
-        settings = [
-          {
-            name = "Toolbar";
-            toolbar = true;
-            bookmarks = [
-              {
-                name = "NixOS Packages";
-                url = "https://search.nixos.org/packages";
-              }
-              {
-                name = "Zen Docs";
-                url = "https://docs.zen-browser.app";
-              }
-            ];
-          }
-        ];
-      };
+      # Live keyboard-shortcut schema version (prevents silent breakage).
+      keyboardShortcutsVersion = 20;
     };
   };
 }

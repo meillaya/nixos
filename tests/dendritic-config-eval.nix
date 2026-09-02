@@ -251,13 +251,13 @@ assert hasShell "fish" nixos.environment.shells;
 assert assertHm nixos.home-manager.users.mei;
 assert hasInfix "/bin/nu --login" nixosKonsoleProfile.text;
 
-# Declarative Zen Browser is configured on the NixOS home with the marker
-# space/pin ids from the shared fragment, proving the zen aspect is wired onto
-# this host and not left dangling.
+# Declarative Zen Browser is configured on the NixOS home with the real spaces
+# and pins from the shared fragment (which was generated from the live Zen
+# profile), proving the zen aspect is wired onto this host.
 assert nixos.home-manager.users.mei.programs.zen-browser.enable;
 assert nixos.home-manager.users.mei.programs.zen-browser.profiles.default.spaces ? "Personal";
 assert nixos.home-manager.users.mei.programs.zen-browser.profiles.default.spaces."Personal".id
-  == "df914405-a213-458f-ace7-164dd9c9087f";
-assert nixos.home-manager.users.mei.programs.zen-browser.profiles.default.pins ? "DevDocs";
+  == "66b75881-fbf4-40c5-95de-ac8041642aad";
+assert nixos.home-manager.users.mei.programs.zen-browser.profiles.default.pins ? "P01";
 
 "dendritic-config-eval=PASS"
