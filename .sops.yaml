@@ -12,3 +12,8 @@ creation_rules:
       - age:
           - *admin
           - *recovery
+  - path_regex: backups/tidewater\.jsonlz4$
+    key_groups:
+      - age:
+          - *admin
+          - *recovery
