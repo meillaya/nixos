@@ -31,7 +31,8 @@
       DisablePocket = true;
       DisableTelemetry = true;
       DontCheckDefaultBrowser = true;
-      NoDefaultBookmarks = true;
+      # NoDefaultBookmarks is intentionally absent: home-manager's firefox
+      # module derives it from the declared profiles.*.bookmarks below.
       OfferToSaveLogins = false;
       EnableTrackingProtection = {
         Value = true;

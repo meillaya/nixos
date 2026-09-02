@@ -58,6 +58,5 @@
     kdePackages.polkit-kde-agent-1
     niri
     xwayland-satellite
-    inputs.zen-browser.packages.${pkgs.stdenv.hostPlatform.system}.default
   ];
 }

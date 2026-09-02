@@ -1,4 +1,4 @@
-{ den, ... }:
+{ den, inputs, ... }:
 let
   osIdentity =
     { host, user, ... }:
@@ -48,6 +48,14 @@ in
     ];
 
     homeManager = { config, pkgs, lib, ... }: {
+      # Declarative Zen Browser (shared fragment drives identical spaces, pins,
+      # settings, policies, and shortcuts on every host with the mei user).
+      # Cross-machine parity comes from the stable space/pin ids in the
+      # fragment, never from profile-folder copying.
+      imports = [
+        inputs.zen-browser.homeModules.beta
+        (import ../../shared/config/zen.nix)
+      ];
       home.packages = [
         ((pkgs.writeShellScriptBin "codex-wrapped" ''
           set -euo pipefail

@@ -9,6 +9,5 @@ let
   };
 in
 shared-packages ++ linux-packages ++ [
-  inputs.zen-browser.packages.${pkgs.stdenv.hostPlatform.system}.default
   pkgs.sops
 ]
