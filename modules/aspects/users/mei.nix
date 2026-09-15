@@ -57,6 +57,9 @@ in
         (import ../../shared/config/zen.nix)
       ];
       home.packages = [
+        # Agent multiplexer (herdr.dev). From our own pin: current
+        # nixos-unstable carries herdr, so no extra flake input is needed.
+        pkgs.herdr
         ((pkgs.writeShellScriptBin "codex-wrapped" ''
           set -euo pipefail
           export SOPS_AGE_KEY_FILE="${config.home.homeDirectory}/.config/sops/age/keys.txt"
@@ -66,6 +69,44 @@ in
       ];
       gtk.gtk4.theme = config.gtk.theme;
       home.file = import ../../shared/files.nix { inherit config pkgs lib; };
+
+      # `programs.git.signing` (in shared/home-manager.nix) points at
+      # ~/.ssh/git_signing_ed25519.pub and sets commit.gpgsign = true, but nothing
+      # ever created the keypair. On a fresh machine every commit fails with
+      # "Couldn't load public key ~/.ssh/git_signing_ed25519.pub: No such file or
+      # directory".
+      #
+      # The key is generated rather than shipped because it is per-machine
+      # identity: never regenerate over an existing key, so the identity stays
+      # stable across activations. The public half is kept in allowed_signers so
+      # `git log --show-signature` verifies without an "Unable to open allowed keys
+      # file" warning (gpg.ssh.allowedSignersFile points there too).
+      home.activation.setupGitSigningKey = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+        key="${config.home.homeDirectory}/.ssh/git_signing_ed25519"
+        allowed="${config.home.homeDirectory}/.ssh/allowed_signers"
+        sshdir="${config.home.homeDirectory}/.ssh"
+
+        if [ ! -f "$key" ]; then
+          $VERBOSE_ECHO "git-signing: generating $key"
+          mkdir -p "$sshdir"
+          chmod 700 "$sshdir"
+          $DRY_RUN_CMD ${pkgs.openssh}/bin/ssh-keygen \
+            -t ed25519 \
+            -f "$key" \
+            -N "" \
+            -C "git signing key"
+          chmod 600 "$key"
+          chmod 644 "$key.pub"
+        fi
+
+        # Refresh allowed_signers when it is missing or has drifted, so
+        # verification always matches the live key.
+        if [ ! -f "$allowed" ] || ! grep -qF "$(cat "$key.pub")" "$allowed"; then
+          $VERBOSE_ECHO "git-signing: refreshing $allowed"
+          $DRY_RUN_CMD printf '%s %s\n' "nathanagbomed@proton.me" "$(cat "$key.pub")" > "$allowed"
+          chmod 644 "$allowed"
+        fi
+      '';
       programs = (import ../../shared/home-manager.nix { inherit config pkgs lib; }) // {
         nushell = {
           enable = true;
