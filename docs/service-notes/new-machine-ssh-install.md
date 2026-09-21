@@ -24,6 +24,12 @@ These are **not in the repo** and a fresh clone cannot work without them:
 Copy both to an external disk. `gen_trust.py` fails closed if either is
 missing, by design.
 
+The authoritative GitHub SSH key is **no longer** in that list: it is escrowed
+in the tracked store `secrets/github-ssh.yaml` and installed at `~/.ssh/id_github`
+by home-manager activation on the first `home-switch`/`build-switch` — provided
+the new machine has an age identity (see
+[`github-ssh-key.md`](./github-ssh-key.md)).
+
 ## 1. Build the ISO
 
 From the repo, at the commit you want to install:

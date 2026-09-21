@@ -107,6 +107,60 @@ in
           chmod 644 "$allowed"
         fi
       '';
+
+      # Authoritative GitHub SSH key. The keypair is escrowed in
+      # `secrets/github-ssh.yaml` (sops/age, tracked in the repo), so every host
+      # reaches the same GitHub identity through `home-switch` / `build-switch`
+      # instead of a hand-copied key. `id_github` is the identity the shared SSH
+      # config tries first for github.com; `id_ed25519` is the path
+      # `sops.age.sshKeyPaths` and the enrollment tooling already expect, so it
+      # is filled in only when it does not exist — an existing per-machine key is
+      # never overwritten, because it may be that machine's age identity.
+      #
+      # Decrypting needs an age identity: `$SOPS_AGE_KEY_FILE`, else
+      # ~/.config/sops/age/keys.txt (the `&workstation` recipient). Without one
+      # the step warns and leaves the machine untouched instead of failing the
+      # switch. The store must be git-tracked before the first switch: flake
+      # evaluation only sees tracked files, and this is a path literal.
+      home.activation.installGithubSshKey =
+        lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+          store=${../../../secrets/github-ssh.yaml}
+          identity="''${SOPS_AGE_KEY_FILE:-${config.home.homeDirectory}/.config/sops/age/keys.txt}"
+          sshdir="${config.home.homeDirectory}/.ssh"
+          key="$sshdir/id_github"
+          legacy="$sshdir/id_ed25519"
+
+          if [ ! -f "$identity" ]; then
+            printf '%s\n' "github-ssh-key: no age identity at $identity; skipping (place keys.txt or set SOPS_AGE_KEY_FILE, then re-run activation)" >&2
+          else
+            tmp="$(mktemp)"
+            pub="$(mktemp)"
+            chmod 600 "$tmp"  # ssh-keygen refuses group/world-readable keys
+
+            if SOPS_AGE_KEY_FILE="$identity" ${pkgs.sops}/bin/sops --input-type yaml --output-type binary --decrypt --extract '["github-ssh-private-key"]' "$store" > "$tmp" 2>/dev/null \
+              && [ -s "$tmp" ] \
+              && ${pkgs.openssh}/bin/ssh-keygen -y -f "$tmp" > "$pub" 2>/dev/null; then
+              chmod 644 "$pub"
+              mkdir -p "$sshdir"
+              chmod 700 "$sshdir"
+
+              if [ ! -f "$key" ] || ! cmp -s "$tmp" "$key"; then
+                $VERBOSE_ECHO "github-ssh-key: installing $key"
+                $DRY_RUN_CMD install -m 600 "$tmp" "$key"
+              fi
+
+              if [ ! -e "$legacy" ]; then
+                $VERBOSE_ECHO "github-ssh-key: installing $legacy"
+                $DRY_RUN_CMD install -m 600 "$tmp" "$legacy"
+                $DRY_RUN_CMD install -m 644 "$pub" "$legacy.pub"
+              fi
+            else
+              printf '%s\n' "github-ssh-key: could not decrypt or validate secrets/github-ssh.yaml with $identity; leaving $key alone" >&2
+            fi
+
+            rm -f "$tmp" "$pub"
+          fi
+        '';
       programs = (import ../../shared/home-manager.nix { inherit config pkgs lib; }) // {
         nushell = {
           enable = true;

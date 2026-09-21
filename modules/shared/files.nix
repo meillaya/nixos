@@ -15,9 +15,12 @@ let
           lib.attrByPath [ "users" "users" primaryUser "home" ] null config;
     in
     if hmHome != null then hmHome else if managedUserHome != null then managedUserHome else "$HOME";
-  # GitHub authentication key (public part only). The private key lives at
-  # ~/.ssh/id_ed25519 and is rotated manually.
-  githubPublicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPoWsO0x+p0FKVKOrfHPc0xeZuOZyMapMt8LxPbWHtb5 mei@entropyos-nix";
+  # Authoritative GitHub authentication key (public half only). The private half
+  # is escrowed in the sops store secrets/github-ssh.yaml and installed at
+  # ~/.ssh/id_github (and ~/.ssh/id_ed25519 when that path is still free) by
+  # home.activation.installGithubSshKey. This declaration must track the sealed
+  # key, or the ~/.ssh/id_github.pub this writes contradicts the private half.
+  githubPublicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOML7rbzZQUicy279UWUYh/7bPEr8OyUqk16kDgStJn+ mei@nixos-thinkpad-machine0";
 in
 {
   ".npmrc" = {
@@ -43,9 +46,9 @@ in
 
   ".ssh/id_github.pub" = {
     text = githubPublicKey;
-    # force: replace the manual `id_github.pub -> id_ed25519.pub` symlink with the
-    # managed file. Safe — the declared githubPublicKey is byte-identical to
-    # id_ed25519.pub on the enrolled machines (verified 2026-08-14).
+    # force: replace the manual `id_github.pub -> id_ed25519.pub` symlink that
+    # predates the declaration, and follow any future rotation of the key
+    # without leaving the old public half behind.
     force = true;
   };
 

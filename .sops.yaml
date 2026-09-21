@@ -1,6 +1,18 @@
 keys:
+  # Standalone age identities (age-keygen). `&admin` is the original fleet
+  # identity; `&workstation` is the identity generated on the CachyOS
+  # workstation (nixos-thinkpad) and stored at ~/.config/sops/age/keys.txt.
   - &admin age1xxj3ft4g9gkfryedx85z9je76s07xxfqcvzl4c3t777d45hfgpvqwkpclc
   - &recovery age1f3fgneph45yn900kqvzkysztspyz7puh9uqneujpxft5rsqjeglq99lnz0
+  - &workstation age12kpavl6rfve4kgcacq0ysr4fxw5gx29fnfy2hs55av4qxj3yug6serx5yn
+  # Age identity derived from the authoritative GitHub SSH key (the ed25519 key
+  # whose public half is declared in modules/shared/files.nix and whose private
+  # half is escrowed in secrets/github-ssh.yaml) via
+  # `ssh-to-age < ~/.ssh/id_github.pub`. Every host installs that key at
+  # ~/.ssh/id_ed25519, which is also `sops.age.sshKeyPaths`, so a host can
+  # decrypt the store with the same key it uses for GitHub. Re-derive after any
+  # GitHub key rotation.
+  - &github age1f7d77pdq406qvm9teng652sefew8f8v0qvcmayqn5zsgq2x8q3wsw65lkj
 creation_rules:
   - path_regex: secrets/coding-agents\.yaml$
     key_groups:
@@ -12,6 +24,13 @@ creation_rules:
       - age:
           - *admin
           - *recovery
+  - path_regex: secrets/github-ssh\.yaml$
+    key_groups:
+      - age:
+          - *admin
+          - *recovery
+          - *workstation
+          - *github
   - path_regex: backups/tidewater\.jsonlz4$
     key_groups:
       - age:
