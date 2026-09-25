@@ -1,5 +1,5 @@
-# Shared declarative Zen Browser configuration — GENERATED from the live
-# profile at ~/.config/zen/wqidnanv.Default Profile (zen-sessions.jsonlz4 + prefs.js).
+# Shared declarative Zen Browser configuration — managed profile "meillaya"
+# pointing at ~/.config/zen/8lze40dp.Default Profile (the original browser data).
 #
 # This reproduces the REAL spaces, pinned tabs, and settings across machines via
 # the mei user aspect -> inputs.zen-browser.homeModules.beta. It does NOT copy
@@ -22,9 +22,10 @@
       EnableTrackingProtection = { Value = true; Locked = true; Cryptomining = true; Fingerprinting = true; };
     };
 
-    profiles.default = {
-      # Target the real browser profile dir (not a fresh "default").
-      path = "wqidnanv.Default Profile";
+    profiles.meillaya = {
+      # Use the folder containing the actual browser data from the old profile.
+      path = "8lze40dp.Default Profile";
+      isDefault = true;
 
       # Live settings (from prefs.js).
       settings = {

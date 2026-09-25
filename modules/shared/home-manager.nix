@@ -72,7 +72,6 @@ in
       export PATH=$HOME/.pnpm-packages/bin:$HOME/.pnpm-packages:$PATH
       export PATH=$HOME/.npm-packages/bin:$HOME/bin:$PATH
       export PATH=$HOME/.local/bin:$PATH
-      export PATH=$HOME/.kimi-code/bin:$PATH
 
       export ALTERNATE_EDITOR=""
       export EDITOR="emacsclient -t"
@@ -168,7 +167,6 @@ in
       fish_add_path --prepend $HOME/.pnpm-packages/bin $HOME/.pnpm-packages
       fish_add_path --prepend $HOME/.npm-packages/bin $HOME/bin
       fish_add_path --prepend $HOME/.local/bin
-      fish_add_path --prepend $HOME/.kimi-code/bin
 
       test -r "$HOME/.opam/opam-init/init.fish" && source "$HOME/.opam/opam-init/init.fish" > /dev/null 2> /dev/null; or true
 
@@ -284,7 +282,6 @@ in
         export PATH=$HOME/.pnpm-packages/bin:$HOME/.pnpm-packages:$PATH
         export PATH=$HOME/.npm-packages/bin:$HOME/bin:$PATH
         export PATH=$HOME/.local/bin:$PATH
-        export PATH=$HOME/.kimi-code/bin:$PATH
 
         [[ -f "$HOME/.local/bin/env" ]] && . "$HOME/.local/bin/env"
         [[ -f "$HOME/.ghcup/env" ]] && . "$HOME/.ghcup/env"
@@ -369,7 +366,7 @@ in
 
   git = {
     enable = true;
-    ignores = [ "*.swp" "**/.claude/settings.local.json" ];
+    ignores = [ "*.swp" ];
     lfs = {
       enable = true;
     };

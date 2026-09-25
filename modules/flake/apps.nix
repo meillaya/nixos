@@ -154,6 +154,46 @@ EOF
           esac
         done
 
+        # Pre-flight: name every derivation this switch would compile locally.
+        # `--dry-run` consults the substituters, so anything listed here is
+        # missing from both the store and the binary caches: a package that is
+        # broken upstream surfaces here instead of failing mid-switch. Home
+        # Manager's own generation scripts always appear and take seconds.
+        if ! preflight="$(${pkgs.nix}/bin/nix build --dry-run --no-link \
+          "${self}#homeConfigurations.''${target}.activationPackage" 2>&1)"; then
+          printf '%s\n' 'pre-flight: cannot evaluate the activation package:' >&2
+          printf '%s\n' "$preflight" >&2
+          exit 1
+        fi
+
+        build_count=0
+        build_list=""
+        collecting=0
+        while IFS= read -r line; do
+          if [ "$collecting" -eq 0 ]; then
+            case "$line" in
+              *' will be built:') collecting=1 ;;
+            esac
+            continue
+          fi
+          case "$line" in
+            '  /nix/store/'*)
+              build_count=$((build_count + 1))
+              build_list="$build_list
+''${line#'  '}"
+              ;;
+            *) collecting=0 ;;
+          esac
+        done <<<"$preflight"
+
+        if [ "$build_count" -eq 0 ]; then
+          printf '%s\n' 'pre-flight: nothing to compile; every path is in the store or a binary cache.'
+        else
+          printf 'pre-flight: %d derivation(s) will be compiled locally:\n' "$build_count"
+          printf '%s\n' "$build_list"
+          printf '%s\n' '  (home-manager-*, activation-script and hm_* entries are generated locally and take seconds.)'
+        fi
+
         # Fresh multi-user Nix installs may not have the default profile
         # directories initialized yet, which can trip up standalone
         # Home Manager. Touch the profile state first.

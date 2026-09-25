@@ -2,15 +2,15 @@
   "schemaVersion": 1,
   "unfree": [
     {
-      "expiresAt": "2026-11-19",
+      "expiresAt": "2026-12-14",
       "maxTtlDays": 90,
       "output": "darwinConfigurations.aarch64-darwin",
       "owner": "mei",
       "pname": "raycast",
       "reason": "preserve-existing-selected-application",
-      "reviewedAt": "2026-08-19",
+      "reviewedAt": "2026-09-15",
       "system": "aarch64-darwin",
-      "version": "1.104.24"
+      "version": "2.3.1.0"
     },
     {
       "expiresAt": "2026-10-11",
@@ -46,26 +46,26 @@
       "version": "2026.2.0.1"
     },
     {
-      "expiresAt": "2026-10-15",
+      "expiresAt": "2026-12-14",
       "maxTtlDays": 90,
       "output": "darwinConfigurations.aarch64-darwin",
       "owner": "mei",
       "pname": "terraform",
       "reason": "preserve-existing-selected-application",
-      "reviewedAt": "2026-07-17",
+      "reviewedAt": "2026-09-15",
       "system": "aarch64-darwin",
-      "version": "1.15.8"
+      "version": "1.16.1"
     },
     {
-      "expiresAt": "2026-10-11",
+      "expiresAt": "2026-12-14",
       "maxTtlDays": 90,
       "output": "darwinConfigurations.aarch64-darwin",
       "owner": "mei",
       "pname": "unrar",
       "reason": "preserve-existing-selected-application",
-      "reviewedAt": "2026-07-13",
+      "reviewedAt": "2026-09-15",
       "system": "aarch64-darwin",
-      "version": "7.2.7"
+      "version": "7.3.1"
     },
     {
       "expiresAt": "2026-10-11",
@@ -79,48 +79,48 @@
       "version": "2.4.9"
     },
     {
-      "expiresAt": "2026-10-15",
+      "expiresAt": "2026-12-14",
       "maxTtlDays": 90,
       "output": "homeConfigurations.standalone-linux",
       "owner": "mei",
       "pname": "obsidian",
       "reason": "requested-desktop-application",
-      "reviewedAt": "2026-07-17",
+      "reviewedAt": "2026-09-15",
       "system": "x86_64-linux",
-      "version": "1.13.4"
+      "version": "1.13.7"
     },
     {
-      "expiresAt": "2026-10-15",
+      "expiresAt": "2026-12-14",
       "maxTtlDays": 90,
       "output": "homeConfigurations.standalone-linux",
       "owner": "mei",
       "pname": "spotify",
       "reason": "requested-desktop-application",
-      "reviewedAt": "2026-07-17",
+      "reviewedAt": "2026-09-15",
       "system": "x86_64-linux",
-      "version": "1.2.92.147.g5b8f9367"
+      "version": "1.2.95.453.g0eeebbed"
     },
     {
-      "expiresAt": "2026-10-15",
+      "expiresAt": "2026-12-14",
       "maxTtlDays": 90,
       "output": "homeConfigurations.standalone-linux",
       "owner": "mei",
       "pname": "terraform",
       "reason": "preserve-existing-selected-application",
-      "reviewedAt": "2026-07-17",
+      "reviewedAt": "2026-09-15",
       "system": "x86_64-linux",
-      "version": "1.15.8"
+      "version": "1.16.1"
     },
     {
-      "expiresAt": "2026-10-11",
+      "expiresAt": "2026-12-14",
       "maxTtlDays": 90,
       "output": "homeConfigurations.standalone-linux",
       "owner": "mei",
       "pname": "unrar",
       "reason": "preserve-existing-selected-application",
-      "reviewedAt": "2026-07-13",
+      "reviewedAt": "2026-09-15",
       "system": "x86_64-linux",
-      "version": "7.2.7"
+      "version": "7.3.1"
     },
     {
       "expiresAt": "2026-10-11",
@@ -134,59 +134,59 @@
       "version": "2.4.9"
     },
     {
-      "expiresAt": "2026-10-11",
+      "expiresAt": "2026-12-14",
       "maxTtlDays": 90,
       "output": "nixosConfigurations.x86_64-linux",
       "owner": "mei",
       "pname": "google-chrome",
       "reason": "preserve-existing-selected-application",
-      "reviewedAt": "2026-07-13",
+      "reviewedAt": "2026-09-15",
       "system": "x86_64-linux",
-      "version": "151.0.7922.137"
+      "version": "153.0.8010.36"
     },
     {
-      "expiresAt": "2026-10-15",
+      "expiresAt": "2026-12-14",
       "maxTtlDays": 90,
       "output": "nixosConfigurations.x86_64-linux",
       "owner": "mei",
       "pname": "obsidian",
       "reason": "requested-desktop-application",
-      "reviewedAt": "2026-07-17",
+      "reviewedAt": "2026-09-15",
       "system": "x86_64-linux",
-      "version": "1.13.4"
+      "version": "1.13.7"
     },
     {
-      "expiresAt": "2026-10-15",
+      "expiresAt": "2026-12-14",
       "maxTtlDays": 90,
       "output": "nixosConfigurations.x86_64-linux",
       "owner": "mei",
       "pname": "spotify",
       "reason": "requested-desktop-application",
-      "reviewedAt": "2026-07-17",
+      "reviewedAt": "2026-09-15",
       "system": "x86_64-linux",
-      "version": "1.2.92.147.g5b8f9367"
+      "version": "1.2.95.453.g0eeebbed"
     },
     {
-      "expiresAt": "2026-10-15",
+      "expiresAt": "2026-12-14",
       "maxTtlDays": 90,
       "output": "nixosConfigurations.x86_64-linux",
       "owner": "mei",
       "pname": "terraform",
       "reason": "preserve-existing-selected-application",
-      "reviewedAt": "2026-07-17",
+      "reviewedAt": "2026-09-15",
       "system": "x86_64-linux",
-      "version": "1.15.8"
+      "version": "1.16.1"
     },
     {
-      "expiresAt": "2026-10-11",
+      "expiresAt": "2026-12-14",
       "maxTtlDays": 90,
       "output": "nixosConfigurations.x86_64-linux",
       "owner": "mei",
       "pname": "unrar",
       "reason": "preserve-existing-selected-application",
-      "reviewedAt": "2026-07-13",
+      "reviewedAt": "2026-09-15",
       "system": "x86_64-linux",
-      "version": "7.2.7"
+      "version": "7.3.1"
     },
     {
       "expiresAt": "2026-10-11",
@@ -200,48 +200,26 @@
       "version": "2.4.9"
     },
     {
-      "expiresAt": "2026-10-25",
-      "maxTtlDays": 90,
-      "output": "nixosConfigurations.x86_64-linux",
-      "owner": "mei",
-      "pname": "opencode-omo",
-      "reason": "requested-coding-agent-harness",
-      "reviewedAt": "2026-08-14",
-      "system": "x86_64-linux",
-      "version": "5.0.0-beta.7"
-    },
-    {
-      "expiresAt": "2026-10-25",
-      "maxTtlDays": 90,
-      "output": "darwinConfigurations.aarch64-darwin",
-      "owner": "mei",
-      "pname": "opencode-omo",
-      "reason": "requested-coding-agent-harness",
-      "reviewedAt": "2026-08-14",
-      "system": "aarch64-darwin",
-      "version": "5.0.0-beta.7"
-    },
-    {
-      "expiresAt": "2026-11-26",
+      "expiresAt": "2026-12-14",
       "maxTtlDays": 90,
       "output": "homeConfigurations.standalone-linux",
       "owner": "mei",
       "pname": "android-studio",
       "reason": "requested-desktop-application",
-      "reviewedAt": "2026-08-28",
+      "reviewedAt": "2026-09-15",
       "system": "x86_64-linux",
-      "version": "2026.1.3.8"
+      "version": "2026.1.4.7"
     },
     {
-      "expiresAt": "2026-11-26",
+      "expiresAt": "2026-12-14",
       "maxTtlDays": 90,
       "output": "nixosConfigurations.x86_64-linux",
       "owner": "mei",
       "pname": "android-studio",
       "reason": "requested-desktop-application",
-      "reviewedAt": "2026-08-28",
+      "reviewedAt": "2026-09-15",
       "system": "x86_64-linux",
-      "version": "2026.1.3.8"
+      "version": "2026.1.4.7"
     }
   ]
 }

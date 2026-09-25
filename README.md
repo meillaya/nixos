@@ -134,21 +134,9 @@ inputs (see `flake.nix`):
 
 ## Secrets
 
-Only `sops-nix` is wired. The five coding-agent API keys
-(`OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `GEMINI_API_KEY`,
-`OPENROUTER_API_KEY`, `GITHUB_TOKEN`) are evaluated from
-`secrets/coding-agents.yaml` for both Linux hosts via the
-`den.aspects.sops` chain. The recipient policy is `.sops.yaml` at the
-repo root.
-
-## Coding agents
-
-`codex` and `omo-ai@beta` are installed by the standalone Home Manager
-activation block — the wrappers, install hooks, and other agents
-(`kimi`, `hermes`, `zeroclaw`, `pi`, `opencode`, `omo-agent-toolkit`)
-are removed. `lazycodex` is installed manually via
-`npx lazycodex-ai install`. The shared `codex-wrapped` shim injects
-provider keys from the sops file at runtime.
+Only the GitHub SSH key is managed as a repository secret. The encrypted
+keypair is installed by the `mei` Home Manager activation and is unrelated to
+agent tooling.
 
 ## Layout
 

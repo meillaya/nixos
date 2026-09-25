@@ -39,7 +39,11 @@ with pkgs;
   # Cross-Linux desktop applications
   calibre
   conky
-  freecad
+  # freecad is paused 2026-09-15: python3.14-ifcopenshell 0.8.0 fails to compile
+  # against boost 1.91 at nixpkgs ef34387, so freecad is absent from
+  # cache.nixos.org and its local build fails the same way. Restore once the
+  # upstream build works again.
+  # freecad
   fsearch
   gimp
   ghostty

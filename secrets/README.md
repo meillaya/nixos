@@ -6,9 +6,6 @@ fetching a private GitHub secrets repository during evaluation.
 
 Tracked, committed, sops/age-encrypted:
 
-- `coding-agents.yaml` — agent API keys (`OPENAI_API_KEY`,
-  `ANTHROPIC_API_KEY`, `GEMINI_API_KEY`, `OPENROUTER_API_KEY`, `GITHUB_TOKEN`),
-  declared as `sops.secrets.*` in `modules/aspects/features/sops.nix`.
 - `github-ssh.yaml` — the authoritative GitHub SSH keypair, field
   `github-ssh-private-key`. Installed on every host at `~/.ssh/id_github` (and at
   `~/.ssh/id_ed25519` when that path is still free) by
@@ -30,7 +27,3 @@ Decrypting requires an age identity on the machine: `$SOPS_AGE_KEY_FILE`, else
 `~/.config/sops/age/keys.txt`. Encryption needs no identity at all — the
 recipients in `.sops.yaml` are public — so a fresh clone can add secrets but not
 read them.
-
-For per-tool runtime API keys (OpenAI, Anthropic, etc.), use the
-`codex-wrapped` shim that injects the sops-decoded values from
-`coding-agents.yaml` into the agent's environment.

@@ -34,16 +34,6 @@ in
     recursive = true;
   };
 
-  # Pin the opencode plugin to the same oh-my-openagent version the repo
-  # installs (5.0.0-beta.7). `@latest` would resolve to 4.19.4 on npm and
-  # run the old plugin with its built-in model defaults, ignoring the 5.x
-  # `~/.omo/omo.jsonc` config. Runtime changes (MCP servers, providers)
-  # belong in opencode.json, which stays unmanaged.
-  ".config/opencode/opencode.jsonc" = {
-    text = builtins.readFile ../shared/config/opencode/opencode.jsonc;
-    force = true;
-  };
-
   ".ssh/id_github.pub" = {
     text = githubPublicKey;
     # force: replace the manual `id_github.pub -> id_ed25519.pub` symlink that

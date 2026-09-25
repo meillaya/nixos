@@ -29,15 +29,7 @@ in
     enableNixpkgsReleaseCheck = false;
     username = lib.mkDefault userName;
     homeDirectory = lib.mkDefault homeDirectory;
-    packages = (import ./packages.nix { inherit pkgs inputs; }) ++ [
-      pkgs.nodejs
-      ((pkgs.writeShellScriptBin "codex-wrapped" ''
-        set -euo pipefail
-        export SOPS_AGE_KEY_FILE="${config.home.homeDirectory}/.config/sops/age/keys.txt"
-        SECRETS_FILE="${config.home.homeDirectory}/nixos/secrets/coding-agents.yaml"
-        exec sops exec-env "$SECRETS_FILE" -- codex "$@"
-      '') // { pname = "codex-wrapped"; })
-    ];
+    packages = import ./packages.nix { inherit pkgs inputs; };
     file = standalone-files;
     sessionVariables = {
       BROWSER = "zen-beta";
@@ -56,36 +48,16 @@ in
     stateVersion = "25.11";
   };
 
-  home.activation.installCodingAgents = let
+  home.activation.installOmo = let
     npm = "${pkgs.nodejs}/bin/npm";
-    curl = "${pkgs.curl}/bin/curl";
-    bash = "${pkgs.bash}/bin/bash";
-    tar = "${pkgs.gnutar}/bin";
-    gzip = "${pkgs.gzip}/bin";
-    bzip2 = "${pkgs.bzip2}/bin";
-    xz = "${pkgs.xz}/bin";
-    # OMO Native (Senpi engine) ships the `omo` launcher bin; needs node >= 24.
-    # The activation PATH is prefixed with `tar`, `gzip`, `bzip2`, `xz`,
-    # `bash`, `curl`, and `unzip` so the npm install can spawn shell helpers
-    # that the HM activation PATH would otherwise exclude.
-  in lib.hm.dag.entryAfter ["writeBoundary"] ''
-    export PATH="${tar}:${gzip}:${bzip2}:${xz}:${pkgs.bash}/bin:${pkgs.curl}/bin:${pkgs.unzip}/bin:$PATH:$HOME/.local/bin:$HOME/.kimi-code/bin"
-    install_if_missing() {
-      local name="$1" cmd="$2"
-      if ! command -v "$name" &>/dev/null; then
-        echo "install-coding-agents: installing $name..."
-        eval "$cmd"
-      else
-        echo "install-coding-agents: $name already present, skipping"
-      fi
-    }
-    # npm-based installers use --force because the user's prior manual install
-    # may have left symlinks/files at the npm global prefix that block overwrite.
-    install_if_missing codex "${npm} install -g --force @openai/codex"
-    install_if_missing omo "${npm} install -g --force omo-ai@beta"
-    # lazycodex uses an interactive TUI installer and must be installed
-    # manually: `npx lazycodex-ai install` per machine. The verification step
-    # is `npx lazycodex-ai doctor`; it requires codex and `~/.local/bin` on PATH.
+  in lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    export PATH="${pkgs.curl}/bin:${pkgs.unzip}/bin:$PATH:$HOME/.local/bin"
+    if ! command -v omo &>/dev/null; then
+      echo "install-omo: installing omo-ai..."
+      ${npm} install -g --force omo-ai@beta
+    else
+      echo "install-omo: omo already present, skipping"
+    fi
   '';
 
   targets.genericLinux.enable = true;
