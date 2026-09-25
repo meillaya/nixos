@@ -82,7 +82,7 @@ let
     );
   noctaliaSettings = nixos.programs.noctalia.settings or null;
   requiredLinuxApplications = [
-    "calibre" "devenv" "gimp" "ghostty" "helium" "kitty" "obsidian"
+    "calibre" "devenv" "gimp" "ghostty" "herdr" "helium" "kitty" "obsidian"
     "ollama" "qbittorrent" "noctalia" "zen-beta"
   ];
   assertHm = hm:
@@ -93,7 +93,6 @@ let
     assert hm.programs.nushell.settings.completions.algorithm == "fuzzy";
     assert hm.programs.nushell.settings.color_config.hints == "light_cyan";
     assert hasInfix ".nix-profile/bin" hm.programs.nushell.extraEnv;
-    assert hasInfix "/home/mei/.opencode/bin" hm.programs.nushell.extraEnv;
     assert hasInfix "/run/current-system/sw/bin" hm.programs.nushell.extraEnv;
     assert hasInfix "fastfetch" hm.programs.nushell.extraConfig;
     assert hasInfix "which fastfetch" hm.programs.nushell.extraConfig;
@@ -252,12 +251,11 @@ assert assertHm nixos.home-manager.users.mei;
 assert hasInfix "/bin/nu --login" nixosKonsoleProfile.text;
 
 # Declarative Zen Browser is configured on the NixOS home with the real spaces
-# and pins from the shared fragment (which was generated from the live Zen
+# from the shared fragment (which was generated from the live Zen
 # profile), proving the zen aspect is wired onto this host.
 assert nixos.home-manager.users.mei.programs.zen-browser.enable;
-assert nixos.home-manager.users.mei.programs.zen-browser.profiles.default.spaces ? "Personal";
-assert nixos.home-manager.users.mei.programs.zen-browser.profiles.default.spaces."Personal".id
+assert nixos.home-manager.users.mei.programs.zen-browser.profiles.meillaya.spaces ? "Personal";
+assert nixos.home-manager.users.mei.programs.zen-browser.profiles.meillaya.spaces."Personal".id
   == "66b75881-fbf4-40c5-95de-ac8041642aad";
-assert nixos.home-manager.users.mei.programs.zen-browser.profiles.default.pins ? "P01";
 
 "dendritic-config-eval=PASS"

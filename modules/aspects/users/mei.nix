@@ -57,15 +57,8 @@ in
         (import ../../shared/config/zen.nix)
       ];
       home.packages = [
-        # Agent multiplexer (herdr.dev). From our own pin: current
-        # nixos-unstable carries herdr, so no extra flake input is needed.
+        # Herdr agent multiplexer; nixpkgs currently provides the latest release.
         pkgs.herdr
-        ((pkgs.writeShellScriptBin "codex-wrapped" ''
-          set -euo pipefail
-          export SOPS_AGE_KEY_FILE="${config.home.homeDirectory}/.config/sops/age/keys.txt"
-          SECRETS_FILE="${config.home.homeDirectory}/nixos/secrets/coding-agents.yaml"
-          exec sops exec-env "$SECRETS_FILE" -- codex "$@"
-        '') // { pname = "codex-wrapped"; })
       ];
       gtk.gtk4.theme = config.gtk.theme;
       home.file = import ../../shared/files.nix { inherit config pkgs lib; };
@@ -179,8 +172,6 @@ in
           extraEnv = ''
             $env.PATH = ([
               ($env.HOME | path join ".nix-profile/bin")
-              ($env.HOME | path join ".kimi-code/bin")
-              "/home/mei/.opencode/bin"
               "/run/current-system/sw/bin"
               "/nix/var/nix/profiles/default/bin"
             ] | append $env.PATH | uniq)
