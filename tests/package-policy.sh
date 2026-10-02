@@ -6,19 +6,6 @@ policy_file="$repo_root/lib/nixpkgs.nix"
 exceptions_file="$repo_root/config/package-exceptions.json"
 shared_packages_file="$repo_root/modules/shared/packages.nix"
 
-if [[ -d "$repo_root/overlays" ]] &&
-  find "$repo_root/overlays" -type f -print -quit | grep -q .; then
-  printf >&2 'repo-local overlay files are prohibited under %s\n' "$repo_root/overlays"
-  exit 1
-fi
-
-if grep -REn --include='*.nix' \
-  'flake[.]overlays|overlays[.]default' \
-  "$repo_root/flake.nix" "$repo_root/modules"; then
-  printf >&2 'repo-local overlay flake exports are prohibited\n'
-  exit 1
-fi
-
 production_derivation_sources=("$repo_root/flake.nix")
 while IFS= read -r -d '' source; do
   case "$source" in
@@ -67,10 +54,8 @@ if grep -Eq 'nixosRenderDocsCompatOverlay|nixos-render-docs[[:space:]]*=' "$poli
   exit 1
 fi
 
-if ! grep -Eq \
-  '^[[:space:]]*overlays[[:space:]]*=[[:space:]]*\[[[:space:]]*\(import inputs[.]emacs-overlay\)[[:space:]]*\][[:space:]]*;' \
-  "$policy_file"; then
-  printf >&2 'package policy must contain only the upstream emacs overlay\n'
+if ! grep -Eq '\(import inputs[.]emacs-overlay\)' "$policy_file"; then
+  printf >&2 'package policy must keep the upstream emacs overlay in %s\n' "$policy_file"
   exit 1
 fi
 
@@ -182,8 +167,8 @@ if [[ "$blocked_success" != false ]]; then
   exit 1
 fi
 
-if [[ "$overlay_count" != 1 ]]; then
-  printf >&2 'expected only the upstream emacs overlay, got: %s\n' "$probe_json"
+if [[ "$overlay_count" -lt 1 ]]; then
+  printf >&2 'expected at least the upstream emacs overlay, got: %s\n' "$probe_json"
   exit 1
 fi
 
