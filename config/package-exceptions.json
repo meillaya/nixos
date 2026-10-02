@@ -10,7 +10,7 @@
       "reason": "preserve-existing-selected-application",
       "reviewedAt": "2026-09-15",
       "system": "aarch64-darwin",
-      "version": "2.3.1.0"
+      "version": "2.4.1.0"
     },
     {
       "expiresAt": "2026-10-11",
@@ -21,7 +21,7 @@
       "reason": "preserve-existing-selected-application",
       "reviewedAt": "2026-07-13",
       "system": "aarch64-darwin",
-      "version": "2026.2.0.1"
+      "version": "2026.2.2"
     },
     {
       "expiresAt": "2026-10-11",
@@ -208,7 +208,7 @@
       "reason": "requested-desktop-application",
       "reviewedAt": "2026-09-15",
       "system": "x86_64-linux",
-      "version": "2026.1.4.7"
+      "version": "2026.1.4.8"
     },
     {
       "expiresAt": "2026-12-14",
@@ -219,7 +219,7 @@
       "reason": "requested-desktop-application",
       "reviewedAt": "2026-09-15",
       "system": "x86_64-linux",
-      "version": "2026.1.4.7"
+      "version": "2026.1.4.8"
     }
   ]
 }
