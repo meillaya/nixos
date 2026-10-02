@@ -25,6 +25,19 @@ in
     # END nix-caching-zen-browser
   '';
 
+  # Podman is the Nix-provided package on a foreign distro: CachyOS packages
+  # no podman and therefore no /etc/containers, which podman searches for its
+  # signature policy and registry list. Without these user-level files every
+  # `podman run`/pull fails with "no policy.json file found". The policy is
+  # the upstream containers/image default (no signature requirement) and the
+  # registry list makes unqualified image names resolve against docker.io.
+  xdg.configFile."containers/policy.json".text = builtins.toJSON {
+    default = [ { type = "insecureAcceptAnything"; } ];
+  };
+  xdg.configFile."containers/registries.conf".text = ''
+    unqualified-search-registries = ["docker.io"]
+  '';
+
   home = {
     enableNixpkgsReleaseCheck = false;
     username = lib.mkDefault userName;
@@ -48,17 +61,6 @@ in
     stateVersion = "25.11";
   };
 
-  home.activation.installOmo = let
-    npm = "${pkgs.nodejs}/bin/npm";
-  in lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-    export PATH="${pkgs.curl}/bin:${pkgs.unzip}/bin:$PATH:$HOME/.local/bin"
-    if ! command -v omo &>/dev/null; then
-      echo "install-omo: installing omo-ai..."
-      ${npm} install -g --force omo-ai@beta
-    else
-      echo "install-omo: omo already present, skipping"
-    fi
-  '';
 
   targets.genericLinux.enable = true;
   fonts.fontconfig = {
