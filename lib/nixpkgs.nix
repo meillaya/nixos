@@ -25,7 +25,20 @@ let
   packageVersion = pkg: if pkg ? version then pkg.version else lib.getVersion pkg;
   unfreeKeyFor = pkg: "${packageSystem pkg}:${packageName pkg}:${packageVersion pkg}";
   unfreeNameVersionKeyFor = pkg: "${packageName pkg}:${packageVersion pkg}";
-  overlays = [ (import inputs.emacs-overlay) ];
+  zixPins = builtins.fromJSON (builtins.readFile ../zix/managed/pins.json);
+  # The emacs overlay always; the multiverse pin overlay when pins exist
+  # (`nix run .#zix -- pkg add NAME@VERSION`). Pinning here rather than in a
+  # module is deliberate: every host's package set comes from mkPkgs, and
+  # this layer survives home-manager's useGlobalPkgs = true (which discards
+  # per-HM nixpkgs definitions).
+  overlays = [ (import inputs.emacs-overlay) ] ++ (
+    if zixPins == { } || !(inputs ? multiverse) then [ ] else [
+      (inputs.multiverse.lib.pinOverlay {
+        pins = zixPins;
+        config = { inherit (config) allowUnfreePredicate allowInsecure; };
+      })
+    ]
+  );
   config = {
     allowUnfreePredicate = pkg:
       let

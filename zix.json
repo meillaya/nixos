@@ -1,0 +1,122 @@
+{
+  "checks": {
+    "full_extra": [
+      ["nix", "flake", "check", "--all-systems", "--no-build"]
+    ],
+    "quick": [
+      ["bash", "tests/dendritic-architecture.sh"],
+      ["bash", "tests/dendritic-boundaries.sh"],
+      ["bash", "tests/dendritic-apps.sh"],
+      ["bash", "tests/dendritic-shells.sh"],
+      ["bash", "tests/package-policy.sh"],
+      ["nix-instantiate", "--eval", "--strict", "--expr", "import ./tests/dendritic-config-eval.nix {}"]
+    ]
+  },
+  "companion_inputs": {
+    "multiverse": "github:fzakaria/nixpkgs-multiverse"
+  },
+  "default_switch": "standalone-linux",
+  "description": "Den dendritic Nix config: NixOS workstations, nix-darwin, standalone CachyOS Home Manager",
+  "managed": {
+    "manifest": "zix/managed/manifest.json",
+    "packages_file": "zix/managed/packages.nix",
+    "pins_file": "zix/managed/pins.json"
+  },
+  "name": "nixos-config",
+  "policy_file": "lib/nixpkgs.nix",
+  "sandbox": {
+    "agent_mounts": {
+      "claude": [
+        ["~/.claude", "/root/.claude"]
+      ],
+      "opencode": [
+        ["~/.config/opencode", "/root/.config/opencode"],
+        ["~/.local/share/opencode", "/root/.local/share/opencode"]
+      ]
+    },
+    "image": "docker.io/fmzakari/omnibin:latest",
+    "name_prefix": "zix-",
+    "run_args": [
+      "--device",
+      "/dev/fuse",
+      "--cap-add",
+      "SYS_ADMIN"
+    ],
+    "runtime": "auto",
+    "workdir": "/workspace"
+  },
+  "search": {
+    "stable": "github:nixos/nixpkgs/nixos-25.11",
+    "unstable": "github:nixos/nixpkgs/nixos-unstable"
+  },
+  "switches": {
+    "antagony": ["nix", "run", ".#build-switch", "--"],
+    "entropy": ["nix", "run", ".#build-switch", "--"],
+    "remembrance": ["nix", "run", ".#build-switch", "--"],
+    "standalone-linux": ["nix", "run", ".#home-switch", "--"]
+  },
+  "system": "x86_64-linux",
+  "targets": {
+    "darwin": {
+      "description": "the macOS host",
+      "file": "modules/darwin/packages.nix",
+      "kind": "list"
+    },
+    "linux": {
+      "description": "Linux hosts (NixOS workstations and standalone)",
+      "file": "modules/linux/packages.nix",
+      "kind": "list"
+    },
+    "managed": {
+      "description": "zix-managed packages; installed on every host",
+      "kind": "managed"
+    },
+    "nixos": {
+      "description": "NixOS hosts (system-level Home Manager)",
+      "file": "modules/nixos/packages.nix",
+      "kind": "list"
+    },
+    "shared": {
+      "description": "cross-platform packages (all hosts)",
+      "file": "modules/shared/packages.nix",
+      "kind": "list"
+    },
+    "standalone": {
+      "description": "the standalone Home Manager host",
+      "file": "modules/standalone-linux/packages.nix",
+      "kind": "list"
+    }
+  },
+  "tools": {
+    "auto_follow": {
+      "command": ["nix", "run", "github:fzakaria/nix-auto-follow", "--"]
+    },
+    "grail": {
+      "command": ["nix", "run", "github:fzakaria/grail", "--"]
+    },
+    "multiverse": {
+      "command": ["nix", "run", "github:fzakaria/nixpkgs-multiverse#mvs", "--"],
+      "flake": "github:fzakaria/nixpkgs-multiverse"
+    },
+    "omnibin": {
+      "command": ["nix", "run", "github:fzakaria/omnibin", "--"],
+      "flake": "github:fzakaria/omnibin"
+    },
+    "omniflake": {
+      "flake": "github:fzakaria/omniflake"
+    },
+    "rewind": {
+      "command": ["nix", "run", "github:fzakaria/rewindvm", "--"],
+      "flake": "github:fzakaria/rewindvm"
+    },
+    "wrap_buddy": {
+      "command": ["nix", "run", "github:Mic92/wrap-buddy", "--"],
+      "flake": "github:Mic92/wrap-buddy"
+    }
+  },
+  "update_command": ["nix", "run", ".#update", "--"],
+  "version": 1,
+  "vm": {
+    "command": ["nix", "run", "github:fzakaria/rewindvm", "--"]
+  }
+}

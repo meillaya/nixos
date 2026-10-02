@@ -136,3 +136,6 @@ with pkgs;
   docker
   docker-compose
 ]
+
+# zix-managed packages (`nix run .#zix -- pkg add|rm`; see tools/zix/README.md)
+++ (import ../../zix/managed/packages.nix { inherit pkgs; })

@@ -11,7 +11,7 @@ let
   validators = import ../modules/entities/_machine-authority/validators.nix;
   shellName = shell: shell.pname or shell.name or (builtins.baseNameOf (toString shell));
   expectedLinuxApps = [
-    "build" "build-switch" "clean" "home-news" "home-switch" "nh" "search-pkgs" "update"
+    "build" "build-switch" "clean" "home-news" "home-switch" "nh" "search-pkgs" "update" "zix"
   ];
   hasShell = name: shells: builtins.any (shell: shellName shell == name) shells;
   remoteCapabilityValues = builtins.listToAttrs (
@@ -121,7 +121,6 @@ in
 assert builtins.attrNames flake.nixosConfigurations == [ "antagony" "remembrance" ];
 assert builtins.attrNames (flake.darwinConfigurations or { }) == [ "entropy" ];
 assert builtins.attrNames (flake.homeConfigurations or { }) == [ "standalone-linux" ];
-assert builtins.attrNames (flake.overlays or { }) == [ ];
 assert flake.configurationEvaluationPaths == [
   "nixosConfigurations.remembrance"
   "darwinConfigurations.entropy"
@@ -146,7 +145,7 @@ assert (tryDrvPath policyLinuxPkgs.obsidian).success;
 assert !(tryDrvPath policyLinuxPkgs.steam).success;
 assert builtins.attrNames flake.apps.x86_64-linux == expectedLinuxApps;
 assert builtins.attrNames (flake.apps.aarch64-darwin or { }) == [
-  "build" "build-switch" "clean" "search-pkgs" "update"
+  "build" "build-switch" "clean" "search-pkgs" "update" "zix"
 ];
 assert nixos.networking.hostName == "remembrance";
 assert nixos.system.stateVersion == "21.05";

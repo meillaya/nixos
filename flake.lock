@@ -362,6 +362,21 @@
         "type": "github"
       }
     },
+    "multiverse": {
+      "locked": {
+        "lastModified": 1790923538,
+        "narHash": "sha256-uqWAQSTRVaYR4V8tu/TJe0E5SdSh7zXdpYi/Xpn0Wf4=",
+        "owner": "fzakaria",
+        "repo": "nixpkgs-multiverse",
+        "rev": "ea9c705b121fe6f3e6d871de23fd68c8cb6e0d53",
+        "type": "github"
+      },
+      "original": {
+        "owner": "fzakaria",
+        "repo": "nixpkgs-multiverse",
+        "type": "github"
+      }
+    },
     "nh": {
       "inputs": {
         "nixpkgs": [
@@ -481,6 +496,7 @@
         "helium": "helium",
         "home-manager": "home-manager",
         "import-tree": "import-tree",
+        "multiverse": "multiverse",
         "nh": "nh",
         "nixpkgs": "nixpkgs",
         "noctalia": "noctalia",

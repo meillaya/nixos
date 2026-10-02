@@ -60,6 +60,8 @@
       url = "github:serokell/deploy-rs";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    multiverse.url = "github:fzakaria/nixpkgs-multiverse";
   };
   outputs = inputs:
     inputs.flake-parts.lib.mkFlake { inherit inputs; } (inputs.import-tree ./modules/flake);

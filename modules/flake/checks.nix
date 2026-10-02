@@ -66,6 +66,16 @@
         bash "$src/tests/dendritic-shells.sh"
         touch "$out"
       '';
+
+      zix = pkgs.runCommand "zix" {
+        nativeBuildInputs = [ pkgs.bash pkgs.coreutils pkgs.diffutils pkgs.gnugrep pkgs.nix pkgs.python3 ];
+        src = inputs.self;
+      } ''
+        cp -R "$src" source
+        chmod -R u+w source
+        bash source/tests/zix.sh
+        touch "$out"
+      '';
     };
   };
 }

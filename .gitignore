@@ -10,3 +10,4 @@ secrets/*
 !secrets/README.md
 !secrets/coding-agents.yaml
 !secrets/github-ssh.yaml
+zix/backups/

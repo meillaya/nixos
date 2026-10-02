@@ -40,9 +40,13 @@ assert apps == [
     "nh",
     "search-pkgs",
     "update",
+    "zix",
 ], (system, apps)
 PY
 done
+
+test -f "$root/tools/zix/cli.py"
+test -f "$root/tests/zix.sh"
 
 if grep -R -E \
   'nixos-rebuild[[:space:]]+(switch|boot)|nix-collect-garbage|--delete-older-than|--install-bootloader' \

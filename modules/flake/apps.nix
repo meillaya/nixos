@@ -108,6 +108,19 @@ EOF
         search_ref "stable" "$stable_ref"
       '')}/bin/search-pkgs";
     };
+  # zix: config/package/sandbox manager (tools/zix). The wrapper bakes in the
+  # *code* only - the target repository is discovered at runtime from the
+  # caller's cwd (or --repo), so the tool edits the working tree, never a
+  # read-only store copy of it.
+  mkZixApp = system:
+    let
+      pkgs = nixpkgs.legacyPackages.${system};
+    in {
+      type = "app";
+      program = "${(pkgs.writeShellScriptBin "zix" ''
+        exec ${pkgs.python3}/bin/python3 ${self}/tools/zix/cli.py "$@"
+      '')}/bin/zix";
+    };
   mkHomeSwitchApp = system:
     let
       pkgs = nixpkgs.legacyPackages.${system};
@@ -508,6 +521,7 @@ EOF
       "home-news" = mkHomeNewsApp system;
       "home-switch" = mkHomeSwitchApp system;
       "search-pkgs" = mkSearchPkgsApp system;
+      "zix" = mkZixApp system;
       "update" = mkUpdateApp system;
       "build-switch" = mkApp "build-switch" system {
         pathDeps = lib.optionals (nhPkg != null) [ nhPkg ];
@@ -523,6 +537,7 @@ EOF
     {
       "build" = mkApp "build" system { };
       "search-pkgs" = mkSearchPkgsApp system;
+      "zix" = mkZixApp system;
       "build-switch" = mkApp "build-switch" system { };
       "clean" = mkApp "clean" system { };
       "update" = mkUpdateApp system;
