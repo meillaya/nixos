@@ -88,6 +88,22 @@ backups a fresh clone needs and the single-machine variant — see
 The full manual procedure the script wraps is in
 `docs/service-notes/nixos-anywhere-iso-install.md`.
 
+## Containers
+
+Docker and Podman are rootless-only on every host this repo manages
+(`modules/aspects/features/rootless-containers.nix`):
+
+- NixOS hosts run `virtualisation.docker.rootless` (a per-user dockerd that
+exports `DOCKER_HOST`) and podman with its rootless user socket; the rootful
+docker daemon, podman's system socket, and the root-equivalent `docker` group
+are all off, and the user manager lingers so both sockets are reachable
+without an interactive login.
+- The standalone Linux home (a foreign distro with Nix) gets the rootless
+podman user socket plus a docker-compatible `DOCKER_HOST`, so docker clients
+never need a root daemon there either.
+- Darwin is untouched: Docker Desktop/colima and `podman machine` already run
+the engine inside a VM, never as a host root process.
+
 ## Update
 
 ```bash

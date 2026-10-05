@@ -161,15 +161,16 @@ in
   };
 
 
- # Add docker daemon
-  virtualisation.docker.enable = true;
-  virtualisation.docker.logDriver = "json-file";
+  # Container engines are rootless-only; see
+  # modules/aspects/features/rootless-containers.nix (rootless docker user
+  # daemon + rootless podman user socket, no rootful daemon or docker group).
 
   # It's me, it's you, it's everyone
   users.users = {
     ${user} = {
       extraGroups = [
-        "docker"
+        # No "docker": rootless containers never need root-equivalent socket
+        # access (see modules/aspects/features/rootless-containers.nix).
         "i2c"
         "video"
       ];

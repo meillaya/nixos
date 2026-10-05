@@ -7,6 +7,7 @@
     {
       includes = [
         den.aspects.mei
+        den.aspects.rootless-containers
         den.aspects.noctalia
         den.aspects.desktop-media
       ];

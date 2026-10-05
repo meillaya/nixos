@@ -237,10 +237,17 @@ assert nixos.users.users.mei.home == "/home/mei";
 assert builtins.all (group: builtins.elem group nixos.users.users.mei.extraGroups) [
   "wheel"
   "networkmanager"
-  "docker"
   "i2c"
   "video"
 ];
+assert !(builtins.elem "docker" nixos.users.users.mei.extraGroups);
+assert nixos.users.users.mei.linger;
+assert nixos.virtualisation.docker.rootless.enable;
+assert nixos.virtualisation.docker.rootless.setSocketVariable;
+assert !nixos.virtualisation.docker.enable;
+assert nixos.virtualisation.podman.enable;
+assert !nixos.virtualisation.podman.dockerSocket.enable;
+assert nixos.systemd.sockets.podman.wantedBy == [ ];
 assert shellName nixos.users.users.mei.shell == "nushell";
 assert hasShell "nushell" nixos.environment.shells;
 assert hasShell "bash" nixos.environment.shells;
