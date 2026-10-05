@@ -31,6 +31,14 @@ below are present, then runs the build gate and `nixos-anywhere` against
 `root@127.0.0.1`. Without `--yes` it stops after the enrollment checkpoint;
 `--dry-run` prints the plan. When the sops store or age identity is missing,
 `--skip-fold --save <persistent-dir>` keeps the enrollment recoverable instead.
+The install stage refuses to start unless `/` is a live tmpfs/overlay root, so
+the RAM-resident ISO is the supported environment.
+
+The upstream NixOS minimal ISO works for this path too (with the flakes flag
+and the same secret caveats); see
+[`nixos-anywhere-iso-install.md`](./nixos-anywhere-iso-install.md#using-the-official-nixos-minimal-iso).
+It cannot drive the operator-side flow, which needs the `hardware-enroll`
+oneshot baked into the per-host ISO.
 
 The rest of this note is the operator-side variant, which needs an SSH-reachable
 target and a second machine holding the repo.
@@ -44,8 +52,12 @@ These are **not in the repo** and a fresh clone cannot work without them:
 - `secrets/remembrance-keys.yaml` — the local sops store holding the
   permanent-login and host private keys (gitignored by design).
 
-Copy both to an external disk. `gen_trust.py` fails closed if either is
-missing, by design.
+Copy both to an external disk. The operator flow fails closed without them:
+`gen_trust.py` needs the sops store to verify an enrolled host's
+permanent-login key, and the fold stage needs it to re-encrypt the host key.
+(The one-command app can still enroll a *new* host without them, because
+`gen_trust.py` falls back to the fleet record's operator facts; it then
+requires `--skip-fold --save` instead of the fold.)
 
 The authoritative GitHub SSH key is **no longer** in that list: it is escrowed
 in the tracked store `secrets/github-ssh.yaml` and installed at `~/.ssh/id_github`
@@ -61,10 +73,10 @@ From the repo, at the commit you want to install:
 nix build .#iso.<host>
 ```
 
-The ISO is **not** the upstream minimal image — it is NixOS's own ISO
-builder run over the host's configuration at the flake's pinned nixpkgs,
-with the `hardware-enroll` oneshot and the enrollment base declaration
-baked in. Flash it:
+The per-host ISO is **not** the upstream minimal image — it is NixOS's own ISO
+builder run over the host's configuration at the flake's pinned nixpkgs, with
+the `hardware-enroll` oneshot and the enrollment base declaration baked in,
+plus `VARIANT_ID=installer` so `nixos-anywhere` skips kexec. Flash it:
 
 ```bash
 sudo dd if=result/iso/*.iso of=/dev/sdX bs=4M status=progress oflag=sync
@@ -108,6 +120,8 @@ nix profile install github:viperML/nh --profile /nix/var/nix/profiles/default
 
 `nh` is not in `systemPackages`, and the pre-install build gate needs it.
 The git identity is needed because the fold stage commits the enrollment.
+The flake app (`nix run github:meillaya/nixos#install`) ships `nh` itself, so
+this step only applies to the operator-side flow.
 
 ## 5. Run the install
 
@@ -115,6 +129,8 @@ The git identity is needed because the fold stage commits the enrollment.
 bin/host-install.sh --dry-run --target-host <ip>        # preview the plan
 bin/host-install.sh --target-host <ip> --skip-install   # enroll + commit only (checkpoint)
 bin/host-install.sh --target-host <ip> --yes            # full run
+bin/host-install.sh --target-host <ip> --install-only   # build gate + install, skip enroll/fold
+bin/host-install.sh --target-host <ip> --yes --skip-fold    # keep the host key out of the sops store
 ```
 
 With `--yes`, the stages run in order — enroll (upload trust fixture,
@@ -129,10 +145,14 @@ are excluded).
 
 ## 6. After the install
 
-- The target reboots into NixOS; the verification switch has already run.
+- The target reboots into NixOS; the verification switch has already run in the
+  operator flow. The one-command app cannot verify after the reboot (it runs on
+  the target), so it skips that stage; day-2 `nh os switch` takes over.
 - First console login sets `mei`'s password (bootstrap-password).
-- The enrollment commit is local — push it:
-  `git push origin main`.
+- The enrollment commit is local — push it: `git push origin main`. In the app
+  flow the commit lives in the RAM work tree (`/root/nixos-install`), so copy it
+  out first with `--save DIR` (or run the app from a persistent `--workdir` and
+  commit/push from there) before the machine reboots.
 - Day-2 updates: `nix run .#build-switch` (nh).
 
 ## If something fails
@@ -141,14 +161,28 @@ are excluded).
   `|| true`; check `journalctl -u hardware-enroll` on the target.
 - **`nh: command not found`** — step 4 was skipped.
 - **`gen_trust` fails** — the age key or `secrets/remembrance-keys.yaml`
-  was not restored.
+  was not restored, and (for a re-run) the host record diverges from the
+  fleet record's operator facts.
 - **SSH auth denied** — the target's key is not yours: fix `keys` in
   `system.nix` (step 3).
+- **The app refuses with "`/` is a `btrfs` filesystem"** — the install stage
+  only runs from a live environment so the enrolled disk can be erased safely;
+  boot the ISO (or pass `--allow-mounted-root` when the target disk is not the
+  running root).
+- **The app demands `--save`** — `--skip-fold` keeps the host key out of the
+  sops store, so the enrollment must be written somewhere persistent first.
 
 ## Single-machine variant
 
-No second machine? Run steps 4–5 *inside the ISO environment* against
-itself: clone the repo to `/root/nixos`, restore the backups, then
-`bin/host-install.sh --target-host 127.0.0.1 --yes` (set `passwd root` on
-the console first, or install your key into `/root/.ssh/authorized_keys`).
-The installer runs from RAM, so wiping the disk underneath it is safe.
+No second machine? Use the flake app: `nix run github:meillaya/nixos#install`
+inside the ISO environment does exactly this variant — it copies the repo to a
+work tree, sets up root SSH to itself, probes the hardware, enrolls, and runs
+the build gate plus `nixos-anywhere` against `127.0.0.1`.
+
+The manual equivalent is steps 4–5 *inside the ISO environment*: clone the repo
+to `/root/nixos`, restore the backups, then
+`bin/host-install.sh --target-host 127.0.0.1 --yes --skip-verify` (set
+`passwd root` on the console first, or install your key into
+`/root/.ssh/authorized_keys`; `--skip-verify` is required because the reboot
+replaces the installer environment running the script). The installer runs from
+RAM, so wiping the disk underneath it is safe.

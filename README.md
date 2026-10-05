@@ -48,7 +48,10 @@ the internal disk binding, GPU, network controllers, firmware, power and
 suspend — commits the enrollment into the work tree, folds the freshly
 generated host key into the sops store when it is available, and then hands
 the build gate and the destructive `nixos-anywhere` install to
-`bin/host-install.sh --install-only` (which re-checks `--yes` itself).
+`bin/host-install.sh --install-only` (which re-checks `--yes` itself). The
+upstream NixOS minimal ISO works here too (keep the flakes flag and the
+secret caveats); the operator flow below needs the per-host ISO — see
+[`docs/service-notes/nixos-anywhere-iso-install.md`](docs/service-notes/nixos-anywhere-iso-install.md).
 
 Without `--yes` the run stops after the enrollment checkpoint so the probed
 declaration can be reviewed first:
@@ -87,7 +90,8 @@ nix build .#iso.<host>
 ```
 
 (`.#iso.<host>` is shorthand for
-`.#nixosConfigurations.<host>.config.system.build.isoImage`.) Write it
+`.#nixosConfigurations.<host>.config.system.build.images.iso`; the artifact
+lands in `result/iso/`.) Write it
 to a USB stick and boot the target from it (e.g. a Proxmox VM). Then
 know the target's IP. The script does not build the ISO, boot the
 target, or guess the address.

@@ -126,8 +126,10 @@ The cross-host evaluation test keeps the primary graphical application set in
 sync between NixOS and standalone Linux. Add generally useful Linux desktop apps
 to both package surfaces, or intentionally document why a package is host-only.
 
-Linux machine declarations currently have disabled boot/storage authority. CI
-and operators may build their toplevels without activating them:
+Enrolled hosts (remembrance) carry full boot/storage authority; a pending host
+(antagony) gets its enrollment written by the one-command installer before the
+destructive stage. CI and operators may build any declared toplevel without
+activating it:
 
 ```bash
 cd ~/nixos
@@ -136,9 +138,10 @@ nix run .#build
 ```
 
 The Linux app inventory derives activation authority from the machine records.
-`build-switch` builds the selected toplevel and runs `sudo nixos-rebuild
-switch`; `clean` deletes system generations older than 7 days. Standalone
-`home-switch` and `home-news` remain available on both Linux systems.
+`install` runs the reviewed enrollment and the first install on a live target;
+`build-switch` builds the selected toplevel and activates it via `nh os switch`;
+`clean` deletes system generations older than 7 days. Standalone `home-switch`
+and `home-news` remain available on both Linux systems.
 
 The Apple Silicon machine exposes the same `build-switch`, `clean`, `update`,
 `build`, and `search-pkgs` apps, where `build-switch` runs
