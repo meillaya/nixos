@@ -217,6 +217,17 @@ def _gpu_renderer_digest() -> str | None:
     return None
 
 
+def _gpu_identity_digest(address: str) -> str:
+    # Headless live environments cannot run glxinfo (no display), so the
+    # renderer digest falls back to the PCI identity of the selected GPU --
+    # a hardware fact that stays stable across installs and OSes.
+    sysfs_addr = address if address.startswith("0000:") else f"0000:{address}"
+    device = Path("/sys/bus/pci/devices") / sysfs_addr
+    vendor = (device / "vendor").read_text().strip()
+    pci_device = (device / "device").read_text().strip()
+    return _sha256(f"pci:{vendor}:{pci_device}")
+
+
 def _network_rows_and_caps(pci: list[tuple[str, str, str]]) -> tuple[list[JsonObject], list[str]]:
     ethernet: list[tuple[str, str, str]] = []
     wifi: list[tuple[str, str, str]] = []
@@ -288,6 +299,7 @@ def _capability_values(
     bluetooth: bool,
     gpu_present: bool,
     power: bool,
+    suspend: bool,
     ddc_present: bool,
     remote: bool,
 ) -> JsonObject:
@@ -310,6 +322,8 @@ def _capability_values(
         present.add("gpu")
     if power:
         present.add("power")
+    if suspend:
+        present.add("suspend")
     if ddc_present:
         present.add("ddc")
     present.update(network_caps)
@@ -351,6 +365,20 @@ def _power_daemon() -> str | None:
     return None
 
 
+def _has_power_supply() -> bool:
+    # Hardware presence, not the running OS: a live installer never runs the
+    # power daemon, but a laptop still has a battery/AC adapter.
+    root = Path("/sys/class/power_supply")
+    return root.is_dir() and any(root.iterdir())
+
+
+def _suspend_available() -> bool:
+    state = Path("/sys/power/state")
+    if not state.is_file():
+        return False
+    return bool(set(state.read_text().split()) & {"mem", "disk"})
+
+
 def probe_fixture(base: JsonObject, trust: JsonObject, disk_by_id: str | None = None) -> JsonObject:
     """Build the typed attended fixture from the real hardware of this machine.
 
@@ -374,19 +402,22 @@ def probe_fixture(base: JsonObject, trust: JsonObject, disk_by_id: str | None = 
     gpu = None
     if gpu_present:
         driver = "amdgpu"
+        renderer = None
         for address, pci_class, _ in pci:
             if pci_class == _CLASS_GPU:
                 driver = _driver_for(address) or "amdgpu"
+                renderer = _gpu_renderer_digest() or _gpu_identity_digest(address)
                 break
-        renderer = _gpu_renderer_digest()
         if renderer is None:
-            raise ContractError("probe: GPU present but renderer digest unavailable (need glxinfo)")
+            raise ContractError("probe: GPU present but neither renderer nor PCI identity is readable")
         gpu = {"expectedDriver": driver, "expectedRendererDigest": renderer}
 
     audio = _has_audio()
     bluetooth = _has_bluetooth()
     ddc_present = _has_ddc()
-    power = _power_daemon() == "power-profiles-daemon"
+    power = _has_power_supply() or _power_daemon() == "power-profiles-daemon"
+    power_daemon = "power-profiles-daemon" if power else None
+    suspend = _suspend_available()
     remote = False
 
     # Firmware inventory: network controllers + GPU + host bridge (+ NVMe).
@@ -425,7 +456,7 @@ def probe_fixture(base: JsonObject, trust: JsonObject, disk_by_id: str | None = 
         raise ContractError("probe: firmware inventory empty")
     firmware.sort(key=lambda row: row["logicalId"])
 
-    capabilities = _capability_values(network_caps, audio, bluetooth, gpu_present, power, ddc_present, remote)
+    capabilities = _capability_values(network_caps, audio, bluetooth, gpu_present, power, suspend, ddc_present, remote)
 
     return {
         "schemaVersion": 1,
@@ -453,7 +484,7 @@ def probe_fixture(base: JsonObject, trust: JsonObject, disk_by_id: str | None = 
             "remoteInstall": remote,
             "fallback": {"localConsole": True, "reconnect": True},
         },
-        "powerDaemon": _power_daemon(),
+        "powerDaemon": power_daemon,
         "devices": {
             "audio": {"state": "present" if audio else "absent", **({} if audio else {"reason": "not-equipped"})},
             "bluetooth": {

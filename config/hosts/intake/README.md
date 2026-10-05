@@ -44,3 +44,14 @@ After the artifact is written, copy it into this directory and commit it; the
 build-time machine record follows automatically (model.nix imports the JSON).
 No synthetic fixture may enroll a host.
 
+## One-command install on the target
+
+The flake app `nix run github:meillaya/nixos#install` runs the same pipeline on
+the machine being installed (a live Linux environment with Nix, e.g. the flake's
+ISO): it probes the real hardware, writes `<host>.json` + `<host>.intake.json`
+into a writable work tree, commits them there, folds the fresh host key into the
+operator sops store when it is available, and only then runs the build gate and
+`nixos-anywhere` via `bin/host-install.sh --install-only`. Without `--yes` the
+run stops after the enrollment checkpoint; `--skip-fold --save DIR` covers a
+live environment that does not carry the operator secrets yet.
+

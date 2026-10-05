@@ -19,6 +19,10 @@ options:
   --host <name>       flake hostname to enroll/install (default: remembrance)
   --yes               confirm the destructive nixos-anywhere install
   --skip-install      enroll + fold + commit only; no build/install/verify
+  --install-only      skip enroll/fold; run the build gate + install on the
+                      already-enrolled worktree
+  --skip-fold         keep the host key local: copy + commit the intake but do
+                      not fold the host private key into the sops store
   --skip-verify       skip the post-install nh os switch stage
   --dry-run           print the exact command plan; execute nothing
 EOF
@@ -33,6 +37,8 @@ target_host=""
 host="remembrance"
 assume_yes=false
 skip_install=false
+install_only=false
+skip_fold=false
 skip_verify=false
 dry_run=false
 
@@ -56,6 +62,14 @@ while [[ $# -gt 0 ]]; do
       skip_install=true
       shift
       ;;
+    --install-only)
+      install_only=true
+      shift
+      ;;
+    --skip-fold)
+      skip_fold=true
+      shift
+      ;;
     --skip-verify)
       skip_verify=true
       shift
@@ -75,15 +89,23 @@ done
 tmpdir="${TMPDIR:-/tmp}/host-install.$$"
 
 print_plan() {
-  echo "0. PYTHONPATH=${root} python3 scripts/hardware/gen_trust.py --host ${host} -o ${tmpdir}/trust.json"
-  echo "1. ssh root@${target_host} 'mkdir -p /root/enroll'"
-  echo "2. scp trust.json root@${target_host}:/root/enroll/"
-  echo "3. ssh root@${target_host} 'systemctl start hardware-enroll'"
-  echo "4. scp -r root@${target_host}:/root/enroll/ ${tmpdir}/"
-  echo "5. cp ${tmpdir}/${host}.json config/hosts/intake/${host}.json"
-  echo "   cp ${tmpdir}/${host}.intake.json config/hosts/intake/${host}.intake.json"
-  echo "6. bin/nix-config-host-key-enroll ${tmpdir}/${host}.host-key ${host}"
-  echo "7. git add config/hosts/intake/ secrets/remembrance-keys.yaml && git commit -m \"enroll: refresh ${host}\""
+  if [[ "$install_only" == true ]]; then
+    echo "0-7. (skipped: --install-only)"
+  else
+    echo "0. PYTHONPATH=${root} python3 scripts/hardware/gen_trust.py --host ${host} -o ${tmpdir}/trust.json"
+    echo "1. ssh root@${target_host} 'mkdir -p /root/enroll'"
+    echo "2. scp trust.json root@${target_host}:/root/enroll/"
+    echo "3. ssh root@${target_host} 'systemctl start hardware-enroll'"
+    echo "4. scp -r root@${target_host}:/root/enroll/ ${tmpdir}/"
+    echo "5. cp ${tmpdir}/${host}.json config/hosts/intake/${host}.json"
+    echo "   cp ${tmpdir}/${host}.intake.json config/hosts/intake/${host}.intake.json"
+    if [[ "$skip_fold" == true ]]; then
+      echo "6. (skipped: --skip-fold) host key stays at ${tmpdir}/${host}.host-key"
+    else
+      echo "6. bin/nix-config-host-key-enroll ${tmpdir}/${host}.host-key ${host}"
+    fi
+    echo "7. git add config/hosts/intake/ [secrets/remembrance-keys.yaml] && git commit -m \"enroll: refresh ${host}\""
+  fi
   echo "8. nh os build . -H ${host}"
   if [[ "$assume_yes" == true ]]; then
     echo "9. nix run github:nix-community/nixos-anywhere -- --flake .#${host} --target-host root@${target_host}"
@@ -131,18 +153,23 @@ stage_fold() {
   cp "$tmpdir/$host.json" "config/hosts/intake/$host.json"
   cp "$tmpdir/$host.intake.json" "config/hosts/intake/$host.intake.json"
 
-  if ! bin/nix-config-host-key-enroll "$tmpdir/$host.host-key" "$host"; then
+  if [[ "$skip_fold" == true ]]; then
+    echo "warning: --skip-fold: host key is NOT folded into secrets/remembrance-keys.yaml; it stays at $tmpdir/$host.host-key and must be stored by the caller" >&2
+  elif ! bin/nix-config-host-key-enroll "$tmpdir/$host.host-key" "$host"; then
     echo "error: host-key fold failed for $host; the retrieved key does not match the committed enrollment record (or sops re-encryption failed). Nothing was committed; aborting before build/install." >&2
     exit 1
   fi
 
   # Commit only after the fold: the sops file now embeds the folded host key,
   # and a clean checkout must carry it.
-  git add config/hosts/intake/ secrets/remembrance-keys.yaml
+  git add config/hosts/intake/
+  if [[ "$skip_fold" != true ]]; then
+    git add secrets/remembrance-keys.yaml
+  fi
   git commit -m "enroll: refresh $host"
 
   # A partial `git add` would silently omit a path from the commit.
-  if ! git diff-tree --no-commit-id --name-only -r HEAD | grep -q "secrets/remembrance-keys.yaml"; then
+  if [[ "$skip_fold" != true ]] && ! git diff-tree --no-commit-id --name-only -r HEAD | grep -q "secrets/remembrance-keys.yaml"; then
     echo "error: commit HEAD does not contain secrets/remembrance-keys.yaml; a clean checkout would miss the folded host key." >&2
     exit 1
   fi
@@ -197,15 +224,20 @@ fi
 
 [[ -n "$target_host" ]] || { echo "error: --target-host is required" >&2; die_usage; }
 
-stage_enroll
-stage_fold
+if [[ "$install_only" == true ]]; then
+  stage_build_gate
+  stage_install
+else
+  stage_enroll
+  stage_fold
 
-if [[ "$skip_install" == true ]]; then
-  exit 0
+  if [[ "$skip_install" == true ]]; then
+    exit 0
+  fi
+
+  stage_build_gate
+  stage_install
 fi
-
-stage_build_gate
-stage_install
 
 if [[ "$skip_verify" == true ]]; then
   echo "stage verify: skipped (--skip-verify)" >&2

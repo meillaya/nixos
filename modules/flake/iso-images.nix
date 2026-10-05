@@ -15,6 +15,11 @@
 # overwriting any prior artifact for the host. The operator supplies the trust
 # fixture at /root/enroll/trust.json (fail-closed without it). See
 # `scripts/hardware/auto_enroll.py` and `config/hosts/intake/README.md`.
+#
+# The image also declares itself a NixOS installer (`VARIANT_ID=installer`), so
+# nixos-anywhere skips its kexec phase. Without the marker a one-command
+# self-install (nixos-anywhere runs on the same machine through root@127.0.0.1)
+# would kexec out from under its own orchestrating process.
 { lib, config, ... }:
 let
   authority = import ../entities/_machine-authority/model.nix;
@@ -45,11 +50,14 @@ let
           '';
         };
       };
+      installerMarker = {
+        system.nixos.variant_id = "installer";
+      };
     in
     (config.flake.nixosConfigurations.${host}.extendModules {
       modules =
         lib.optional needsInitrdForce { boot.initrd.enable = lib.mkForce true; }
-        ++ [ enrollment ];
+        ++ [ enrollment installerMarker ];
     }).config.system.build.images.iso;
 in
 {

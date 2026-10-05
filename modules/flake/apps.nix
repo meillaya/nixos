@@ -515,9 +515,20 @@ EOF
     };
   mkLinuxApps = system:
     let
+      pkgs = nixpkgs.legacyPackages.${system};
       nhPkg = inputs.nh.packages.${system}.default or null;
+      # One-command local installer: the wrapper carries the tools the probe and
+      # the self-SSH install path need (the flake ISO provides them itself).
+      installDeps = [
+        pkgs.python3
+        pkgs.openssh
+        pkgs.sops
+        pkgs.pciutils
+        pkgs.mesa-demos
+      ] ++ lib.optionals (nhPkg != null) [ nhPkg ];
     in {
       "build" = mkApp "build" system { };
+      "install" = mkApp "install" system { pathDeps = installDeps; };
       "home-news" = mkHomeNewsApp system;
       "home-switch" = mkHomeSwitchApp system;
       "search-pkgs" = mkSearchPkgsApp system;

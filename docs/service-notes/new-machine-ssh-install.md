@@ -12,6 +12,29 @@ enrollments, reviewed machine record) is unchanged — see
 [`nixos-anywhere-iso-install.md`](./nixos-anywhere-iso-install.md) for the
 manual procedure this wraps.
 
+## The short path: one command on the target itself
+
+When no second machine is available, the flake app does the whole flow on the
+target. Boot a live Linux environment with Nix (the flake's own ISO is the
+recommended one), then:
+
+```bash
+sudo nix run --extra-experimental-features 'nix-command flakes' \
+  github:meillaya/nixos#install -- --yes
+```
+
+The app detects the machine (a ThinkPad P52 maps to `antagony`; otherwise pass
+`--host <name>`), copies the flake into a writable work tree, probes the real
+hardware through the same intake pipeline the ISO oneshot uses, commits the
+enrollment, folds the fresh host key into the sops store when the two secrets
+below are present, then runs the build gate and `nixos-anywhere` against
+`root@127.0.0.1`. Without `--yes` it stops after the enrollment checkpoint;
+`--dry-run` prints the plan. When the sops store or age identity is missing,
+`--skip-fold --save <persistent-dir>` keeps the enrollment recoverable instead.
+
+The rest of this note is the operator-side variant, which needs an SSH-reachable
+target and a second machine holding the repo.
+
 ## 0. Before anything: back up two secrets
 
 These are **not in the repo** and a fresh clone cannot work without them:

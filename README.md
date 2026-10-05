@@ -30,6 +30,48 @@ All configured systems get the flake app surface: on Linux `build`,
 
 ## Install
 
+### One command on the target (no operator machine)
+
+Run the installer on the machine being installed, booted into a live Linux
+environment with Nix (the flake's own ISO is the recommended one):
+
+```bash
+sudo nix run --extra-experimental-features 'nix-command flakes' \
+  github:meillaya/nixos#install -- --yes
+```
+
+The command auto-detects a known laptop model (a ThinkPad P52 maps to
+`antagony`; pass `--host <name>` otherwise), copies the flake into a writable
+work tree (`/root/nixos-install`), probes the real hardware through the same
+reviewed intake pipeline the ISO oneshot uses — CPU/microcode, UEFI/boot,
+the internal disk binding, GPU, network controllers, firmware, power and
+suspend — commits the enrollment into the work tree, folds the freshly
+generated host key into the sops store when it is available, and then hands
+the build gate and the destructive `nixos-anywhere` install to
+`bin/host-install.sh --install-only` (which re-checks `--yes` itself).
+
+Without `--yes` the run stops after the enrollment checkpoint so the probed
+declaration can be reviewed first:
+
+```bash
+sudo nix run .#install --                  # probe + enroll, print the summary
+sudo nix run .#install -- --yes            # build gate + install + reboot
+sudo nix run .#install -- --dry-run        # print the plan, execute nothing
+sudo nix run .#install -- --skip-fold --save /mnt/usb/enroll --yes
+```
+
+`--skip-fold` keeps the host key local instead of folding it into
+`secrets/remembrance-keys.yaml`; it then requires `--save DIR` on persistent
+storage so the enrollment stays recoverable. Without a display, the GPU
+renderer digest falls back to the selected GPU's PCI identity so headless
+live environments can still enroll. The install stage itself is refused unless
+`/` is a live tmpfs/overlay root (boot the ISO): erasing the enrolled disk from
+a disk-backed root would destroy the running system underneath the process.
+`--allow-mounted-root` bypasses that check for the rare case where the target
+disk is not the running root.
+
+### From the operator side
+
 Installation is ISO-driven and wrapped by one operator-side command,
 `bin/host-install.sh`. Run it from a machine holding this repo, against
 the target booted into the installer ISO:
@@ -72,6 +114,8 @@ Modes:
 bin/host-install.sh --target-host <ip> --skip-install   # enroll + commit only, no install
 bin/host-install.sh --target-host <ip> --dry-run        # print the exact command plan, execute nothing
 bin/host-install.sh --target-host <ip> --yes --skip-verify  # skip the post-install nh switch
+bin/host-install.sh --target-host <ip> --install-only   # build gate + install, skip enroll/fold
+bin/host-install.sh --target-host <ip> --yes --skip-fold    # keep the host key local
 ```
 
 `--host` defaults to `remembrance`; pass `--host <host>` for the other

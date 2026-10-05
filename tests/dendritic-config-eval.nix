@@ -11,7 +11,7 @@ let
   validators = import ../modules/entities/_machine-authority/validators.nix;
   shellName = shell: shell.pname or shell.name or (builtins.baseNameOf (toString shell));
   expectedLinuxApps = [
-    "build" "build-switch" "clean" "home-news" "home-switch" "nh" "search-pkgs" "update" "zix"
+    "build" "build-switch" "clean" "home-news" "home-switch" "install" "nh" "search-pkgs" "update" "zix"
   ];
   hasShell = name: shells: builtins.any (shell: shellName shell == name) shells;
   remoteCapabilityValues = builtins.listToAttrs (

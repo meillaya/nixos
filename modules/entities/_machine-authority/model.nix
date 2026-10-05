@@ -5,14 +5,22 @@ let
   # hardware-intake artifact (config/hosts/intake/remembrance.json) emitted by
   # `bin/nix-config-hardware-intake create` + `validate`. Importing it here makes
   # the committed enrollment the single source of truth; re-enrollment replaces
-  # the file and the build-time record follows automatically. antagony and
-  # entropy remain pending/disabled below.
+  # the file and the build-time record follows automatically. antagony loads the
+  # same artifact as soon as the first enrollment writes
+  # config/hosts/intake/antagony.json (the one-command installer does this on
+  # the target) and otherwise falls back to the inline pending record below.
+  # entropy remains pending/disabled.
   machines = {
     remembrance = builtins.fromJSON (
       builtins.readFile ../../../config/hosts/intake/remembrance.json
     );
 
-    antagony = {
+    antagony =
+      if builtins.pathExists ../../../config/hosts/intake/antagony.json then
+        builtins.fromJSON (
+          builtins.readFile ../../../config/hosts/intake/antagony.json
+        )
+      else {
       hostId = "antagony";
       target = "nixosConfigurations.antagony";
       system = "x86_64-linux";
@@ -47,7 +55,7 @@ let
       ddcConnectors = [ ];
       remoteInstall = false;
       platformExpectations.kind = "none";
-    };
+      };
 
     entropy = {
       hostId = "entropy";

@@ -1,0 +1,371 @@
+#!/usr/bin/env bash
+# One-command NixOS install for a host declared in this flake.
+#
+# Run it as root on the target machine, inside a live Linux environment that has
+# Nix. The flake's own installer ISO (`nix build .#iso.<host>`) is the supported
+# environment: it carries a running sshd and can boot in RAM, so wiping the disk
+# underneath it is safe. Any live Linux with Nix and sshd also works.
+#
+#   sudo nix run --extra-experimental-features 'nix-command flakes' \
+#     github:meillaya/nixos#install -- --yes
+#
+# Stages:
+#   1. copy this flake into a writable work tree (default /root/nixos-install),
+#   2. probe the real hardware of this machine and write the reviewed
+#      enrollment artifacts through the same pipeline the ISO oneshot uses,
+#   3. commit the enrollment into the work tree and fold the freshly generated
+#      host key into the operator sops store when it is available,
+#   4. hand the build gate and the destructive nixos-anywhere install to
+#      bin/host-install.sh --install-only, which re-checks --yes itself.
+#
+# Without --yes the run stops after the enrollment checkpoint: the hardware
+# declaration is reviewed in the work tree before anything touches the disk.
+set -euo pipefail
+
+orig_args=("$@")
+
+host=""
+disk=""
+workdir=""
+save_dir=""
+trust_file=""
+reviewer="${USER:-install}"
+target_host="127.0.0.1"
+assume_yes=false
+dry_run=false
+install_only=false
+skip_fold=false
+allow_mounted_root=false
+
+usage() {
+  cat <<'EOF'
+Usage: nix run .#install -- [options]
+
+Installs NixOS on the machine running this command, using the flake's reviewed
+hardware-enrollment pipeline. Requires root (sudo re-execs automatically) and a
+live Linux environment with sshd (the flake's own ISO is recommended).
+
+Options:
+  --host NAME        flake host to install (default: auto-detected from DMI;
+                     a ThinkPad P52 maps to antagony)
+  --disk BASENAME    pin the target whole-device /dev/disk/by-id basename
+                     (default: auto-discover the internal disk)
+  --workdir DIR      writable work tree (default /root/nixos-install; reused
+                     when it already holds a flake)
+  --save DIR         copy the enrollment artifacts (declaration, intake
+                     document, host key) to DIR on persistent storage
+  --trust FILE       operator trust fixture (default: generated from the
+                     fleet record by scripts/hardware/gen_trust.py)
+  --reviewer NAME    reviewer principal recorded in the intake document
+  --target-host ADDR install address (only 127.0.0.1/localhost; this installer
+                     cannot install a remote machine)
+  --yes              confirm the destructive install (without it the run stops
+                     after the enrollment checkpoint)
+  --install-only     skip probe/enroll/fold; install the work tree as-is
+  --skip-fold        keep the host key local instead of folding it into the
+                     sops store (requires --save)
+  --allow-mounted-root
+                     proceed even when / is a disk filesystem; only safe when
+                     the enrolled target disk is not the running root
+  --dry-run          print the plan and execute nothing
+  -h, --help         show this help
+EOF
+}
+
+die() {
+  printf 'install: %s\n' "$*" >&2
+  exit 1
+}
+
+while (( $# > 0 )); do
+  case "$1" in
+    --host=*) host=${1#*=}; shift ;;
+    --host)
+      (( $# >= 2 )) || die "--host requires a value"
+      host=$2
+      shift 2
+      ;;
+    --disk=*) disk=${1#*=}; shift ;;
+    --disk)
+      (( $# >= 2 )) || die "--disk requires a value"
+      disk=$2
+      shift 2
+      ;;
+    --workdir=*) workdir=${1#*=}; shift ;;
+    --workdir)
+      (( $# >= 2 )) || die "--workdir requires a value"
+      workdir=$2
+      shift 2
+      ;;
+    --save=*) save_dir=${1#*=}; shift ;;
+    --save)
+      (( $# >= 2 )) || die "--save requires a value"
+      save_dir=$2
+      shift 2
+      ;;
+    --trust=*) trust_file=${1#*=}; shift ;;
+    --trust)
+      (( $# >= 2 )) || die "--trust requires a value"
+      trust_file=$2
+      shift 2
+      ;;
+    --reviewer=*) reviewer=${1#*=}; shift ;;
+    --reviewer)
+      (( $# >= 2 )) || die "--reviewer requires a value"
+      reviewer=$2
+      shift 2
+      ;;
+    --target-host=*) target_host=${1#*=}; shift ;;
+    --target-host)
+      (( $# >= 2 )) || die "--target-host requires a value"
+      target_host=$2
+      shift 2
+      ;;
+    --yes) assume_yes=true; shift ;;
+    --install-only) install_only=true; shift ;;
+    --skip-fold) skip_fold=true; shift ;;
+    --allow-mounted-root) allow_mounted_root=true; shift ;;
+    --dry-run) dry_run=true; shift ;;
+    --help|-h) usage; exit 0 ;;
+    *) die "unknown argument: $1 (see --help)" ;;
+  esac
+done
+
+[[ "$(uname -s)" == "Linux" ]] || die "this installer targets Linux"
+case "$target_host" in
+  127.0.0.1|localhost|::1) ;;
+  *) die "the one-command installer only installs the machine it runs on; use bin/host-install.sh for a remote target" ;;
+esac
+[[ "$reviewer" =~ ^[A-Za-z0-9._-]{1,64}$ ]] || die "--reviewer must match [A-Za-z0-9._-]{1,64}"
+
+script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)
+flake_root=$(cd -- "${script_dir}/../.." && pwd -P)
+[[ -f "$flake_root/flake.nix" ]] || die "cannot locate the flake root from ${BASH_SOURCE[0]}"
+
+if [[ -z "$host" ]]; then
+  product=$(cat /sys/devices/virtual/dmi/id/product_version 2>/dev/null || true)
+  [[ -n "$product" ]] || product=$(cat /sys/devices/virtual/dmi/id/product_name 2>/dev/null || true)
+  case "$product" in
+    "ThinkPad P52") host="antagony" ;;
+    *) host="" ;;
+  esac
+  if [[ -n "$host" ]]; then
+    printf 'install: detected host %s from DMI product "%s"\n' "$host" "$product"
+  fi
+fi
+
+if [[ "$dry_run" == true ]]; then
+  printf 'install plan (host: %s, target: root@%s)\n' "${host:-<host>}" "$target_host"
+  cat <<EOF
+  1. work tree   cp -a ${flake_root}/. -> ${workdir:-/root/nixos-install} (reused if it already holds a flake)
+  2. enrollment  python3 -m scripts.hardware.auto_enroll --host ${host:-<host>} --base <machine record> --trust <generated> --out <workdir>/.install-staging
+  3. commit      config/hosts/intake/${host:-<host>}.json + .intake.json
+  4. host key    bin/nix-config-host-key-enroll <host-key> ${host:-<host>}   (--skip-fold: kept local, --save required)
+  5. install     <workdir>/bin/host-install.sh --host ${host:-<host>} --target-host ${target_host} --install-only --yes --skip-verify
+                 (refused unless / is a live tmpfs/overlay root, or --allow-mounted-root)
+EOF
+  exit 0
+fi
+
+[[ -n "$host" ]] || die "cannot infer a flake host for this machine; pass --host <name>"
+workdir=${workdir:-/root/nixos-install}
+staging="$workdir/.install-staging"
+
+if (( EUID != 0 )); then
+  if command -v sudo >/dev/null 2>&1; then
+    exec sudo --preserve-env=PATH -- "$0" "${orig_args[@]}"
+  fi
+  die "must run as root"
+fi
+
+declared_hosts=$(nix eval --impure --json --expr \
+  "builtins.attrNames (builtins.getFlake \"path:${flake_root}\").nixosConfigurations" 2>/dev/null) \
+  || die "cannot evaluate the flake at ${flake_root}"
+case "$declared_hosts" in
+  *"\"${host}\""*) ;;
+  *) die "host '${host}' is not a nixosConfiguration of this flake" ;;
+esac
+
+prepare_worktree() {
+  if [[ -f "$workdir/flake.nix" ]]; then
+    printf 'install: reusing work tree %s\n' "$workdir"
+  else
+    mkdir -p "$workdir"
+    cp -a "$flake_root/." "$workdir/"
+    chmod -R u+w "$workdir"
+  fi
+  if [[ ! -d "$workdir/.git" ]]; then
+    # A store copy may carry a .git file pointing at the original checkout;
+    # never commit into that repository.
+    rm -f "$workdir/.git"
+    git -C "$workdir" init -q
+  fi
+  git -C "$workdir" config user.email "nixos-install@localhost"
+  git -C "$workdir" config user.name "nixos install"
+  if ! git -C "$workdir" rev-parse HEAD >/dev/null 2>&1; then
+    git -C "$workdir" add -A
+    git -C "$workdir" commit -q -m "install: work tree for ${host}"
+  fi
+}
+
+setup_self_ssh() {
+  mkdir -p /root/.ssh
+  chmod 700 /root/.ssh
+  if [[ ! -f /root/.ssh/id_ed25519 ]]; then
+    ssh-keygen -q -t ed25519 -N '' -C nixos-install -f /root/.ssh/id_ed25519
+  fi
+  touch /root/.ssh/authorized_keys
+  chmod 600 /root/.ssh/authorized_keys
+  local pub
+  pub=$(cat /root/.ssh/id_ed25519.pub)
+  grep -qxF "$pub" /root/.ssh/authorized_keys || printf '%s\n' "$pub" >> /root/.ssh/authorized_keys
+  systemctl start sshd >/dev/null 2>&1 || true
+  if ! ssh -o BatchMode=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
+    -o ConnectTimeout=10 "root@${target_host}" true >/dev/null 2>&1; then
+    die "root@${target_host} is not reachable over SSH; nixos-anywhere needs a running sshd that accepts the root key (the flake's ISO provides one)"
+  fi
+}
+
+enroll() {
+  rm -rf "$staging"
+  mkdir -p "$staging"
+
+  # The base is the flake's current machine record: the inline pending
+  # declaration until the first enrollment, the committed record afterwards.
+  nix eval --impure --json --expr \
+    "(import ${workdir}/modules/entities/_machine-authority/model.nix).getMachine \"${host}\"" \
+    > "$staging/base.raw.json" || die "cannot read the machine record for ${host}"
+  PYTHONPATH="$workdir" python3 - "$staging/base.raw.json" "$staging/base.json" <<'PY'
+import json
+import sys
+from pathlib import Path
+from scripts.support.canonical_json import encode
+
+Path(sys.argv[2]).write_bytes(encode(json.loads(Path(sys.argv[1]).read_text())))
+PY
+
+  if [[ -n "$trust_file" ]]; then
+    cp "$trust_file" "$staging/trust.json"
+  else
+    PYTHONPATH="$workdir" python3 "$workdir/scripts/hardware/gen_trust.py" \
+      --host "$host" -o "$staging/trust.json" \
+      || die "trust generation failed; pass --trust <file> or restore the operator secrets"
+  fi
+
+  local -a disk_args=()
+  [[ -n "$disk" ]] && disk_args=(--disk "$disk")
+  PYTHONPATH="$workdir" python3 -m scripts.hardware.auto_enroll \
+    --host "$host" \
+    --base "$staging/base.json" \
+    --trust "$staging/trust.json" \
+    --out "$staging" \
+    --reviewer "$reviewer" \
+    "${disk_args[@]}" \
+    || die "hardware enrollment failed; nothing was installed"
+
+  cp "$staging/${host}.json" "$workdir/config/hosts/intake/${host}.json"
+  cp "$staging/${host}.intake.json" "$workdir/config/hosts/intake/${host}.intake.json"
+  git -C "$workdir" add "config/hosts/intake/${host}.json" "config/hosts/intake/${host}.intake.json"
+  if ! git -C "$workdir" diff --cached --quiet; then
+    git -C "$workdir" commit -q -m "enroll: refresh ${host}"
+  fi
+
+  PYTHONPATH="$workdir" python3 - "$workdir/config/hosts/intake/${host}.json" <<'PY'
+import json
+import sys
+
+machine = json.load(open(sys.argv[1]))
+gpu = machine["devices"]["gpu"]
+gpu_note = f"/{gpu['expectedDriver']}" if gpu else ""
+print(f"install: enrollment for {machine['hostId']} ({machine['cpuVendor']})")
+print(f"  gpu      {machine['gpu']} {gpu_note}")
+print(f"  disk     /dev/disk/by-id/{machine['storage']['diskById']} ({machine['storage']['expected']['sizeBytes']} bytes)")
+print(f"  network  {machine['network']} (wifi {machine['capabilities']['values']['network.wifi']['state']}, ethernet {machine['capabilities']['values']['network.ethernet']['state']})")
+print(f"  power    {machine['capabilities']['values']['power']['state']} (suspend {machine['capabilities']['values']['suspend']['state']})")
+PY
+}
+
+fold_host_key() {
+  want_save=false
+  if [[ "$skip_fold" == true ]]; then
+    printf 'install: --skip-fold: host key kept at %s/%s.host-key\n' "$staging" "$host"
+    want_save=true
+    return 0
+  fi
+  local age_key="${SOPS_AGE_KEY_FILE:-$HOME/.config/sops/age/keys.txt}"
+  if [[ -f "$workdir/secrets/remembrance-keys.yaml" && -f "$age_key" ]]; then
+    ( cd "$workdir" && bin/nix-config-host-key-enroll "$staging/${host}.host-key" "$host" ) \
+      || die "host-key fold failed; pass --skip-fold --save DIR to keep the enrollment local"
+    # The sops store is gitignored by design; -f mirrors the operator flow when
+    # the work tree has not force-added the store yet.
+    git -C "$workdir" add secrets/remembrance-keys.yaml 2>/dev/null \
+      || git -C "$workdir" add -f secrets/remembrance-keys.yaml
+    if ! git -C "$workdir" diff --cached --quiet; then
+      git -C "$workdir" commit -q -m "enroll: fold ${host} host key"
+    fi
+  else
+    printf 'install: no sops store or age identity at %s; host key stays at %s/%s.host-key\n' \
+      "$age_key" "$staging" "$host" >&2
+    want_save=true
+  fi
+}
+
+save_artifacts() {
+  [[ -n "$save_dir" ]] || return 0
+  mkdir -p "$save_dir"
+  cp -a "$staging/${host}.json" "$save_dir/${host}.json"
+  cp -a "$staging/${host}.intake.json" "$save_dir/${host}.intake.json"
+  if [[ -f "$staging/${host}.host-key" ]]; then
+    cp -a "$staging/${host}.host-key" "$save_dir/${host}.host-key"
+    chmod 600 "$save_dir/${host}.host-key"
+  fi
+  printf 'install: enrollment artifacts saved to %s\n' "$save_dir"
+}
+
+install_phase() {
+  printf 'install: installing %s on this machine; --yes was given and the install erases the enrolled disk\n' "$host"
+  "$workdir/bin/host-install.sh" \
+    --host "$host" \
+    --target-host "$target_host" \
+    --install-only \
+    --yes \
+    --skip-verify
+}
+
+require_live_root() {
+  [[ "$allow_mounted_root" == true ]] && return 0
+  local fstype
+  fstype=$(awk '$2 == "/" { print $3; exit }' /proc/mounts)
+  case "$fstype" in
+    tmpfs|ramfs|overlay|squashfs) return 0 ;;
+  esac
+  die "/ is a '$fstype' filesystem; the install erases the enrolled disk and must run from a live environment (e.g. the flake ISO) so the running root is not destroyed underneath it. Use --allow-mounted-root only when the target disk is not the running root."
+}
+
+if [[ "$install_only" == true ]]; then
+  [[ -f "$workdir/config/hosts/intake/${host}.json" ]] \
+    || die "--install-only needs an enrolled work tree (${workdir}/config/hosts/intake/${host}.json is missing)"
+  [[ "$assume_yes" == true ]] || die "the install stage requires --yes"
+  require_live_root
+  install_phase
+  exit 0
+fi
+
+prepare_worktree
+enroll
+save_artifacts
+fold_host_key
+save_artifacts
+
+if [[ "$want_save" == true && -z "$save_dir" ]]; then
+  die "the host key was not folded into the sops store; pass --save DIR on persistent storage so the enrollment stays recoverable"
+fi
+
+if [[ "$assume_yes" != true ]]; then
+  printf 'install: enrollment checkpoint complete in %s; re-run with --yes to install (the enrolled disk is erased)\n' "$workdir"
+  exit 0
+fi
+
+setup_self_ssh
+require_live_root
+install_phase

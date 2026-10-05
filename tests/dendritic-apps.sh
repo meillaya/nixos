@@ -17,10 +17,16 @@ python3 -m py_compile "$tmpdir/linux-home-sources.py"
 grep -Fq 'exec ${self}/apps/${system}/${scriptName} "$@"' \
   "$root/modules/flake/apps.nix"
 
-for app in build build-switch clean
+for app in build build-switch clean install
 do
   test -x "$root/apps/x86_64-linux/$app"
 done
+
+# The one-command installer must stay dry-run safe: it prints its plan and
+# touches nothing (no work tree, no trust fixture, no disk).
+"$root/apps/x86_64-linux/install" --dry-run > "$tmpdir/install-plan"
+grep -Fq -- '--install-only' "$tmpdir/install-plan"
+grep -Fq -- 'auto_enroll' "$tmpdir/install-plan"
 
 for system in x86_64-linux; do
   app_names=$(nix eval --impure --json --expr \
@@ -37,6 +43,7 @@ assert apps == [
     "clean",
     "home-news",
     "home-switch",
+    "install",
     "nh",
     "search-pkgs",
     "update",
