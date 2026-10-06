@@ -36,50 +36,23 @@
 # would reject those definitions. Node disk space comes from the qemu-vm
 # module defaults; the extra empty disk is the "nothing was written" witness.
 #
-# Two test-only fixtures keep the VM faithful and bootable (documented in the
-# let-block below): an installed machine's bootstrap-password verifier, which
-# the ISO config's activation validator demands even on a fresh boot, and
-# memory/cores matched to the full workstation closure the ISO config carries.
+# The only test-only fixture left is the resource fit (memory/cores matched to
+# the full workstation closure the ISO config carries). A bootstrap-password seed
+# fixture was removed in todo 16: the ISO variant now neutralizes its own
+# bootstrap-password verifier (see modules/flake/iso-images.nix), so this VM
+# boots the config AS SHIPPED and any regression there fails the test.
 { pkgs, isoConfig }:
 let
-  # Test-only fixture 1: a throwaway yescrypt verifier for the VM's account.
-  # The ISO config's activation validator (modules/nixos/bootstrap-password.nix)
-  # fails any fresh machine without /var/lib/nixos-bootstrap/mei-password.hash,
-  # and the config's systemd initrd runs activation before switch-root, so a
-  # fresh boot never reaches stage 2 (observed: switch-root fails with
-  # "os-release file is missing", then the test framework's panic-on-fail kills
-  # the VM). Installed machines carry exactly this file, staged by the
-  # installer; seeding it here reproduces the installed machine's first boot.
-  bootstrapHash = "$y$j9T$2Et07t.7WMkmGGTiT3n2I0$RYWTdy.Dy3EYwq5ySiGBDOc8MYLoDxEMOE2m9QLxeQ5";
-
   vmFixture =
     { pkgs, ... }:
     {
-      # Test-only fixture 2: resource fit. The imported config is a full
+      # Test-only fixture: resource fit. The imported config is a full
       # workstation closure; the qemu-vm 1 GiB / 1 CPU defaults are too small
-      # for it under the test driver.
+      # for it under the test driver. No activation fixture is needed: the ISO
+      # variant neutralizes its own bootstrap-password verifier (see
+      # modules/flake/iso-images.nix), so this VM boots the config as shipped.
       virtualisation.memorySize = 2048;
       virtualisation.cores = 2;
-
-      # Seed the verifier into the real root before the initrd's activation
-      # runs, so the validator sees what an installed system would carry.
-      boot.initrd.systemd.services.seed-bootstrap-password = {
-        description = "Seed the bootstrap password hash fixture for the gate-inertness VM";
-        unitConfig.DefaultDependencies = false;
-        after = [ "sysroot.mount" ];
-        before = [ "initrd-nixos-activation.service" ];
-        wantedBy = [ "initrd-nixos-activation.service" ];
-        serviceConfig = {
-          Type = "oneshot";
-          RemainAfterExit = true;
-        };
-        script = ''
-          ${pkgs.coreutils}/bin/install -d -o 0 -g 0 -m 0700 /sysroot/var/lib/nixos-bootstrap
-          ${pkgs.coreutils}/bin/printf '%s\n' '${bootstrapHash}' > /sysroot/var/lib/nixos-bootstrap/mei-password.hash
-          ${pkgs.coreutils}/bin/chown 0:0 /sysroot/var/lib/nixos-bootstrap/mei-password.hash
-          ${pkgs.coreutils}/bin/chmod 0600 /sysroot/var/lib/nixos-bootstrap/mei-password.hash
-        '';
-      };
     };
 in
 pkgs.testers.runNixOSTest {

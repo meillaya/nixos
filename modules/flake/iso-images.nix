@@ -130,11 +130,32 @@ let
           };
         };
       };
+      # Installer-only: the live ISO's "/" is a fresh tmpfs, so the bootstrap
+      # password verifier cannot find /var/lib/nixos-bootstrap/<user>-password.hash
+      # at activation time. With systemd's initrd, `initrd-nixos-activation`
+      # runs EVERY activation script before switch-root, so the verifier's
+      # hard-fail aborts the boot and switch-root then refuses ("os-release file
+      # is missing") -> emergency mode (F-A diagnosis). Neutralize both
+      # bootstrap-password activation scripts on the installer variant only; the
+      # installed system (and this variant's `users` activation, which merely
+      # warns when `hashedPasswordFile` is absent under mutableUsers) keeps
+      # the validators intact.
+      bootstrapPasswordInert =
+        let
+          inert = {
+            deps = [ ];
+            text = "";
+          };
+        in
+        {
+          system.activationScripts.bootstrapPasswordHash = lib.mkForce inert;
+          system.activationScripts.consumeBootstrapPassword = lib.mkForce inert;
+        };
     in
     (config.flake.nixosConfigurations.${host}.extendModules {
       modules =
         lib.optional needsInitrdForce { boot.initrd.enable = lib.mkForce true; }
-        ++ [ enrollment installerMarker btrfsSupport autoinstall ];
+        ++ [ enrollment installerMarker btrfsSupport autoinstall bootstrapPasswordInert ];
     });
 in
 {
