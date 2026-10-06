@@ -36,7 +36,9 @@
       '';
 
       install-staging = pkgs.runCommand "install-staging" {
-        nativeBuildInputs = [ pkgs.bash pkgs.coreutils pkgs.gnugrep pkgs.nix pkgs.python3 ];
+        # mkpasswd: the test executes the staging generator for real, and the
+        # generator shells out to `mkpasswd --method=yescrypt --stdin`.
+        nativeBuildInputs = [ pkgs.bash pkgs.coreutils pkgs.gnugrep pkgs.mkpasswd pkgs.nix pkgs.python3 ];
         NIX_CONFIG = "experimental-features = nix-command flakes";
         src = inputs.self;
       } ''
