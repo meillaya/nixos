@@ -55,11 +55,19 @@ let
       installerMarker = {
         system.nixos.variant_id = "installer";
       };
+      # Installer-only: the target disk carries btrfs subvolumes (see
+      # `modules/nixos/disk-config.nix`), so the ISO must be able to mount and
+      # inspect it. The installer profile drops btrfs from the supported set;
+      # re-add the filesystems and load the module at boot.
+      btrfsSupport = {
+        boot.supportedFilesystems = [ "btrfs" "vfat" ];
+        boot.kernelModules = [ "btrfs" ];
+      };
     in
     (config.flake.nixosConfigurations.${host}.extendModules {
       modules =
         lib.optional needsInitrdForce { boot.initrd.enable = lib.mkForce true; }
-        ++ [ enrollment installerMarker ];
+        ++ [ enrollment installerMarker btrfsSupport ];
     }).config.system.build.images.iso;
 in
 {
