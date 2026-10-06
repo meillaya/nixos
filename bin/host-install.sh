@@ -25,6 +25,11 @@ options:
                       not fold the host private key into the sops store
   --skip-verify       skip the post-install nh os switch stage
   --dry-run           print the exact command plan; execute nothing
+  --extra-files <dir> stage <dir> into the target's /mnt before install
+                      (forwarded to nixos-anywhere --extra-files)
+  --chown <path> <owner>
+                      chown -R /mnt/<path> <owner> after the extra-files copy;
+                      repeatable (forwarded to nixos-anywhere --chown)
 EOF
 }
 
@@ -41,6 +46,8 @@ install_only=false
 skip_fold=false
 skip_verify=false
 dry_run=false
+extra_files=""
+chown_args=()
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -78,6 +85,16 @@ while [[ $# -gt 0 ]]; do
       dry_run=true
       shift
       ;;
+    --extra-files)
+      [[ $# -ge 2 ]] || die_usage
+      extra_files=$2
+      shift 2
+      ;;
+    --chown)
+      [[ $# -ge 3 ]] || die_usage
+      chown_args+=("$2" "$3")
+      shift 3
+      ;;
     *)
       echo "error: unknown argument: $1" >&2
       die_usage
@@ -89,6 +106,15 @@ done
 tmpdir="${TMPDIR:-/tmp}/host-install.$$"
 
 print_plan() {
+  local transport=""
+  if [[ -n "$extra_files" ]]; then
+    transport+=" --extra-files ${extra_files}"
+  fi
+  local i
+  for ((i = 0; i < ${#chown_args[@]}; i += 2)); do
+    transport+=" --chown ${chown_args[i]} ${chown_args[i + 1]}"
+  done
+
   if [[ "$install_only" == true ]]; then
     echo "0-7. (skipped: --install-only)"
   else
@@ -107,10 +133,10 @@ print_plan() {
     echo "7. git add config/hosts/intake/ [secrets/remembrance-keys.yaml] && git commit -m \"enroll: refresh ${host}\""
   fi
   echo "8. nh os build . -H ${host}"
-  if [[ "$assume_yes" == true ]]; then
-    echo "9. nix run github:nix-community/nixos-anywhere -- --flake .#${host} --target-host root@${target_host}"
-  else
-    echo "9. REFUSING: install requires --yes"
+  echo "9. : > /run/autoinstall-done"
+  echo "   nix run github:nix-community/nixos-anywhere -- --flake .#${host} --target-host root@${target_host}${transport}"
+  if [[ "$assume_yes" != true ]]; then
+    echo "   REFUSING: install requires --yes"
   fi
   if [[ "$skip_verify" == true ]]; then
     echo "10. (skipped: --skip-verify)"
@@ -198,7 +224,21 @@ stage_install() {
     exit 1
   fi
 
-  if ! nix run github:nix-community/nixos-anywhere -- --flake ".#${host}" --target-host "root@${target_host}"; then
+  local -a transport=()
+  if [[ -n "$extra_files" ]]; then
+    transport+=(--extra-files "$extra_files")
+  fi
+  local i
+  for ((i = 0; i < ${#chown_args[@]}; i += 2)); do
+    transport+=(--chown "${chown_args[i]}" "${chown_args[i + 1]}")
+  done
+
+  # Attempt marker: written immediately before the destructive call so a
+  # re-entrant run in this boot (the ISO unit guards on
+  # ConditionPathExists=!/run/autoinstall-done) does not fire nixos-anywhere twice.
+  : > /run/autoinstall-done
+
+  if ! nix run github:nix-community/nixos-anywhere -- --flake ".#${host}" --target-host "root@${target_host}" "${transport[@]}"; then
     echo "error: nixos-anywhere install failed for $host; the target may be left partially partitioned" >&2
     exit 1
   fi
