@@ -162,14 +162,3 @@ staging_identity() {
     "$keyfile" "$rel" "$rel" "$uid" "$gid"
   return 0
 }
-
-staging_plan() {
-  cat <<'EOF'
-  staging     mktemp -d under a tmpfs mount (removed on exit)
-              var/lib/nixos-bootstrap/<user>-password.hash  (0700 dir, 0600, yescrypt)
-              var/lib/nixos-enrollment/<artifact>           (0700 dir, 0600)
-              home/<user>/.config/sops/age/keys.txt         (0600)
-              transport: nixos-anywhere --extra-files <stage> --chown home/<user>/.config <uid>:<gid>
-              the plaintext password is printed once and never written to disk
-EOF
-}
