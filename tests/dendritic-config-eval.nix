@@ -117,6 +117,12 @@ let
     assert countExactLine "set -g allow-passthrough on"
       hm.xdg.configFile."tmux/tmux.conf".text == 1;
     true;
+  # The installer ISO config (`flake.isoConfig.<host>`) is the extended
+  # per-host config the ISO builds from; the wall below pins both the
+  # btrfs-capable image and the opt-in gated autostart unit.
+  isoConfigAntagony = flake.isoConfig.antagony.config;
+  isoAutoinstallUnit = isoConfigAntagony.systemd.services."nixos-autoinstall";
+  isoEnrollmentText = isoConfigAntagony.environment.etc."hardware-enrollment/antagony.json".text;
 in
 assert builtins.attrNames flake.nixosConfigurations == [ "antagony" "remembrance" ];
 assert builtins.attrNames (flake.darwinConfigurations or { }) == [ "entropy" ];
@@ -263,5 +269,29 @@ assert nixos.home-manager.users.mei.programs.zen-browser.enable;
 assert nixos.home-manager.users.mei.programs.zen-browser.profiles.meillaya.spaces ? "Personal";
 assert nixos.home-manager.users.mei.programs.zen-browser.profiles.meillaya.spaces."Personal".id
   == "66b75881-fbf4-40c5-95de-ac8041642aad";
+
+# ISO installer wall: the image reads a btrfs disk and the autostart unit is
+# opt-in, inert by default, and fails into the rescue target.
+assert isoConfigAntagony.boot.supportedFilesystems.btrfs;
+assert isoConfigAntagony.boot.supportedFilesystems.vfat;
+assert builtins.elem "btrfs" isoConfigAntagony.boot.kernelModules;
+assert hasInfix ''"hostId":"antagony"'' isoEnrollmentText;
+assert isoConfigAntagony.system.nixos.variant_id == "installer";
+assert builtins.elem "multi-user.target" isoAutoinstallUnit.wantedBy;
+assert builtins.elem "network-online.target" isoAutoinstallUnit.wants;
+assert builtins.elem "network-online.target" isoAutoinstallUnit.after;
+assert builtins.elem "sshd.service" isoAutoinstallUnit.after;
+assert builtins.elem "hardware-enroll.service" isoAutoinstallUnit.after;
+assert isoAutoinstallUnit.unitConfig.ConditionKernelCommandLine == "nixos.autoinstall=1";
+assert isoAutoinstallUnit.unitConfig.ConditionPathExists == "!/run/autoinstall-done";
+assert isoAutoinstallUnit.unitConfig.SuccessAction == "reboot";
+assert builtins.elem "iso-install-rescue.target" isoAutoinstallUnit.unitConfig.OnFailure;
+assert isoAutoinstallUnit.serviceConfig.Type == "oneshot";
+assert isoAutoinstallUnit.serviceConfig.RemainAfterExit;
+assert isoAutoinstallUnit.serviceConfig.StandardOutput == "journal+console";
+assert hasInfix "install" isoAutoinstallUnit.script;
+assert hasInfix "--rescue-identity" isoAutoinstallUnit.script;
+# Negative: a plain boot must never carry the opt-in flag in kernelParams.
+assert !(builtins.elem "nixos.autoinstall=1" isoConfigAntagony.boot.kernelParams);
 
 "dendritic-config-eval=PASS"
