@@ -31,6 +31,10 @@ save_dir=""
 trust_file=""
 reviewer="${USER:-install}"
 target_host="127.0.0.1"
+install_user=""
+install_uid=""
+install_gid=""
+stage=""
 assume_yes=false
 dry_run=false
 install_only=false
@@ -142,6 +146,35 @@ script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)
 flake_root=$(cd -- "${script_dir}/../.." && pwd -P)
 [[ -f "$flake_root/flake.nix" ]] || die "cannot locate the flake root from ${BASH_SOURCE[0]}"
 
+# Shared staging builder (wave 1): staging_init/staging_password mint the
+# per-install password hash into a tmpfs stage that `nixos-anywhere
+# --extra-files` copies into the target. The helper also reports the ownership
+# target for the user-owned subtree, which the install phase forwards --chown.
+# shellcheck source=../../bin/_install-staging.sh
+# shellcheck disable=SC1091
+source "$flake_root/bin/_install-staging.sh"
+
+# Resolve the enrolled user identity for $host: the staged base record first
+# (enroll has just written it), else the flake's machine authority (dry-run
+# display). Failure leaves the identity unset so the plan shows the
+# <user>/<uid>/<gid> placeholders instead of guessing.
+resolve_identity() {
+  local raw="" identity=""
+  if [[ -f "${staging:-}/base.json" ]]; then
+    raw=$(cat "$staging/base.json") || raw=""
+  elif [[ -n "$host" ]]; then
+    raw=$(timeout 900 nix eval --impure --json --expr \
+      "(import ${flake_root}/modules/entities/_machine-authority/model.nix).getMachine \"${host}\"" 2>/dev/null) || raw=""
+  fi
+  [[ -n "$raw" ]] || return 0
+  identity=$(printf '%s' "$raw" | python3 -c \
+    'import json, sys
+identity = json.load(sys.stdin)["identity"]
+print(identity["name"], identity["uid"], identity["gid"])' 2>/dev/null) || identity=""
+  [[ -n "$identity" ]] || return 0
+  read -r install_user install_uid install_gid <<<"$identity"
+}
+
 if [[ -z "$host" ]]; then
   product=$(cat /sys/devices/virtual/dmi/id/product_version 2>/dev/null || true)
   [[ -n "$product" ]] || product=$(cat /sys/devices/virtual/dmi/id/product_name 2>/dev/null || true)
@@ -155,13 +188,21 @@ if [[ -z "$host" ]]; then
 fi
 
 if [[ "$dry_run" == true ]]; then
+  resolve_identity
+  ownership_plan="home/<user>/.config <uid>:<gid>"
+  if [[ -n "$install_user" ]]; then
+    ownership_plan="home/${install_user}/.config ${install_uid}:${install_gid}"
+  fi
   printf 'install plan (host: %s, target: root@%s)\n' "${host:-<host>}" "$target_host"
   cat <<EOF
   1. work tree   cp -a ${flake_root}/. -> ${workdir:-/root/nixos-install} (reused if it already holds a flake)
   2. enrollment  python3 -m scripts.hardware.auto_enroll --host ${host:-<host>} --base <machine record> --trust <generated> --out <workdir>/.install-staging
   3. commit      config/hosts/intake/${host:-<host>}.json + .intake.json
   4. host key    bin/nix-config-host-key-enroll <host-key> ${host:-<host>}   (--skip-fold: kept local, --save required)
-  5. install     <workdir>/bin/host-install.sh --host ${host:-<host>} --target-host ${target_host} --install-only --yes --skip-verify
+  5. staging     tmpfs stage per run (removed on exit): var/lib/nixos-bootstrap/<user>-password.hash (0700 dir, 0600, yescrypt)
+                 transport: --extra-files <stage> --chown ${ownership_plan}
+                 the plaintext password is printed once and never written to disk
+  6. install     <workdir>/bin/host-install.sh --host ${host:-<host>} --target-host ${target_host} --install-only --yes --skip-verify --extra-files <stage> --chown ${ownership_plan}
                  (refused unless / is a live tmpfs/overlay root, or --allow-mounted-root)
 EOF
   exit 0
@@ -322,14 +363,34 @@ save_artifacts() {
   printf 'install: enrollment artifacts saved to %s\n' "$save_dir"
 }
 
+# Mint the per-install password into a fresh tmpfs stage. staging_init installs
+# the EXIT trap that removes the stage; staging_password prints the plaintext
+# exactly once and never writes it to disk. Called only on the full install
+# path, so --install-only never stages a second time.
+stage_install_payload() {
+  staging_init || return 1
+  stage=$STAGING_DIR
+  staging_password "$stage" "$install_user" || return 1
+}
+
 install_phase() {
   printf 'install: installing %s on this machine; --yes was given and the install erases the enrolled disk\n' "$host"
+  local -a transport=()
+  if [[ -n "${stage:-}" ]]; then
+    transport+=(--extra-files "$stage")
+  fi
+  if [[ -n "${install_user:-}" ]]; then
+    # staging_identity reports the same ownership pair; the password-only stage
+    # still forwards it so the user-owned .config subtree stays user-owned.
+    transport+=(--chown "home/${install_user}/.config" "${install_uid}:${install_gid}")
+  fi
   "$workdir/bin/host-install.sh" \
     --host "$host" \
     --target-host "$target_host" \
     --install-only \
     --yes \
-    --skip-verify
+    --skip-verify \
+    "${transport[@]}"
 }
 
 require_live_root() {
@@ -365,6 +426,10 @@ if [[ "$assume_yes" != true ]]; then
   printf 'install: enrollment checkpoint complete in %s; re-run with --yes to install (the enrolled disk is erased)\n' "$workdir"
   exit 0
 fi
+
+resolve_identity
+[[ -n "$install_user" ]] || die "cannot resolve the enrolled user identity for ${host}; refusing to stage the password"
+stage_install_payload
 
 setup_self_ssh
 require_live_root
