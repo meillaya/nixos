@@ -56,8 +56,9 @@ Options:
                      (default: auto-discover the internal disk)
   --workdir DIR      writable work tree (default /root/nixos-install; reused
                      when it already holds a flake)
-  --save DIR         copy the enrollment artifacts (declaration, intake
-                     document, host key) to DIR on persistent storage
+  --save DIR         also copy the enrollment artifacts (declaration, intake
+                     document, host key) to DIR on persistent storage; the
+                     artifacts are staged into the installed system regardless
   --trust FILE       operator trust fixture (default: generated from the
                      fleet record by scripts/hardware/gen_trust.py)
   --reviewer NAME    reviewer principal recorded in the intake document
@@ -67,7 +68,7 @@ Options:
                      after the enrollment checkpoint)
   --install-only     skip probe/enroll/fold; install the work tree as-is
   --skip-fold        keep the host key local instead of folding it into the
-                     sops store (requires --save)
+                     sops store
   --allow-mounted-root
                      proceed even when / is a disk filesystem; only safe when
                      the enrolled target disk is not the running root
@@ -198,8 +199,10 @@ if [[ "$dry_run" == true ]]; then
   1. work tree   cp -a ${flake_root}/. -> ${workdir:-/root/nixos-install} (reused if it already holds a flake)
   2. enrollment  python3 -m scripts.hardware.auto_enroll --host ${host:-<host>} --base <machine record> --trust <generated> --out <workdir>/.install-staging
   3. commit      config/hosts/intake/${host:-<host>}.json + .intake.json
-  4. host key    bin/nix-config-host-key-enroll <host-key> ${host:-<host>}   (--skip-fold: kept local, --save required)
+  4. host key    bin/nix-config-host-key-enroll <host-key> ${host:-<host>}   (optional: --skip-fold keeps it local)
   5. staging     tmpfs stage per run (removed on exit): var/lib/nixos-bootstrap/<user>-password.hash (0700 dir, 0600, yescrypt)
+                 var/lib/nixos-enrollment/<candidate,intake,host-key> (0700 dir, 0600), copied into the installed system
+                 home/<user>/.config/sops/age/keys.txt (0600) from \$SOPS_AGE_KEY_FILE else ~/.config/sops/age/keys.txt
                  transport: --extra-files <stage> --chown ${ownership_plan}
                  the plaintext password is printed once and never written to disk
   6. install     <workdir>/bin/host-install.sh --host ${host:-<host>} --target-host ${target_host} --install-only --yes --skip-verify --extra-files <stage> --chown ${ownership_plan}
@@ -363,14 +366,58 @@ save_artifacts() {
   printf 'install: enrollment artifacts saved to %s\n' "$save_dir"
 }
 
-# Mint the per-install password into a fresh tmpfs stage. staging_init installs
-# the EXIT trap that removes the stage; staging_password prints the plaintext
-# exactly once and never writes it to disk. Called only on the full install
-# path, so --install-only never stages a second time.
+# Stage the enrollment artifacts (candidate, intake document, host key) the
+# enroll step just produced. A missing piece warns instead of aborting: the
+# install stays valid, and a partial set only loses recoverability.
+stage_enrollment_artifacts() {
+  local stage="$1" src
+  local -a artifacts=()
+  for src in "${host}.json" "${host}.intake.json" "${host}.host-key"; do
+    [[ -f "$staging/$src" ]] && artifacts+=("$staging/$src")
+  done
+  if (( ${#artifacts[@]} == 0 )); then
+    printf 'install: warning: no enrollment artifacts under %s to stage\n' "$staging" >&2
+    return 0
+  fi
+  staging_artifacts "$stage" "${artifacts[@]}" \
+    || printf 'install: warning: could not stage every enrollment artifact; continuing\n' >&2
+  return 0
+}
+
+# Stage the held age identity at home/<user>/.config/sops/age/keys.txt. The
+# source order mirrors fold_host_key: $SOPS_AGE_KEY_FILE, else the default
+# ~/.config/sops/age/keys.txt. An absent or unreadable source warns and
+# continues; the identity is never fed into the sops fold.
+stage_age_identity() {
+  local stage="$1" keyfile
+  keyfile="${SOPS_AGE_KEY_FILE:-$HOME/.config/sops/age/keys.txt}"
+  if [[ ! -f "$keyfile" ]]; then
+    printf 'install: warning: no age identity at %s; the installed system will need one before it can decrypt secrets\n' "$keyfile" >&2
+    return 0
+  fi
+  staging_identity "$stage" "$install_user" "$install_uid" "$install_gid" "$keyfile" \
+    || printf 'install: warning: could not stage the age identity from %s; continuing\n' "$keyfile" >&2
+  return 0
+}
+
+# Mint the per-install password into a fresh tmpfs stage and copy in the
+# enrollment artifacts and the age identity. staging_init installs the EXIT
+# trap that removes the stage; staging_password prints the plaintext exactly
+# once and never writes it to disk. Called only on the full install path, so
+# --install-only never stages a second time.
 stage_install_payload() {
   staging_init || return 1
   stage=$STAGING_DIR
   staging_password "$stage" "$install_user" || return 1
+  stage_enrollment_artifacts "$stage"
+  stage_age_identity "$stage"
+}
+
+# The artifacts persist in the installed system whether or not the host key
+# was folded, so an unfolded key is a warning, not a stop. --save stays
+# available as an optional escape hatch that keeps an extra copy on disk.
+announce_unfolded_key() {
+  printf 'install: warning: the host key was not folded into the sops store; the enrollment artifacts are staged into the installed system, and --save DIR still keeps an extra copy on persistent storage\n' >&2
 }
 
 install_phase() {
@@ -380,8 +427,8 @@ install_phase() {
     transport+=(--extra-files "$stage")
   fi
   if [[ -n "${install_user:-}" ]]; then
-    # staging_identity reports the same ownership pair; the password-only stage
-    # still forwards it so the user-owned .config subtree stays user-owned.
+    # staging_identity reports the same ownership pair, so the stage always
+    # forwards it and the user-owned .config subtree stays user-owned.
     transport+=(--chown "home/${install_user}/.config" "${install_uid}:${install_gid}")
   fi
   "$workdir/bin/host-install.sh" \
@@ -419,7 +466,7 @@ fold_host_key
 save_artifacts
 
 if [[ "$want_save" == true && -z "$save_dir" ]]; then
-  die "the host key was not folded into the sops store; pass --save DIR on persistent storage so the enrollment stays recoverable"
+  announce_unfolded_key
 fi
 
 if [[ "$assume_yes" != true ]]; then
