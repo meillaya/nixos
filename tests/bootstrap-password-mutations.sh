@@ -6,6 +6,13 @@
 set -euo pipefail
 
 repo=${BOOTSTRAP_MUTATIONS_REPO:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}
+# nix in a build sandbox needs a writable HOME for its chroot store (see
+# tests/package-policy.sh); this also keeps a developer's real ~/nix state out.
+export HOME="${TMPDIR:-/tmp}/nix-bootstrap-mutations-home"
+export XDG_STATE_HOME="${XDG_STATE_HOME:-$HOME/.local/state}"
+export XDG_DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}"
+export NIX_CONFIG="${NIX_CONFIG:-} experimental-features = nix-command flakes"
+mkdir -p "$HOME" "$XDG_STATE_HOME" "$XDG_DATA_HOME"
 tmp=$(mktemp -d -t nix-bootstrap-mutations.XXXXXX)
 trap 'rm -rf "$tmp"' EXIT
 
