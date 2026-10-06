@@ -30,6 +30,15 @@ options:
   --chown <path> <owner>
                       chown -R /mnt/<path> <owner> after the extra-files copy;
                       repeatable (forwarded to nixos-anywhere --chown)
+  --stage-identity <src>
+                      additionally stage the age identity at <src> as the
+                      installed user's own key (home/<user>/.config/sops/age/
+                      keys.txt); off by default - the operator's own identity is
+                      never staged implicitly. Operator entry point only;
+                      ignored with --install-only
+
+On the operator entry point (no --install-only) the script mints a per-install
+password for the target's user, stages it for nixos-anywhere, and prints it once.
 EOF
 }
 
@@ -48,6 +57,15 @@ skip_verify=false
 dry_run=false
 extra_files=""
 chown_args=()
+stage_identity_src=""
+
+# The installed account, and its numeric ownership on the target. The repo's
+# machine identity fixes the user name (modules/entities/_machine-authority/
+# model.nix: name = "mei", home = /home/mei); the conventional first account is
+# 1000:100. nixos-anywhere --chown requires the numeric pair.
+install_user="mei"
+install_uid="1000"
+install_gid="100"
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -95,6 +113,11 @@ while [[ $# -gt 0 ]]; do
       chown_args+=("$2" "$3")
       shift 3
       ;;
+    --stage-identity)
+      [[ $# -ge 2 ]] || die_usage
+      stage_identity_src=$2
+      shift 2
+      ;;
     *)
       echo "error: unknown argument: $1" >&2
       die_usage
@@ -105,15 +128,87 @@ done
 # Artifact staging area for the enroll/retrieve stage (created by later todos).
 tmpdir="${TMPDIR:-/tmp}/host-install.$$"
 
+# Operator-path staging state, populated by stage_password_payload().
+operator_stage=""
+operator_chown_path=""
+operator_chown_owner=""
+
+# The operator entry point mints the per-install password and (only with
+# --stage-identity) stages the age identity; --install-only callers (the install
+# app) supply their own stage through --extra-files/--chown instead.
+if [[ "$install_only" != true ]]; then
+  # shellcheck source=bin/_install-staging.sh
+  . "$root/bin/_install-staging.sh"
+elif [[ -n "$stage_identity_src" ]]; then
+  echo "warning: --stage-identity has no effect with --install-only; the caller supplies its own stage" >&2
+fi
+
+# The app wrapper puts mkpasswd on PATH via installDeps; a bare operator machine
+# may not carry it, so resolve it from the flake's pinned nixpkgs when missing.
+ensure_mkpasswd() {
+  command -v mkpasswd >/dev/null 2>&1 && return 0
+  local mkpasswd_out
+  mkpasswd_out=$(nix eval --extra-experimental-features 'nix-command flakes' --raw \
+    --inputs-from "$root" nixpkgs#mkpasswd.outPath) \
+    || { echo "error: mkpasswd is not on PATH and could not be resolved from the flake's nixpkgs" >&2; exit 1; }
+  PATH="${mkpasswd_out}/bin:$PATH"
+  export PATH
+}
+
+# Mint the per-install password (and, with --stage-identity, the age identity)
+# into the tmpfs stage that nixos-anywhere --extra-files copies into the target.
+# The staging logic lives in bin/_install-staging.sh; never duplicate it here.
+# Prints the password once, unless $1 is true (--dry-run suppresses that line).
+stage_password_payload() {
+  local quiet=${1:-false}
+  ensure_mkpasswd
+
+  staging_init >/dev/null || return 1
+  operator_stage=$STAGING_DIR
+
+  # A caller-supplied --extra-files tree is overlaid into the stage, so its
+  # files still reach the target alongside the password and identity.
+  if [[ "$quiet" != true && -n "$extra_files" ]]; then
+    [[ -d "$extra_files" ]] \
+      || { echo "error: --extra-files is not a directory: $extra_files" >&2; exit 1; }
+    cp -a "$extra_files/." "$operator_stage/" \
+      || { echo "error: cannot overlay --extra-files into the stage" >&2; exit 1; }
+  fi
+
+  if [[ "$quiet" == true ]]; then
+    staging_password "$operator_stage" "$install_user" >/dev/null || return 1
+  else
+    staging_password "$operator_stage" "$install_user" || return 1
+  fi
+
+  if [[ -n "$stage_identity_src" ]]; then
+    [[ -f "$stage_identity_src" ]] \
+      || { echo "error: --stage-identity: file not found: $stage_identity_src" >&2; exit 1; }
+    if [[ "$quiet" == true ]]; then
+      staging_identity "$operator_stage" "$install_user" "$install_uid" "$install_gid" "$stage_identity_src" >/dev/null || return 1
+    else
+      staging_identity "$operator_stage" "$install_user" "$install_uid" "$install_gid" "$stage_identity_src" || return 1
+    fi
+    operator_chown_path="home/$install_user/.config"
+    operator_chown_owner="$install_uid:$install_gid"
+  fi
+  return 0
+}
+
 print_plan() {
   local transport=""
-  if [[ -n "$extra_files" ]]; then
+  if [[ -n "$operator_stage" ]]; then
+    transport+=" --extra-files ${operator_stage}"
+  elif [[ -n "$extra_files" ]]; then
     transport+=" --extra-files ${extra_files}"
   fi
   local i
   for ((i = 0; i < ${#chown_args[@]}; i += 2)); do
     transport+=" --chown ${chown_args[i]} ${chown_args[i + 1]}"
   done
+  if [[ -n "$operator_chown_path" ]]; then
+    transport+=" --chown ${operator_chown_path} ${operator_chown_owner}"
+  fi
 
   if [[ "$install_only" == true ]]; then
     echo "0-7. (skipped: --install-only)"
@@ -131,6 +226,16 @@ print_plan() {
       echo "6. bin/nix-config-host-key-enroll ${tmpdir}/${host}.host-key ${host}"
     fi
     echo "7. git add config/hosts/intake/ [secrets/remembrance-keys.yaml] && git commit -m \"enroll: refresh ${host}\""
+  fi
+  if [[ -n "$operator_stage" ]]; then
+    echo "   staging: var/lib/nixos-bootstrap/${install_user}-password.hash (0700 dir, 0600, yescrypt) under ${operator_stage}"
+    if [[ -n "$operator_chown_path" ]]; then
+      echo "   staging: age identity -> home/${install_user}/.config/sops/age/keys.txt"
+    fi
+    if [[ -n "$extra_files" ]]; then
+      echo "   staging: overlays --extra-files ${extra_files} into the stage"
+    fi
+    echo "   staging: the plaintext password is printed once and never written to disk"
   fi
   echo "8. nh os build . -H ${host}"
   echo "9. : > /run/autoinstall-done"
@@ -225,13 +330,18 @@ stage_install() {
   fi
 
   local -a transport=()
-  if [[ -n "$extra_files" ]]; then
+  if [[ -n "$operator_stage" ]]; then
+    transport+=(--extra-files "$operator_stage")
+  elif [[ -n "$extra_files" ]]; then
     transport+=(--extra-files "$extra_files")
   fi
   local i
   for ((i = 0; i < ${#chown_args[@]}; i += 2)); do
     transport+=(--chown "${chown_args[i]}" "${chown_args[i + 1]}")
   done
+  if [[ -n "$operator_chown_path" ]]; then
+    transport+=(--chown "$operator_chown_path" "$operator_chown_owner")
+  fi
 
   # Attempt marker: written immediately before the destructive call so a
   # re-entrant run in this boot (the ISO unit guards on
@@ -258,6 +368,11 @@ stage_verify() {
 if [[ "$dry_run" == true ]]; then
   # Dry-run tolerates a missing --target-host: the plan prints with a placeholder.
   target_host=${target_host:-'<ip>'}
+  # Mint the staging (validating mkpasswd and the identity source) but suppress
+  # the password so the printed plan carries no secret.
+  if [[ "$install_only" != true ]]; then
+    stage_password_payload true
+  fi
   print_plan
   exit 0
 fi
@@ -275,6 +390,9 @@ else
     exit 0
   fi
 
+  # Mint and stage the password (and the identity with --stage-identity) before
+  # the destructive install, so a missing mkpasswd or identity dies first.
+  stage_password_payload
   stage_build_gate
   stage_install
 fi
