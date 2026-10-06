@@ -1,7 +1,8 @@
 # Per-host NixOS installer ISOs.
 #
 # Exposes `nix build .#iso.<host>` (flake output `iso.<host>`), which is
-# shorthand for `.#nixosConfigurations.<host>.config.system.build.isoImage`.
+# shorthand for `.#nixosConfigurations.<host>.config.system.build.isoImage`,
+# built from the extended per-host config `flake.isoConfig.<host>`.
 # Exactly ONE ISO variant (installer) per NixOS host: remembrance, antagony.
 #
 # Pending hosts (boot.state == "disabled") disable the initrd while awaiting
@@ -16,16 +17,22 @@
 # fixture at /root/enroll/trust.json (fail-closed without it). See
 # `scripts/hardware/auto_enroll.py` and `config/hosts/intake/README.md`.
 #
+# A plain boot is inert. When the operator appends `nixos.autoinstall=1` at the
+# boot menu, `nixos-autoinstall.service` runs the flake's own install app for
+# this host; a failure activates `iso-install-rescue.target`, which drops to a
+# root shell on tty1. The flag is never added to `boot.kernelParams`, so no
+# automatic path can start an install.
+#
 # The image also declares itself a NixOS installer (`VARIANT_ID=installer`), so
 # nixos-anywhere skips its kexec phase. Without the marker a one-command
 # self-install (nixos-anywhere runs on the same machine through root@127.0.0.1)
 # would kexec out from under its own orchestrating process.
-{ lib, config, ... }:
+{ inputs, lib, config, ... }:
 let
   authority = import ../entities/_machine-authority/model.nix;
   isoHosts = [ "remembrance" "antagony" ];
 
-  isoFor = host:
+  isoConfigFor = host:
     let
       machine = authority.getMachine host;
       needsInitrdForce = machine.boot.state == "disabled";
@@ -63,13 +70,67 @@ let
         boot.supportedFilesystems = [ "btrfs" "vfat" ];
         boot.kernelModules = [ "btrfs" ];
       };
+      autoinstall = { pkgs, ... }: {
+        # Bake the flake tree at a stable path so a booted installer can drive
+        # another install by hand without fetching anything. The unit below
+        # runs the app wrapper, whose closure carries the same source.
+        environment.etc."nixos-install/flake".source = "${inputs.self}";
+
+        # Opt-in autostart: the unit activates ONLY when the operator appends
+        # `nixos.autoinstall=1` at the boot menu (ConditionKernelCommandLine).
+        # The marker check stops a second attempt within the same boot, and a
+        # failure lands in the rescue target instead of a reboot loop.
+        systemd.services.nixos-autoinstall = {
+          wantedBy = [ "multi-user.target" ];
+          wants = [ "network-online.target" ];
+          after = [ "network-online.target" "sshd.service" "hardware-enroll.service" ];
+          unitConfig = {
+            ConditionKernelCommandLine = "nixos.autoinstall=1";
+            ConditionPathExists = "!/run/autoinstall-done";
+            SuccessAction = "reboot";
+            OnFailure = [ "iso-install-rescue.target" ];
+          };
+          serviceConfig = {
+            Type = "oneshot";
+            RemainAfterExit = true;
+            StandardOutput = "journal+console";
+            StandardError = "journal+console";
+          };
+          script = ''
+            ${config.flake.apps.x86_64-linux.install.program} --host ${host} --yes --rescue-identity
+          '';
+        };
+
+        systemd.targets.iso-install-rescue = {
+          description = "ISO auto-install rescue (the install attempt failed)";
+        };
+
+        # The rescue target hands the operator a root shell on tty1; tty-force
+        # takes the tty from the getty so the shell owns the console.
+        systemd.services.iso-install-rescue-shell = {
+          description = "ISO auto-install rescue shell on tty1";
+          wantedBy = [ "iso-install-rescue.target" ];
+          serviceConfig = {
+            Type = "idle";
+            ExecStart = "${pkgs.bashInteractive}/bin/bash -i";
+            StandardInput = "tty-force";
+            StandardOutput = "tty";
+            StandardError = "tty";
+            TTYPath = "/dev/tty1";
+            TTYReset = true;
+            TTYVHangup = true;
+            TTYVTDisallocate = true;
+          };
+        };
+      };
     in
     (config.flake.nixosConfigurations.${host}.extendModules {
       modules =
         lib.optional needsInitrdForce { boot.initrd.enable = lib.mkForce true; }
-        ++ [ enrollment installerMarker btrfsSupport ];
-    }).config.system.build.images.iso;
+        ++ [ enrollment installerMarker btrfsSupport autoinstall ];
+    });
 in
 {
-  flake.iso = lib.genAttrs isoHosts isoFor;
+  flake.isoConfig = lib.genAttrs isoHosts isoConfigFor;
+  flake.iso = lib.genAttrs isoHosts (host: config.flake.isoConfig.${host}.config.system.build.images.iso);
 }
