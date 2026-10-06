@@ -40,6 +40,7 @@ dry_run=false
 install_only=false
 skip_fold=false
 allow_mounted_root=false
+rescue_identity=false
 
 usage() {
   cat <<'EOF'
@@ -72,6 +73,10 @@ Options:
   --allow-mounted-root
                      proceed even when / is a disk filesystem; only safe when
                      the enrolled target disk is not the running root
+  --rescue-identity  mount the live btrfs layout read-only and copy the held age
+                     identity (~/.config/sops/age/keys.txt) into the stage; use
+                     it when that identity is the only copy and the disk is
+                     about to be wiped. Dies when the identity cannot be found.
   --dry-run          print the plan and execute nothing
   -h, --help         show this help
 EOF
@@ -130,6 +135,7 @@ while (( $# > 0 )); do
     --install-only) install_only=true; shift ;;
     --skip-fold) skip_fold=true; shift ;;
     --allow-mounted-root) allow_mounted_root=true; shift ;;
+    --rescue-identity) rescue_identity=true; shift ;;
     --dry-run) dry_run=true; shift ;;
     --help|-h) usage; exit 0 ;;
     *) die "unknown argument: $1 (see --help)" ;;
@@ -176,13 +182,28 @@ print(identity["name"], identity["uid"], identity["gid"])' 2>/dev/null) || ident
   read -r install_user install_uid install_gid <<<"$identity"
 }
 
-if [[ -z "$host" ]]; then
+# DMI product string of the running machine: the only hardware fact available
+# before enrollment.
+dmi_product() {
+  local product
   product=$(cat /sys/devices/virtual/dmi/id/product_version 2>/dev/null || true)
   [[ -n "$product" ]] || product=$(cat /sys/devices/virtual/dmi/id/product_name 2>/dev/null || true)
-  case "$product" in
-    "ThinkPad P52") host="antagony" ;;
-    *) host="" ;;
+  printf '%s\n' "$product"
+}
+
+# Map a DMI product string to a declared flake host. Empty output means "this
+# product is not a declared host"; callers refuse rather than guess. Add the
+# machine's product line here when declaring a host.
+dmi_host_for_product() {
+  case "$1" in
+    "ThinkPad P52") printf 'antagony\n' ;;
+    *) : ;;
   esac
+}
+
+if [[ -z "$host" ]]; then
+  product=$(dmi_product)
+  host=$(dmi_host_for_product "$product")
   if [[ -n "$host" ]]; then
     printf 'install: detected host %s from DMI product "%s"\n' "$host" "$product"
   fi
@@ -194,6 +215,10 @@ if [[ "$dry_run" == true ]]; then
   if [[ -n "$install_user" ]]; then
     ownership_plan="home/${install_user}/.config ${install_uid}:${install_gid}"
   fi
+  rescue_plan=""
+  if [[ "$rescue_identity" == true ]]; then
+    rescue_plan=$'\n  5b. rescue     mount the live btrfs @home read-only, copy ~/.config/sops/age/keys.txt into the stage, unmount (--rescue-identity; dies if the identity is missing)'
+  fi
   printf 'install plan (host: %s, target: root@%s)\n' "${host:-<host>}" "$target_host"
   cat <<EOF
   1. work tree   cp -a ${flake_root}/. -> ${workdir:-/root/nixos-install} (reused if it already holds a flake)
@@ -204,7 +229,7 @@ if [[ "$dry_run" == true ]]; then
                  var/lib/nixos-enrollment/<candidate,intake,host-key> (0700 dir, 0600), copied into the installed system
                  home/<user>/.config/sops/age/keys.txt (0600) from \$SOPS_AGE_KEY_FILE else ~/.config/sops/age/keys.txt
                  transport: --extra-files <stage> --chown ${ownership_plan}
-                 the plaintext password is printed once and never written to disk
+                 the plaintext password is printed once and never written to disk${rescue_plan}
   6. install     <workdir>/bin/host-install.sh --host ${host:-<host>} --target-host ${target_host} --install-only --yes --skip-verify --extra-files <stage> --chown ${ownership_plan}
                  (refused unless / is a live tmpfs/overlay root, or --allow-mounted-root)
 EOF
@@ -390,6 +415,10 @@ stage_enrollment_artifacts() {
 # continues; the identity is never fed into the sops fold.
 stage_age_identity() {
   local stage="$1" keyfile
+  if [[ "$rescue_identity" == true ]]; then
+    rescue_age_identity "$stage"
+    return $?
+  fi
   keyfile="${SOPS_AGE_KEY_FILE:-$HOME/.config/sops/age/keys.txt}"
   if [[ ! -f "$keyfile" ]]; then
     printf 'install: warning: no age identity at %s; the installed system will need one before it can decrypt secrets\n' "$keyfile" >&2
@@ -411,6 +440,164 @@ stage_install_payload() {
   staging_password "$stage" "$install_user" || return 1
   stage_enrollment_artifacts "$stage"
   stage_age_identity "$stage"
+}
+
+# Compare the freshly probed candidate against the record baked into the work
+# tree, and refuse to install a declaration onto hardware it does not describe.
+# A pending record carries no hardware to compare, so its DMI product must map
+# to --host instead; there is no override.
+verify_host_match() {
+  local baked="$staging/base.json" candidate="$staging/${host}.json"
+  [[ -f "$baked" ]] || die "verify_host_match: no machine record at ${baked}"
+  [[ -f "$candidate" ]] || die "verify_host_match: no candidate record at ${candidate}"
+
+  local pending
+  pending=$(python3 -c 'import json, sys
+record = json.load(open(sys.argv[1]))
+storage = record.get("storage") or {}
+print("true" if record.get("cpuVendor") == "pending" and storage.get("profile") == "none" else "false")' \
+    "$baked" 2>/dev/null) || die "verify_host_match: cannot read ${baked}"
+
+  if [[ "$pending" == true ]]; then
+    local product mapped
+    product=$(dmi_product)
+    mapped=$(dmi_host_for_product "$product")
+    [[ -n "$mapped" ]] \
+      || die "DMI product '${product}' does not map to a declared host; add its mapping before installing (no override)"
+    [[ "$mapped" == "$host" ]] \
+      || die "DMI product '${product}' maps to '${mapped}', not '--host ${host}'; refusing to install the wrong declaration"
+    printf 'install: host match OK (pending record): DMI "%s" -> %s\n' "$product" "$host"
+    return 0
+  fi
+
+  if ! python3 - "$baked" "$candidate" "$host" <<'PY'
+# verify-host-match: the candidate hardware must equal the baked record on the
+# storage bindings and the CPU vendor; any difference aborts before the wipe.
+import json
+import sys
+
+baked = json.load(open(sys.argv[1]))
+candidate = json.load(open(sys.argv[2]))
+host = sys.argv[3]
+
+
+def storage(record):
+    return record.get("storage") or {}
+
+
+def expected(record):
+    return storage(record).get("expected") or {}
+
+
+checks = [
+    ("storage.diskById", storage(baked).get("diskById"), storage(candidate).get("diskById")),
+    ("storage.expected.sizeBytes", expected(baked).get("sizeBytes"), expected(candidate).get("sizeBytes")),
+    ("storage.expected.logicalSectorBytes", expected(baked).get("logicalSectorBytes"), expected(candidate).get("logicalSectorBytes")),
+    ("storage.expected.modelSha256", expected(baked).get("modelSha256"), expected(candidate).get("modelSha256")),
+    ("storage.expected.serialSha256", expected(baked).get("serialSha256"), expected(candidate).get("serialSha256")),
+    ("cpuVendor", baked.get("cpuVendor"), candidate.get("cpuVendor")),
+]
+
+mismatches = [(name, baked_value, candidate_value) for name, baked_value, candidate_value in checks if baked_value != candidate_value]
+if mismatches:
+    for name, baked_value, candidate_value in mismatches:
+        print(
+            f"verify_host_match: {host}: {name} differs: "
+            f"baked={baked_value!r} candidate={candidate_value!r}",
+            file=sys.stderr,
+        )
+    sys.exit(1)
+print(f"install: host match OK (enrolled record): {host} candidate matches the baked storage/cpu")
+PY
+  then
+    die "the probed hardware does not match the enrolled record for ${host}; refusing to install over it"
+  fi
+}
+
+# The disk whose live layout holds the held age identity: --disk wins, then the
+# freshly probed candidate's storage binding, then the baked record's.
+rescue_disk_by_id() {
+  local record id
+  for record in "$staging/${host}.json" "$staging/base.json"; do
+    [[ -f "$record" ]] || continue
+    id=$(python3 -c 'import json, sys
+storage = json.load(open(sys.argv[1])).get("storage") or {}
+print(storage.get("diskById") or "")' "$record" 2>/dev/null) || id=""
+    if [[ -n "$id" ]]; then
+      printf '%s\n' "$id"
+      return 0
+    fi
+  done
+  return 1
+}
+
+# Unmount the rescue mountpoint if it is mounted, then remove its directory.
+# A failure to unmount is fatal so nothing proceeds to the wipe with a live
+# scratch mount.
+_rescue_umount() {
+  [[ -n "${RESCUE_MNT:-}" ]] || return 0
+  if mountpoint -q -- "$RESCUE_MNT" 2>/dev/null; then
+    if ! timeout 30 umount -- "$RESCUE_MNT" 2>/dev/null; then
+      timeout 30 umount -l -- "$RESCUE_MNT" 2>/dev/null \
+        || die "--rescue-identity: could not unmount ${RESCUE_MNT}; refusing to continue"
+    fi
+  fi
+  rmdir -- "$RESCUE_MNT" 2>/dev/null || true
+  RESCUE_MNT=""
+}
+
+_rescue_cleanup() {
+  _rescue_umount
+  _staging_cleanup
+}
+
+# --rescue-identity: read the held age identity off the live layout on the disk
+# being replaced. The mount is read-only with nologreplay, so it cannot mutate
+# the old system; the fallback mounts the top-level subvolume and looks for
+# @home by hand. Dies when the flag is set and the identity is missing - the
+# caller asked for it, so a silent miss would let the wipe destroy the only copy.
+rescue_age_identity() {
+  local stage="$1"
+  require_live_root
+
+  local disk_id="${disk:-}"
+  if [[ -z "$disk_id" ]]; then
+    disk_id=$(rescue_disk_by_id) \
+      || die "--rescue-identity: cannot determine the target disk; pass --disk <by-id basename>"
+  fi
+  local part="/dev/disk/by-id/${disk_id}-part2"
+  [[ -e "$part" ]] || die "--rescue-identity: ${part} does not exist; cannot read the live identity"
+
+  RESCUE_MNT=$(mktemp -d -- "${TMPDIR:-/tmp}/nixos-rescue.XXXXXXXX") \
+    || die "--rescue-identity: cannot create a mountpoint"
+  trap '_rescue_cleanup' EXIT
+
+  if ! timeout 30 mount -o ro,nologreplay,subvol=/@home -- "$part" "$RESCUE_MNT" 2>/dev/null; then
+    timeout 30 mount -o ro,nologreplay,subvolid=5 -- "$part" "$RESCUE_MNT" \
+      || { _rescue_umount; die "--rescue-identity: cannot mount ${part} read-only"; }
+  fi
+
+  local key="" candidate
+  for candidate in \
+    "$RESCUE_MNT/${install_user}/.config/sops/age/keys.txt" \
+    "$RESCUE_MNT/@home/${install_user}/.config/sops/age/keys.txt" \
+    "$RESCUE_MNT/home/${install_user}/.config/sops/age/keys.txt"; do
+    if [[ -f "$candidate" ]]; then
+      key="$candidate"
+      break
+    fi
+  done
+  if [[ -z "$key" ]]; then
+    _rescue_umount
+    die "--rescue-identity: no age identity at ${install_user}/.config/sops/age/keys.txt on ${part}; refusing to wipe without the held identity"
+  fi
+
+  local rc=0
+  staging_identity "$stage" "$install_user" "$install_uid" "$install_gid" "$key" || rc=$?
+  _rescue_umount
+  (( rc == 0 )) || die "--rescue-identity: could not stage the rescued identity from ${part}"
+  printf 'install: rescued the age identity from %s (read-only)\n' "$part"
+  return 0
 }
 
 # The artifacts persist in the installed system whether or not the host key
@@ -461,6 +648,7 @@ fi
 
 prepare_worktree
 enroll
+verify_host_match
 save_artifacts
 fold_host_key
 save_artifacts
