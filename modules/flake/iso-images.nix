@@ -41,14 +41,16 @@ let
           };
           script = ''
             mkdir -p /root/enroll
-            ${pkgs.coreutils}/bin/printf '%s' '${baseDeclaration}' > /etc/hardware-enrollment/${host}.json
             nix-config-hardware-auto-enroll \
               --host ${host} \
               --base /etc/hardware-enrollment/${host}.json \
               --trust /root/enroll/trust.json \
-              --out /root/enroll || true
+              --out /root/enroll || echo "hardware-enroll: masked failure (artifact presence is the gate)" >&2
           '';
         };
+        # The base record the oneshot's `--base` reads must already exist at boot:
+        # land it declaratively instead of racing a runtime write inside the unit.
+        environment.etc."hardware-enrollment/${host}.json".text = baseDeclaration;
       };
       installerMarker = {
         system.nixos.variant_id = "installer";
