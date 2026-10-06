@@ -27,12 +27,18 @@ The app detects the machine (a ThinkPad P52 maps to `antagony`; otherwise pass
 `--host <name>`), copies the flake into a writable work tree, probes the real
 hardware through the same intake pipeline the ISO oneshot uses, commits the
 enrollment, folds the fresh host key into the sops store when the two secrets
-below are present, then runs the build gate and `nixos-anywhere` against
-`root@127.0.0.1`. Without `--yes` it stops after the enrollment checkpoint;
-`--dry-run` prints the plan. When the sops store or age identity is missing,
-`--skip-fold --save <persistent-dir>` keeps the enrollment recoverable instead.
-The install stage refuses to start unless `/` is a live tmpfs/overlay root, so
-the RAM-resident ISO is the supported environment.
+below are present, then mints a one-time password for `mei` into a tmpfs stage
+alongside the enrollment artifacts and the age identity, prints the password
+once, and runs the build gate plus `nixos-anywhere` against `root@127.0.0.1`
+with the stage forwarded as `--extra-files`. Without `--yes` it stops after the
+enrollment checkpoint; `--dry-run` prints the plan. The artifacts persist in the
+installed system whether or not the fold happened, so `--skip-fold --save
+<persistent-dir>` is no longer required: `--save` just keeps an extra copy. When
+the held age identity exists only on the disk being wiped, `--rescue-identity`
+mounts the live btrfs layout read-only and copies `~/.config/sops/age/keys.txt`
+into the stage, refusing to continue if it cannot find it. The install stage
+refuses to start unless `/` is a live tmpfs/overlay root, so the RAM-resident ISO
+is the supported environment.
 
 The upstream NixOS minimal ISO works for this path too (with the flakes flag
 and the same secret caveats); see
@@ -131,6 +137,9 @@ bin/host-install.sh --target-host <ip> --skip-install   # enroll + commit only (
 bin/host-install.sh --target-host <ip> --yes            # full run
 bin/host-install.sh --target-host <ip> --install-only   # build gate + install, skip enroll/fold
 bin/host-install.sh --target-host <ip> --yes --skip-fold    # keep the host key out of the sops store
+bin/host-install.sh --target-host <ip> --yes --extra-files <dir>  # overlay extra files into the target
+bin/host-install.sh --target-host <ip> --yes --chown home/mei/.config 1000:100  # repeatable
+bin/host-install.sh --target-host <ip> --yes --stage-identity ~/.config/sops/age/keys.txt
 ```
 
 With `--yes`, the stages run in order — enroll (upload trust fixture,
@@ -138,6 +147,14 @@ trigger `hardware-enroll`, pull the artifacts back), fold (commit the
 refreshed enrollment + re-encrypted host key), `nh os build` gate, then
 `nixos-anywhere` partitions the target disk and installs, and after the
 reboot `nh os switch` verifies the deployed system over SSH.
+
+On this operator path (anything but `--install-only`) the script mints a
+per-install password for `mei` into a tmpfs stage and prints it once, then
+forwards the stage as `nixos-anywhere --extra-files` so the fresh machine is
+loggable. `--extra-files <dir>` and repeatable `--chown <path> <owner>` are
+passed straight through; `--stage-identity SRC` optionally adds an age key at
+`home/<user>/.config/sops/age/keys.txt` and is off by default, so the operator's
+own identity is never staged implicitly.
 
 Disk selection is automatic on the target: the already-bound disk is
 preferred when present, otherwise the largest internal disk (USB devices
@@ -148,7 +165,9 @@ are excluded).
 - The target reboots into NixOS; the verification switch has already run in the
   operator flow. The one-command app cannot verify after the reboot (it runs on
   the target), so it skips that stage; day-2 `nh os switch` takes over.
-- First console login sets `mei`'s password (bootstrap-password).
+- The install minted `mei`'s password and printed it once to the console (the
+  journal too); use it for the first login. It is never written to disk in
+  readable form, so copy it off the screen before the install reboots.
 - The enrollment commit is local — push it: `git push origin main`. In the app
   flow the commit lives in the RAM work tree (`/root/nixos-install`), so copy it
   out first with `--save DIR` (or run the app from a persistent `--workdir` and
@@ -169,8 +188,13 @@ are excluded).
   only runs from a live environment so the enrolled disk can be erased safely;
   boot the ISO (or pass `--allow-mounted-root` when the target disk is not the
   running root).
-- **The app demands `--save`** — `--skip-fold` keeps the host key out of the
-  sops store, so the enrollment must be written somewhere persistent first.
+- **The app warns that it could not fold the host key** because the sops store
+  or age identity was missing; the enrollment artifacts are still staged into
+  the installed system, and `--save DIR` keeps an extra copy on persistent
+  storage.
+- **The age identity is only on the disk about to be wiped**: re-run with
+  `--rescue-identity`, which mounts the live btrfs layout read-only and stages
+  `~/.config/sops/age/keys.txt` before the install.
 
 ## Single-machine variant
 

@@ -75,9 +75,11 @@ The app detects the machine (a ThinkPad P52 maps to `antagony`; otherwise
 pass `--host <name>`), probes the real hardware through the same intake
 pipeline the ISO's `hardware-enroll` oneshot uses, commits the enrollment
 into a work tree (`/root/nixos-install`), folds the fresh host key into
-`secrets/remembrance-keys.yaml` when the operator secrets are present,
-and then runs the `nh os build` gate plus `nixos-anywhere` against
-`root@127.0.0.1`.
+`secrets/remembrance-keys.yaml` when the operator secrets are present, and
+mints a one-time password for `mei` into a tmpfs stage along with the
+enrollment artifacts and the age identity, printing the password once. Then
+it runs the `nh os build` gate plus `nixos-anywhere` against
+`root@127.0.0.1`, forwarding the stage as `--extra-files`.
 
 ```bash
 sudo nix run .#install --                 # probe + enroll, print the summary
@@ -88,11 +90,15 @@ sudo nix run .#install -- --skip-fold --save /mnt/usb/enroll --yes
 ```
 
 Without `--yes` the run stops after the enrollment checkpoint. `--skip-fold`
-keeps the host key local and requires `--save DIR` on persistent storage (the
-ISO environment is RAM); the enrollment commit inside the work tree is also
-lost on reboot, so copy it out with `--save` and commit it to the repo
-afterwards. The install stage itself refuses to run unless `/` is a live
-tmpfs/overlay root, and re-checks `--yes` inside `bin/host-install.sh`.
+keeps the host key local; the enrollment artifacts are staged into the installed
+system regardless, and `--save DIR` keeps an extra copy on persistent storage
+(the ISO environment is RAM), so the enrollment commit inside the work tree is
+also lost on reboot. Copy it out with `--save` and commit it to the repo
+afterwards. When the held age identity lives only on the disk being replaced,
+pass `--rescue-identity`: the app mounts the live btrfs layout read-only, copies
+`~/.config/sops/age/keys.txt` into the stage, and refuses to proceed without it.
+The install stage itself refuses to run unless `/` is a live tmpfs/overlay root,
+and re-checks `--yes` inside `bin/host-install.sh`.
 
 ### Manual operator-side install
 
@@ -115,6 +121,37 @@ and skips kexec. It partitions the disk with the enrolled Disko layout
 system. `bin/host-install.sh` wraps exactly this command with the
 enroll → fold → gate → install → verify stages.
 
+On this operator path the wrapper also mints a per-install password for `mei`
+into a tmpfs stage and forwards it as `nixos-anywhere --extra-files`, so a fresh
+install leaves a loggable account. `--stage-identity SRC` optionally stages an
+age key at the installed user's `home/<user>/.config/sops/age/keys.txt` (off by
+default), and repeatable `--chown <path> <owner>` forwards the ownership of a
+staged subtree, for example `--chown home/mei/.config 1000:100` for the identity.
+
+## Install by itself (opt in)
+
+The per-host ISO can install unattended, but only after a deliberate per-boot
+opt-in. On a plain boot it does nothing: no disk is touched, and the install
+unit never activates. To arm it, append `nixos.autoinstall=1` to the kernel
+command line at the boot menu (edit the boot entry, add the flag, boot it).
+The flag is never placed in `boot.kernelParams`, so no stored configuration can
+start an install on its own.
+
+With the flag present, the `nixos-autoinstall.service` unit runs the flake's own
+install app for the ISO's host with `--yes --rescue-identity`, once the network
+and the `hardware-enroll` oneshot are up. The attempt writes `/run/autoinstall-done`
+before it calls `nixos-anywhere`, so a retry within the same boot does not fire a
+second wipe. A failure (for example, a host or disk that does not match the
+enrolled record) activates `iso-install-rescue.target`, which opens a root shell
+on tty1 instead of rebooting into a loop. On success the unit reboots into the
+installed system, where the first login uses the password printed to the console
+and journal.
+
+The ISO eval wall pins the unit's conditions, ordering, and script, and a VM
+check boots the same config both with and without the flag: inert on a plain
+boot, and the rescue target after a gated attempt that cannot match a VM to the
+ThinkPad. No real disk is written by that check.
+
 ## Using the official NixOS minimal ISO
 
 The upstream minimal installer (`nixos-minimal-*.iso` from nixos.org) also
@@ -125,7 +162,9 @@ and carries Nix with a nixpkgs copy. Differences to keep in mind:
 - Keep `--extra-experimental-features 'nix-command flakes'` — flakes are not
   enabled on it by default.
 - It has no `hardware-enroll` oneshot and no baked-in base declaration, so
-  only the flake app works; `bin/host-install.sh` needs the per-host ISO.
+  only the flake app works; `bin/host-install.sh` needs the per-host ISO. It also
+  carries no `nixos-autoinstall.service`, so the `nixos.autoinstall=1` boot flag
+  does nothing there.
 - It carries none of the repo's keys; the app installs its own root key for
   the self-SSH phase, so that is fine.
 - The live environment is RAM-backed: the app's tool closure (including `nh`,

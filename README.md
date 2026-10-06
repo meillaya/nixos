@@ -48,9 +48,16 @@ the internal disk binding, GPU, network controllers, firmware, power and
 suspend — commits the enrollment into the work tree, folds the freshly
 generated host key into the sops store when it is available, and then hands
 the build gate and the destructive `nixos-anywhere` install to
-`bin/host-install.sh --install-only` (which re-checks `--yes` itself). The
-upstream NixOS minimal ISO works here too (keep the flakes flag and the
-secret caveats); the operator flow below needs the per-host ISO — see
+`bin/host-install.sh --install-only` (which re-checks `--yes` itself). Just
+before that destructive call it mints a one-time password for `mei` and stages
+it, together with the enrollment artifacts and the age identity, into the
+installed system; it prints the password once for the first login and never
+writes it to disk.
+
+The upstream NixOS minimal ISO works here too (keep the flakes flag and the
+secret caveats). It has no `hardware-enroll` oneshot and no baked-in base
+declaration, so only this one-command app path works on it; the operator flow
+below needs the per-host ISO. See
 [`docs/service-notes/nixos-anywhere-iso-install.md`](docs/service-notes/nixos-anywhere-iso-install.md).
 
 Without `--yes` the run stops after the enrollment checkpoint so the probed
@@ -64,8 +71,12 @@ sudo nix run .#install -- --skip-fold --save /mnt/usb/enroll --yes
 ```
 
 `--skip-fold` keeps the host key local instead of folding it into
-`secrets/remembrance-keys.yaml`; it then requires `--save DIR` on persistent
-storage so the enrollment stays recoverable. Without a display, the GPU
+`secrets/remembrance-keys.yaml`; the enrollment artifacts are staged into the
+installed system regardless, and `--save DIR` keeps an extra copy on persistent
+storage. When the age identity exists only on the disk being wiped, pass
+`--rescue-identity`: the app mounts the live btrfs layout read-only, copies
+`~/.config/sops/age/keys.txt` into the stage, and refuses to continue when it
+cannot find the identity. Without a display, the GPU
 renderer digest falls back to the selected GPU's PCI identity so headless
 live environments can still enroll. The install stage itself is refused unless
 `/` is a live tmpfs/overlay root (boot the ISO): erasing the enrolled disk from
@@ -106,8 +117,12 @@ order:
 4. Commits them: the intake config into `config/hosts/intake/` and the
    re-encrypted sops host key into `secrets/`.
 5. Runs a pre-flight `nh os build` gate on the refreshed flake.
-6. Installs via `nixos-anywhere` (partition + first activation).
-7. Verifies post-install with `nh os switch`.
+6. Mints a per-install password for `mei` into a tmpfs stage, adds the
+   enrollment artifacts, and with `--stage-identity SRC` the age identity,
+   then prints the password once and forwards the stage as
+   `nixos-anywhere --extra-files`.
+7. Installs via `nixos-anywhere` (partition + first activation).
+8. Verifies post-install with `nh os switch`.
 
 Tool roles are fixed: `nixos-anywhere` is the installer; `nh` is the
 pre-flight build gate and the day-2 switch tool. `nh` never installs.
@@ -120,10 +135,34 @@ bin/host-install.sh --target-host <ip> --dry-run        # print the exact comman
 bin/host-install.sh --target-host <ip> --yes --skip-verify  # skip the post-install nh switch
 bin/host-install.sh --target-host <ip> --install-only   # build gate + install, skip enroll/fold
 bin/host-install.sh --target-host <ip> --yes --skip-fold    # keep the host key local
+bin/host-install.sh --target-host <ip> --yes --extra-files <dir>   # overlay extra files into the target
+bin/host-install.sh --target-host <ip> --yes --chown home/mei/.config 1000:100  # repeatable
+bin/host-install.sh --target-host <ip> --yes --stage-identity ~/.config/sops/age/keys.txt
 ```
 
 `--host` defaults to `remembrance`; pass `--host <host>` for the other
-NixOS hosts. The install path is gated behind `--yes`.
+NixOS hosts. The install path is gated behind `--yes`. On this operator path
+(not `--install-only`) the script mints and stages the password itself;
+`--extra-files` and repeatable `--chown <path> <owner>` are forwarded straight
+to `nixos-anywhere`, and `--stage-identity SRC` is off by default so the
+operator's own age key is never staged implicitly.
+
+### Auto-install at boot (opt in)
+
+The installer ISO stays inert on a plain boot: it probes nothing and never
+touches a disk. To let a booted ISO install by itself, append
+`nixos.autoinstall=1` to the kernel command line at the boot menu (edit the
+boot entry, add the flag, boot it). The flag is a per-boot decision and is
+never placed in `boot.kernelParams`, so no automatic path can start an install.
+
+With the flag present, `nixos-autoinstall.service` runs the flake's own install
+app for the ISO's host with `--yes --rescue-identity`, after the network and the
+enrollment oneshot are up. It still has to pass the same trust gates as a manual
+run, including the host and disk match. A failure activates
+`iso-install-rescue.target`, which drops to a root shell on tty1 for triage
+instead of rebooting into a loop. The ISO config, the gate, and the inert
+default boot are covered by the ISO eval wall and a VM check that boots the
+config both with and without the flag.
 
 The four-enrollment gate (`boot.state=uefi`,
 `storage.profile=single-gpt-btrfs`, `publicTrust.state=enrolled`,
