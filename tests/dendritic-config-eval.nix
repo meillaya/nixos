@@ -289,7 +289,10 @@ assert builtins.elem "iso-install-rescue.target" isoAutoinstallUnit.unitConfig.O
 assert isoAutoinstallUnit.serviceConfig.Type == "oneshot";
 assert isoAutoinstallUnit.serviceConfig.RemainAfterExit;
 assert isoAutoinstallUnit.serviceConfig.StandardOutput == "journal+console";
-assert hasInfix "install" isoAutoinstallUnit.script;
+# Invocation, not tautology: a bare `hasInfix "install"` matched the
+# wrapper's own `/nix/store/...-install/bin/install` store path.
+assert hasInfix (builtins.unsafeDiscardStringContext flake.apps.x86_64-linux.install.program) isoAutoinstallUnit.script;
+assert hasInfix "--host antagony" isoAutoinstallUnit.script;
 assert hasInfix "--rescue-identity" isoAutoinstallUnit.script;
 # Negative: a plain boot must never carry the opt-in flag in kernelParams.
 assert !(builtins.elem "nixos.autoinstall=1" isoConfigAntagony.boot.kernelParams);
