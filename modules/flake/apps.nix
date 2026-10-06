@@ -525,6 +525,7 @@ EOF
         pkgs.sops
         pkgs.pciutils
         pkgs.mesa-demos
+        pkgs.mkpasswd
       ] ++ lib.optionals (nhPkg != null) [ nhPkg ];
     in {
       "build" = mkApp "build" system { };
