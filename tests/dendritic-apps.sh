@@ -27,6 +27,7 @@ done
 "$root/apps/x86_64-linux/install" --dry-run > "$tmpdir/install-plan"
 grep -Fq -- '--install-only' "$tmpdir/install-plan"
 grep -Fq -- 'auto_enroll' "$tmpdir/install-plan"
+grep -Fq -- '--extra-files <stage>' "$tmpdir/install-plan"
 
 for system in x86_64-linux; do
   app_names=$(nix eval --impure --json --expr \

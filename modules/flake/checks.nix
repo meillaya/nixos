@@ -35,6 +35,17 @@
         touch "$out"
       '';
 
+      install-staging = pkgs.runCommand "install-staging" {
+        nativeBuildInputs = [ pkgs.bash pkgs.coreutils pkgs.gnugrep pkgs.nix pkgs.python3 ];
+        NIX_CONFIG = "experimental-features = nix-command flakes";
+        src = inputs.self;
+      } ''
+        cp -R "$src" source
+        chmod -R u+w source
+        bash source/tests/install-staging.sh
+        touch "$out"
+      '';
+
       package-policy = pkgs.runCommand "package-policy" {
         nativeBuildInputs = [ pkgs.bash pkgs.gnugrep pkgs.nix pkgs.python3 ];
         DENDRITIC_POLICY_REPO_ROOT = "${inputs.self}";
