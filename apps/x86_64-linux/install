@@ -41,6 +41,7 @@ install_only=false
 skip_fold=false
 allow_mounted_root=false
 rescue_identity=false
+identity_staged=false
 
 usage() {
   cat <<'EOF'
@@ -156,7 +157,8 @@ flake_root=$(cd -- "${script_dir}/../.." && pwd -P)
 # Shared staging builder (wave 1): staging_init/staging_password mint the
 # per-install password hash into a tmpfs stage that `nixos-anywhere
 # --extra-files` copies into the target. The helper also reports the ownership
-# target for the user-owned subtree, which the install phase forwards --chown.
+# target for the user-owned subtree, which the install phase forwards as
+# `--chown` only when that subtree was actually staged.
 # shellcheck source=../../bin/_install-staging.sh
 # shellcheck disable=SC1091
 source "$flake_root/bin/_install-staging.sh"
@@ -211,9 +213,13 @@ fi
 
 if [[ "$dry_run" == true ]]; then
   resolve_identity
-  ownership_plan="home/<user>/.config <uid>:<gid>"
-  if [[ -n "$install_user" ]]; then
-    ownership_plan="home/${install_user}/.config ${install_uid}:${install_gid}"
+  # The user-owned identity subtree is staged only when a source exists, so
+  # --chown is forwarded only then: nixos-anywhere chown -R fails (rc=1) on a
+  # path that was never staged, and disko has already formatted the disk by
+  # that point. No source means no home/ tree, hence no --chown.
+  transport_plan="--extra-files <stage>"
+  if [[ "$rescue_identity" == true || -f "${SOPS_AGE_KEY_FILE:-$HOME/.config/sops/age/keys.txt}" ]]; then
+    transport_plan+=" --chown home/${install_user:-<user>}/.config ${install_uid:-<uid>}:${install_gid:-<gid>}"
   fi
   rescue_plan=""
   if [[ "$rescue_identity" == true ]]; then
@@ -228,9 +234,9 @@ if [[ "$dry_run" == true ]]; then
   5. staging     tmpfs stage per run (removed on exit): var/lib/nixos-bootstrap/<user>-password.hash (0700 dir, 0600, yescrypt)
                  var/lib/nixos-enrollment/<candidate,intake,host-key> (0700 dir, 0600), copied into the installed system
                  home/<user>/.config/sops/age/keys.txt (0600) from \$SOPS_AGE_KEY_FILE else ~/.config/sops/age/keys.txt
-                 transport: --extra-files <stage> --chown ${ownership_plan}
+                 transport: ${transport_plan}
                  the plaintext password is printed once and never written to disk${rescue_plan}
-  6. install     <workdir>/bin/host-install.sh --host ${host:-<host>} --target-host ${target_host} --install-only --yes --skip-verify --extra-files <stage> --chown ${ownership_plan}
+  6. install     <workdir>/bin/host-install.sh --host ${host:-<host>} --target-host ${target_host} --install-only --yes --skip-verify ${transport_plan}
                  (refused unless / is a live tmpfs/overlay root, or --allow-mounted-root)
 EOF
   exit 0
@@ -415,17 +421,23 @@ stage_enrollment_artifacts() {
 # continues; the identity is never fed into the sops fold.
 stage_age_identity() {
   local stage="$1" keyfile
+  identity_staged=false
   if [[ "$rescue_identity" == true ]]; then
-    rescue_age_identity "$stage"
-    return $?
+    if rescue_age_identity "$stage"; then
+      identity_staged=true
+    fi
+    return 0
   fi
   keyfile="${SOPS_AGE_KEY_FILE:-$HOME/.config/sops/age/keys.txt}"
   if [[ ! -f "$keyfile" ]]; then
     printf 'install: warning: no age identity at %s; the installed system will need one before it can decrypt secrets\n' "$keyfile" >&2
     return 0
   fi
-  staging_identity "$stage" "$install_user" "$install_uid" "$install_gid" "$keyfile" \
-    || printf 'install: warning: could not stage the age identity from %s; continuing\n' "$keyfile" >&2
+  if staging_identity "$stage" "$install_user" "$install_uid" "$install_gid" "$keyfile"; then
+    identity_staged=true
+  else
+    printf 'install: warning: could not stage the age identity from %s; continuing\n' "$keyfile" >&2
+  fi
   return 0
 }
 
@@ -613,9 +625,10 @@ install_phase() {
   if [[ -n "${stage:-}" ]]; then
     transport+=(--extra-files "$stage")
   fi
-  if [[ -n "${install_user:-}" ]]; then
-    # staging_identity reports the same ownership pair, so the stage always
-    # forwards it and the user-owned .config subtree stays user-owned.
+  if [[ -n "${install_user:-}" && "$identity_staged" == true ]]; then
+    # Forward the ownership target only when staging_identity actually staged
+    # the .config subtree: nixos-anywhere chown -R fails (rc=1) on a missing
+    # path, and disko has already formatted the disk by that point.
     transport+=(--chown "home/${install_user}/.config" "${install_uid}:${install_gid}")
   fi
   "$workdir/bin/host-install.sh" \
