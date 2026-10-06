@@ -96,6 +96,13 @@ let
             StandardOutput = "journal+console";
             StandardError = "journal+console";
           };
+          # The app wrapper is `#!/usr/bin/env bash` and the app's first action
+          # is `nix eval` (the wrapper then puts its own tool closure on PATH);
+          # the systemd default service PATH carries neither, so the unit died
+          # with `env: 'bash': No such file or directory` (status 127) before
+          # the app could run. Give it the interpreter, the env shebang's
+          # coreutils, and nix.
+          path = [ pkgs.bash pkgs.coreutils pkgs.nix ];
           script = ''
             ${config.flake.apps.x86_64-linux.install.program} --host ${host} --yes --rescue-identity
           '';

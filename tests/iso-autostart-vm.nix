@@ -16,17 +16,20 @@
 #              install run into the flake checks stays a deliberate manual
 #              step, per the plan's Must-NOT).
 #
-# Shipped-config finding (observed in this VM, recorded not fixed here): the
-# gated unit cannot yet get as far as the install app. Its service PATH (the
-# systemd module default: coreutils/findutils/gnugrep/gnused/systemd) lacks
-# `bash`, so the app wrapper (`#!/usr/bin/env bash`) dies with
-# "env: 'bash': No such file or directory" (status 127). With bash added, the
-# next blocker is the missing `nix` on the same PATH (`nix eval` is the app's
-# first action). The real ISO carries the same unit and PATH, so its autostart
-# is equally non-functional; this test asserts what ships today — the gate
-# opens, the unit's start script runs and fails cleanly, the rescue target
-# takes over, and nothing is written — and keeps passing once the unit is
-# repaired and the app's own host-match guard becomes the failure it reaches.
+# Shipped-config finding (observed in this VM). The unit's service PATH now
+# carries the interpreter, the shebang's env, and nix
+# (`path = [ pkgs.bash pkgs.coreutils pkgs.nix ]` in modules/flake/iso-images.nix),
+# so the app wrapper runs: the journal shows its "Running install for
+# x86_64-linux" banner and the app's own `install:` diagnostic. The app cannot
+# get as far as its host-match guard *here* only because its first action is
+# `nix eval` of the baked flake, which must resolve the flake's inputs, and this
+# test's Nix build sandbox has no network (observed: the unit blocked ~25s on
+# 282ms CPU / 7.1K outgoing IP before the eval gave up). On real hardware the
+# unit's `after network-online.target` supplies that network and the app
+# proceeds to the host-match check. This test therefore pins the reachable
+# observable — the app starts and emits its own diagnostic — which fails
+# whenever the unit PATH regresses (a 127 leaves neither line). The gate
+# itself is still what this test proves: a plain boot activates nothing.
 #
 # `node.pkgsReadOnly = false` keeps the shared-policy `nixpkgs.config` /
 # `overlays` that the imported modules define; the read-only-pkgs shortcut
@@ -141,10 +144,16 @@ pkgs.testers.runNixOSTest {
     gatedBoot.succeed("test ! -e /run/autoinstall-done")
     assert_untouched_data_disk(gatedBoot)
 
-    # The journal shows the unit's start script actually ran (its output is
-    # prefixed with the script's syslog identifier, whatever it reports).
+    # The journal shows the app actually started, not merely that the unit's
+    # start script was invoked: the wrapper's banner prints only once
+    # `#!/usr/bin/env bash` resolves, and `install: ` is the app's own
+    # diagnostic. Under the F-B breakage (a service PATH without bash) the unit
+    # died at 127 and neither line appeared, so both assertions fail on the
+    # regression they name. The host-match guard is not reachable in this
+    # offline sandbox (see the header).
     print("nixos-autoinstall.service journal:")
     print(gatedBoot.succeed("journalctl -u nixos-autoinstall.service --no-pager"))
-    gatedBoot.succeed("journalctl -u nixos-autoinstall.service --no-pager | grep -F 'nixos-autoinstall-start'")
+    gatedBoot.succeed("journalctl -u nixos-autoinstall.service --no-pager | grep -F 'Running install for x86_64-linux'")
+    gatedBoot.succeed("journalctl -u nixos-autoinstall.service --no-pager | grep -F 'install: '")
   '';
 }
