@@ -55,6 +55,25 @@
           touch "$out"
         '';
 
+      bootstrap-password-mutations = pkgs.runCommand "bootstrap-password-mutations" {
+        nativeBuildInputs = [
+          pkgs.bash
+          pkgs.coreutils
+          pkgs.gnugrep
+          pkgs.gnused
+          pkgs.gnutar
+          pkgs.jq
+          pkgs.nix
+        ];
+        NIX_CONFIG = "experimental-features = nix-command flakes";
+        src = inputs.self;
+      } ''
+        cp -R "$src" source
+        chmod -R u+w source
+        bash source/tests/bootstrap-password-mutations.sh
+        touch "$out"
+      '';
+
       dendritic-shells = pkgs.runCommand "dendritic-shells" {
         nativeBuildInputs = [ pkgs.bash ];
         DENDRITIC_NU_BIN = "${pkgs.nushell}/bin/nu";
