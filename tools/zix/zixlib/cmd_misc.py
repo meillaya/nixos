@@ -33,6 +33,8 @@ def cmd_doctor(ctx, args):
     add("repo", "ok", str(ctx.cfg.repo))
 
     def managed_files():
+        if ctx.cfg.runtime_only:
+            return "ok", "skipped (runtime-only manifest)"
         problems = []
         if not ctx.cfg.packages_file.exists():
             problems.append("packages.nix missing")
@@ -51,6 +53,8 @@ def cmd_doctor(ctx, args):
     guarded("managed files", managed_files)
 
     def multiverse_input():
+        if ctx.cfg.runtime_only:
+            return "ok", "skipped (runtime-only manifest)"
         flake = ctx.cfg.path("flake.nix")
         if not flake.exists():
             return "fail", "flake.nix missing"

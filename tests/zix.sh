@@ -5,7 +5,7 @@ root=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
 
 # 1. The CLI must be usable without a repository (help and version only).
 python3 "$root/tools/zix/cli.py" --version > /dev/null
-for cmd in doctor check switch update follows flakes pkg sandbox vm bin wrap grail input
+for cmd in doctor check switch update follows flakes pkg sandbox vm bin wrap grail input get
 do
   python3 "$root/tools/zix/cli.py" "$cmd" --help > /dev/null
 done

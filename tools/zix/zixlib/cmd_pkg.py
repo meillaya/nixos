@@ -13,6 +13,7 @@ not, or re-pinning the same version are reported and change nothing.
 """
 
 import json
+import re
 
 from . import nixedit, pins, tools
 from .managed import Managed
@@ -61,6 +62,17 @@ def declared_where(ctx, name, managed=None):
             continue
         for index in nixedit.token_lines(path.read_text(), name):
             hits.append((target, path, index + 1, "list"))
+    modules = ctx.cfg.repo / "modules"
+    if modules.is_dir():
+        pattern = re.compile(r"(?<![\w.])pkgs\.%s\b" % re.escape(name))
+        for path in sorted(modules.rglob("*.nix")):
+            try:
+                text = path.read_text()
+            except (OSError, UnicodeDecodeError):
+                continue
+            for index, line in enumerate(text.split("\n")):
+                if pattern.search(line):
+                    hits.append(("aspect", path, index + 1, "aspect"))
     return hits
 
 
@@ -82,16 +94,17 @@ def _edit_file(ctx, path, new_text):
 # -- add ---------------------------------------------------------------------
 
 def cmd_add(ctx, args):
-    _check_target(ctx, args.target)
+    target = args.target or ctx.cfg.default_target
+    _check_target(ctx, target)
     managed = _managed(ctx)
     for spec in args.specs:
         name, version = parse_spec(spec)
         if not valid_name(name):
             raise ZixError("invalid package name: %r" % name)
         if version:
-            _add_pin(ctx, managed, name, version, args.target, args)
+            _add_pin(ctx, managed, name, version, target, args)
         else:
-            _add_plain(ctx, managed, name, args.target)
+            _add_plain(ctx, managed, name, target)
     return 0
 
 
@@ -133,6 +146,11 @@ def _add_plain(ctx, managed, name, target):
 
 
 def _add_pin(ctx, managed, name, version, target, args):
+    if ctx.cfg.no_pins:
+        raise ZixError(
+            "version pins are disabled for this manifest (no_pins); install "
+            "exact versions at runtime with `zix get %s@%s` instead"
+            % (name, version))
     if not args.skip_check:
         ctx.ui.step("resolving %s versions via nixpkgs-multiverse ..." % name)
         pins.check_version(ctx, name, version)
@@ -215,11 +233,22 @@ def cmd_rm(ctx, args):
     managed = _managed(ctx)
     for name in args.names:
         hits = declared_where(ctx, name, managed)
+        aspects = [h for h in hits if h[3] == "aspect"]
+        for _target, path, line, _kind in aspects:
+            ctx.ui.warn(
+                "%s is declared by hand in %s:%s; zix will not edit it"
+                % (name, relpath(path, ctx.cfg.repo), line))
+        hits = [h for h in hits if h[3] != "aspect"]
         selected = [h for h in hits
                     if not args.target or h[0] == args.target]
         pinned = managed.has_pin(name)
         if not selected and not pinned:
-            ctx.ui.say("nothing to remove: %s is not declared or pinned" % name)
+            if aspects:
+                ctx.ui.say("nothing to remove: %s is only declared by hand"
+                           % name)
+            else:
+                ctx.ui.say("nothing to remove: %s is not declared or pinned"
+                           % name)
             continue
         if len(selected) > 1 and not args.all and not args.target:
             places = "\n".join("  %s (%s:%s)" % (h[0], relpath(h[1], ctx.cfg.repo),

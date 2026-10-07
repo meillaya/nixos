@@ -8,18 +8,24 @@ the same tool works against other configurations once they ship a manifest.
 import argparse
 import os
 import sys
+from pathlib import Path
 
-from zixlib import cmd_misc, cmd_pkg, cmd_sandbox, cmd_vm
+from zixlib import cmd_get, cmd_misc, cmd_pkg, cmd_sandbox, cmd_vm
 from zixlib.backups import Backups
-from zixlib.config import discover_repo, load_config
+from zixlib.config import Config, discover_repo, load_config
 from zixlib.runner import Runner
 from zixlib.util import UI, ZixError
 
-VERSION = "0.1.0"
+VERSION = "0.2.0"
+
+# Commands that work without a zix.json: they touch nothing in a repository.
+REPO_OPTIONAL = {"get"}
 
 EPILOG = """\
 examples:
   zix doctor                             environment and repo sanity
+  zix get ripgrep                        install a package into the user profile now
+  zix get hello@2.10                     an exact nixpkgs version, no repo needed
   zix pkg add ripgrep                    add to the zix-managed set (all hosts)
   zix pkg add kitty --target linux       add to the curated Linux list
   zix pkg add jq@1.7.1                   pin exact version via nixpkgs-multiverse
@@ -84,6 +90,19 @@ def build_parser():
     check = sub.add_parser("check", help="run the repo's check suite")
     check.add_argument("--full", action="store_true",
                        help="also run the expensive full check")
+
+    get = sub.add_parser("get", help="install NAME[@VERSION] into a nix "
+                              "profile now (runtime; no repo needed)")
+    get.add_argument("specs", nargs="*", metavar="NAME[@VERSION]")
+    get.add_argument("--attr", help="nixpkgs attribute when it differs from NAME")
+    get.add_argument("--profile", help="profile to write (default: the user profile)")
+    get.add_argument("--eval-road", action="store_true",
+                     help="resolve by evaluating nixpkgs instead of the "
+                          "multiverse store-path index")
+    get.add_argument("--force", action="store_true",
+                     help="reinstall when the profile already has NAME")
+    get.add_argument("--list", action="store_true",
+                     help="list what the profile currently holds")
 
     switch = sub.add_parser("switch", help="build and activate a host")
     switch.add_argument("host", nargs="?", help="host name (default: from zix.json)")
@@ -187,6 +206,7 @@ def build_parser():
 
 HANDLERS = {
     "doctor": cmd_misc.cmd_doctor,
+    "get": cmd_get.cmd_get,
     "check": cmd_misc.cmd_check,
     "switch": cmd_misc.cmd_switch,
     "update": cmd_misc.cmd_update,
@@ -238,8 +258,16 @@ def main(argv=None):
         return 2
 
     try:
-        repo = discover_repo(explicit=args.repo)
-        cfg = load_config(repo)
+        try:
+            repo = discover_repo(explicit=args.repo)
+            cfg = load_config(repo)
+        except ZixError:
+            if key not in REPO_OPTIONAL or args.repo:
+                raise
+            repo = Path.cwd()
+            cfg = Config(repo, {"version": 1})
+            ui.note("no zix.json found upwards; `%s` does not need a repository"
+                    % key)
         ctx = Ctx(repo, cfg, ui, Runner(ui, args.dry_run), args.dry_run,
                   args.json)
         return handler(ctx, args) or 0

@@ -375,10 +375,101 @@ class CliTests(unittest.TestCase):
             cwd=str(fixture.root / "modules"))
         fixture.assert_return(proc, 0)
 
+    def test_default_target_from_manifest(self):
+        fixture = self.fixture
+        config_path = fixture.root / "zix.json"
+        config = json.loads(config_path.read_text())
+        config["default_target"] = "shared"
+        config_path.write_text(json.dumps(config, indent=2, sort_keys=True)
+                               + "\n")
+        fixture.cli("pkg", "add", "cowsay")
+        self.assertIn("  cowsay\n",
+                      (fixture.root / "modules/shared/packages.nix").read_text())
+        self.assertEqual(fixture.manifest()["packages"], [])
+
+    def test_no_pins_manifest_refuses_version_pins(self):
+        fixture = self.fixture
+        config_path = fixture.root / "zix.json"
+        config = json.loads(config_path.read_text())
+        config["no_pins"] = True
+        config_path.write_text(json.dumps(config, indent=2, sort_keys=True)
+                               + "\n")
+        before = tree_snapshot(fixture.root)
+        proc = fixture.cli("pkg", "add", "jq@2.0.0", expect=None)
+        self.assertNotEqual(proc.returncode, 0)
+        self.assertIn("no_pins", proc.stdout + proc.stderr)
+        self.assertEqual(before, tree_snapshot(fixture.root))
+
+    def test_where_sees_aspect_declarations(self):
+        fixture = self.fixture
+        path = fixture.root / "modules/aspects/users/mei.nix"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("{ pkgs, ... }: {\n  home.packages = [ pkgs.herdr ];\n}\n")
+        proc = fixture.cli("pkg", "where", "herdr")
+        self.assertIn("aspect", proc.stdout)
+        self.assertIn("modules/aspects/users/mei.nix:2", proc.stdout)
+        before = tree_snapshot(fixture.root)
+        proc = fixture.cli("--dry-run", "pkg", "add", "herdr")
+        self.assertIn("already declared", proc.stdout)
+        self.assertEqual(before, tree_snapshot(fixture.root))
+
+    def test_rm_refuses_aspect_declarations(self):
+        fixture = self.fixture
+        path = fixture.root / "modules/aspects/users/mei.nix"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("{ pkgs, ... }: {\n  home.packages = [ pkgs.herdr ];\n}\n")
+        before = tree_snapshot(fixture.root)
+        proc = fixture.cli("pkg", "rm", "herdr")
+        self.assertIn("declared by hand", proc.stdout + proc.stderr)
+        self.assertIn("only declared by hand", proc.stdout)
+        self.assertEqual(before, tree_snapshot(fixture.root))
+
     def test_doctor_survives_minimal_environment(self):
         proc = self.fixture.cli("doctor", expect=None)
         self.assertIn(proc.returncode, (0, 1))
         self.assertIn("zix doctor", proc.stdout)
+
+
+class GetTests(unittest.TestCase):
+    """`zix get` is the runtime path: it must work with no repository."""
+
+    def _run(self, tmp, *args):
+        env = dict(os.environ)
+        env.pop("ZIX_REPO", None)
+        env["ZIX_SYSTEM_CONFIG"] = str(Path(tmp) / "no-system-config")
+        return subprocess.run(
+            [sys.executable, str(ZIX_DIR / "cli.py")] + list(args),
+            capture_output=True, text=True, cwd=str(tmp), env=env)
+
+    def test_get_dry_run_needs_no_repo(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            proc = self._run(tmp, "--dry-run", "get", "hello@2.10")
+            self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+            self.assertIn('fast.versions.hello."2.10".out', proc.stdout)
+            self.assertIn("nix profile add", proc.stdout)
+
+    def test_get_eval_road_refs(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            proc = self._run(tmp, "--dry-run", "get", "hello@2.10",
+                             "--eval-road")
+            self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+            self.assertIn('versions.hello."2.10"', proc.stdout)
+            self.assertNotIn("#fast", proc.stdout)
+            proc = self._run(tmp, "--dry-run", "get", "hello", "--eval-road")
+            self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+            self.assertIn("nixpkgs#hello", proc.stdout)
+
+    def test_get_without_specs_asks_for_one(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            proc = self._run(tmp, "get")
+            self.assertNotEqual(proc.returncode, 0)
+            self.assertIn("nothing to get", proc.stdout + proc.stderr)
+
+    def test_other_commands_still_need_a_repo(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            proc = self._run(tmp, "pkg", "list")
+            self.assertNotEqual(proc.returncode, 0)
+            self.assertIn("no zix.json", proc.stdout + proc.stderr)
 
 
 if __name__ == "__main__":

@@ -3,7 +3,10 @@
 zix is generic: everything repo-specific lives in the ``zix.json`` manifest at
 the repository root. Finding the repo is a walk up from the current directory
 (or ``--repo`` / ``ZIX_REPO``), so the tool works from any subdirectory and can
-be pointed at other people's configurations unchanged.
+be pointed at other people's configurations unchanged. When the walk finds
+nothing, a system-wide manifest (``/etc/zix/zix.json``; override with
+``ZIX_SYSTEM_CONFIG``) is used - that is what images ship so commands like
+``zix get`` work with no checkout on disk.
 """
 
 import json
@@ -24,6 +27,10 @@ class Config:
         self.description = data.get("description", "")
         self.system = data.get("system") or default_system()
         self.targets = data.get("targets", {})
+        self.default_target = data.get("default_target")
+        # Manifests without a pin overlay (no lib/nixpkgs.nix policy) set this
+        # and send exact versions to `zix get` at runtime instead.
+        self.no_pins = bool(data.get("no_pins", False))
         self.managed = data.get("managed", {})
         self.policy_file = data.get("policy_file", "lib/nixpkgs.nix")
         self.checks = data.get("checks", {})
@@ -35,6 +42,9 @@ class Config:
         self.companion_inputs = data.get("companion_inputs", {})
         self.sandbox = data.get("sandbox", {})
         self.vm = data.get("vm", {})
+        # A runtime-only manifest ships in images: no package lists, no
+        # flake.nix, no pins - just enough config for `zix get` and friends.
+        self.runtime_only = bool(data.get("runtime_only", False))
 
     # -- paths ---------------------------------------------------------------
 
@@ -91,9 +101,12 @@ def discover_repo(start=None, explicit=None):
     for candidate in [here] + list(here.parents):
         if (candidate / CONFIG_NAME).exists():
             return candidate
+    system = Path(os.environ.get("ZIX_SYSTEM_CONFIG", "/etc/zix"))
+    if (system / CONFIG_NAME).exists():
+        return system
     raise ZixError(
-        "no %s found from %s upwards; run from the repo or pass --repo"
-        % (CONFIG_NAME, here))
+        "no %s found from %s upwards (and no system manifest at %s); "
+        "run from the repo or pass --repo" % (CONFIG_NAME, here, system))
 
 
 def load_config(repo):
