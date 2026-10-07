@@ -78,3 +78,33 @@ The `multiverse` input was added to `flake.nix` by the first pin and is kept:
 pins need it, and everything else zix exposes is reachable ad-hoc. Roadmap in
 `tools/zix/README.md` (per-host pins, plain-add attribute validation,
 machine0/Modal sandboxes).
+
+
+## Update (2026-10-07): runtime installs, F2, and the machine0 integration
+
+zix grew the piece agents use most: `zix get NAME[@VERSION]` installs into the
+invoking user's nix profile, needs no repository, and resolves through
+nixpkgs-multiverse's store-path index (no nixpkgs evaluation; it falls back to
+the evaluating road when the index has no match, and says so). Alongside it:
+
+- `get` is repo-optional (cli.py REPO_OPTIONAL); everything else may fall back
+  to a system manifest at `/etc/zix/zix.json` (`ZIX_SYSTEM_CONFIG`) when no
+  `zix.json` is found upwards - that is what images ship so `zix get` works
+  with no checkout on disk.
+- The critical review's F2 is fixed: `pkg where` scans `modules/**` for
+  `pkgs.<name>` declarations and reports them as `aspect` hits (`pkg rm`
+  refuses to edit those by hand; `pkg add` stops planning duplicates).
+- New manifest keys for multi-repo use: `default_target`, `no_pins`,
+  `runtime_only` (doctor honours the last one).
+- Version 0.2.0; 25 offline tests plus the smoke checks (`bash tests/zix.sh`,
+  also a `nix flake check` derivation), all green.
+
+machine0 (/home/mei/machine0) now integrates the CLI: `tools/zix` (vendored
+mirror), `pkgs/zix` (python3 + wrapper), `m0coding.zix.enable` (default on)
+installs it and seeds `/etc/zix/zix.json`, `~/.nix-profile/bin` is on the nix
+user's path, and image packages are managed declaratively through
+`modules/packages.nix` (`nix run .#zix -- pkg add NAME`; default_target=image,
+no_pins=true - exact versions go through `zix get`). Verified there:
+`nix flake check` clean, `nix build .#zix`, `doctor` all ok, add/rm round trip
+on `modules/packages.nix`, and `zix get hello@2.10` installing GNU Hello 2.10
+from an empty directory.

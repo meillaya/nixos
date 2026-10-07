@@ -27,6 +27,7 @@ From a checkout you can also run it directly (no flake evaluation):
 
 | area        | commands |
 | ----------- | -------- |
+| runtime     | `get NAME[@VERSION] [--profile P] [--force] [--eval-road]`, `get --list` - install now; no repo needed |
 | packages    | `pkg add NAME[@VERSION] [--target T]`, `pkg rm NAME`, `pkg unpin NAME`, `pkg list`, `pkg where NAME`, `pkg update [--apply]` |
 | search      | `pkg search QUERY` (nixpkgs stable+unstable), `pkg versions NAME` (every version ever, via `mvs`) |
 | flakes      | `flakes list [--match S]`, `flakes run NAME [--attr A] [--pinned]` (omniflake) |
@@ -89,6 +90,34 @@ standalone Home Manager alike.
 `--apply` moves them (verifying each). `zix pkg unpin` returns a package to
 following nixpkgs.
 
+## Runtime installs (`zix get`)
+
+`pkg add` edits the repo (the next rebuild installs the package); `get` is the
+runtime counterpart - it installs into a nix profile immediately, edits no
+repository files, and works with no `zix.json` anywhere:
+
+    zix get ripgrep                 # latest, from the store-path index
+    zix get hello@2.10              # a version nixpkgs shipped in 2016
+    zix get --list                  # what the profile holds now
+
+Resolution goes through nixpkgs-multiverse's store-path index: every version
+nixpkgs ever shipped maps to the store path its build produced, so an exact
+version installs without evaluating nixpkgs at all (seconds, a few hundred MB
+of peak RAM instead of the eval spike). When the index has no match - unfree,
+broken, or newer than the index pin - `get` falls back to the evaluating road
+and says so. `--eval-road` forces that up front.
+
+Where it installs: the invoking user's profile (`~/.nix-profile`, or
+`--profile PATH`). Make sure that profile's `bin` is on PATH - the image
+integration does, and plain installs print a warning when the new binary is
+not reachable. Installs are idempotent (an existing entry is reported, not
+duplicated; `--force` reinstalls).
+
+On machines with no checkout - images, throwaway containers - `zix` reads a
+system manifest at `/etc/zix/zix.json` (override: `ZIX_SYSTEM_CONFIG`) when no
+`zix.json` is found upwards. Mark such a manifest `"runtime_only": true` and
+`doctor` stops expecting package lists, a flake or pins.
+
 ## Safety model
 
 - Every mutating operation takes a snapshot into `zix/backups/` first; on any
@@ -121,16 +150,34 @@ Ship a `zix.json` with the same schema (see this repo's as the reference
 implementation) and the tool works unchanged: targets point at that repo's
 package files, `switches` at its activation commands, `checks` at its test
 suite. Nothing is hardcoded to this configuration; discovery is a walk up
-from the current directory for the nearest `zix.json`.
+from the current directory for the nearest `zix.json` (then the system
+manifest above). Manifest keys that shape multi-repo behaviour:
+
+| key | effect |
+| --- | ------ |
+| `default_target` | target `pkg add NAME` writes to when `--target` is omitted |
+| `no_pins` | refuse version pins (with a pointer at `zix get`) when the repo has no pin policy file |
+| `runtime_only` | `doctor` skips repo-shaped probes (package lists, flake input) |
 
 ## Limits / roadmap
 
 - Version existence checks need network (the multiverse index); `--skip-check`
   works offline.
+- The store-path index does not cover unfree, broken, or post-pin releases;
+  those take the evaluating road (or a future upstream pin kind - the critical
+  review's F1).
+- `get NAME` (no version) resolves the newest version that has a *prebuilt
+  store path*, which is not always upstream's newest release (multiverse's own
+  example: vscode served 1.104.3 while 1.107.x existed without one). Pin
+  `NAME@VERSION` when the difference matters.
 - Pins are global (all hosts, all systems). Per-host pins need a plan.
 - `pkg add` does not yet validate that the attribute exists in nixpkgs for
   plain (unpinned) adds; the build catches typos.
-- `sandbox` is local-only (podman/docker). Machine0 / Modal integration is a
-  later stage.
-- The check suite in `zix.json` runs what the repo's tests/README lists; keep
-  the two in sync when adding checks.
+- `pkg where`/`pkg rm` now see hand declarations in `modules/**` (`pkgs.<name>`)
+  and refuse to edit them; whole-line removal elsewhere in a target file still
+  applies as documented.
+- `sandbox`/`vm` are local-only (podman/docker, /dev/kvm) and cannot run on
+  platforms without /dev/fuse or privileged containers (e.g. Railway).
+- Global flags must precede the subcommand (F3 in the review); not yet fixed.
+- The machine0 integration (vendored copy, runtime manifest, image packaging)
+  lives in that repo; keep the two `tools/zix` trees in sync.
