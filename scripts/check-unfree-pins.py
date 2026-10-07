@@ -7,13 +7,15 @@
 # python3 -B scripts/check-unfree-pins.py [REPO_PATH]
 #
 # Read-only: prints pinned vs current for every unfree exception and exits
-# non-zero when a pin drifted away from the pinned nixpkgs.
-"""Check config/package-exceptions.json against the pinned nixpkgs.
+# non-zero when a row drifted away from the version the policy resolves.
+"""Check config/package-exceptions.json against the version the policy resolves.
 
-Unfree exceptions are version-exact: when nixpkgs drifts, the first drifted
-pin makes every output that includes that package refuse to evaluate
-("Refusing to evaluate package ... because it has an unfree license").
-This prints pinned vs current for every entry and exits non-zero on drift.
+Unfree exceptions are version-exact: when nixpkgs, or a multiverse pin, moves a
+package, the first drifted row makes every output that includes that package
+refuse to evaluate ("Refusing to evaluate package ... because it has an unfree
+license"). Versions are read through ``mkPkgs``, so a pinned package is compared
+at the version the hosts actually receive. This prints pinned vs current for
+every entry and exits non-zero on drift.
 
 Usage: scripts/check-unfree-pins.py [REPO_PATH]
 """
@@ -28,8 +30,10 @@ ATTR_OVERRIDES = {"idea": "jetbrains.idea", "pycharm": "jetbrains.pycharm"}
 
 def current_version(repo, system, attr):
     expr = (
-        f'let pkgs = (builtins.getFlake "{repo}").inputs.nixpkgs'
-        f'.legacyPackages."{system}"; in pkgs.lib.getVersion pkgs.{attr}'
+        f'let flake = builtins.getFlake "{repo}";'
+        f' policy = import (flake.outPath + "/lib/nixpkgs.nix") {{ inputs = flake.inputs; }};'
+        f' pkgs = policy.mkPkgs "{system}";'
+        f' in pkgs.lib.getVersion pkgs.{attr}'
     )
     p = subprocess.run(
         ["nix", "eval", "--impure", "--raw", "--expr", expr],
