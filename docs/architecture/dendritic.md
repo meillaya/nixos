@@ -5,6 +5,44 @@ aspect layer and flake-parts as its only outer output composer. Den is pinned to
 an audited revision in `flake.nix`; review Den's migration notes and rerun all
 cross-platform evaluations before changing that pin.
 
+## Repository layout
+
+```text
+flake.nix                     repo entry point (flake-parts + Den)
+flake.lock                    locked inputs
+lib/nixpkgs.nix               unfree allowlist policy
+modules/
+  entities/                   hosts + machine authority
+  aspects/
+    features/                 leaf capability aspects (niri, noctalia, ...)
+    platforms/                OS-level chains (linux.nix, darwin.nix)
+    roles/                    workstation
+    hardware/                 vendor + capability routing
+    storage/                  storage policy (disko wiring)
+    named-hosts/              hostname + identity projection
+    hosts/                    host aggregates
+    users/mei.nix             user + Home Manager projection
+    shared-policy/nixpkgs.nix nixpkgs config overlay
+  flake/                      flake-parts wiring (dendritic, checks, packages, apps)
+  nixos/                      NixOS implementation modules
+  darwin/                     nix-darwin implementation modules
+  shared/                     cross-platform package and file surfaces
+  linux/                      Linux desktop surface (NixOS and standalone-linux)
+  standalone-linux/           the standalone Home Manager home
+pkgs/                         repo-local derivations
+secrets/                      sops-encrypted secrets
+tests/                        architecture, config-eval, package-policy, readiness
+scripts/                      hardware intake + readiness tasks
+config/                       intake and install-sandbox schemas
+docs/                         architecture, service notes, machine audits
+tools/zix/                    the zix CLI
+```
+
+The Darwin tree (`modules/darwin/`) and the standalone Linux tree
+(`modules/standalone-linux/`) both live here. `modules/shared/`,
+`modules/linux/`, the `mei` user aspect, the `noctalia` and `sops` aspects, and
+`modules/standalone-linux/config/noctalia/config.toml` are used by both.
+
 ## Composition boundaries
 
 `flake.nix` intentionally contains only inputs and one `mkFlake` call.
