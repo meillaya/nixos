@@ -21,6 +21,10 @@ ls result/iso/                # -> nixos-<label>-x86_64-linux.iso
 sudo dd if=result/iso/*.iso of=/dev/sdX bs=4M status=progress oflag=sync
 ```
 
+Where the artifact lands (including the store path and its GC caveat), how to
+rebuild it, and how to smoke-test it locally in QEMU before touching a target:
+[`iso-build-and-qemu-test.md`](./iso-build-and-qemu-test.md).
+
 `.#iso.<host>` is shorthand for
 `.#nixosConfigurations.<host>.config.system.build.images.iso`. The flake
 exposes exactly one ISO variant (installer) per NixOS host:
