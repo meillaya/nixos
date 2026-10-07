@@ -1,0 +1,50 @@
+{
+  "task": "2: ISO: btrfs support and the module at boot",
+  "closes": "GAP-5",
+  "worktree": "/home/mei/nixos-wt/thinkpad-zero-touch-install-wave1",
+  "changed_files": ["modules/flake/iso-images.nix"],
+  "what_changed": [
+    "Added an ISO-only module `btrfsSupport` alongside `enrollment`/`installerMarker`: `boot.supportedFilesystems = [ \"btrfs\" \"vfat\" ]`, `boot.kernelModules = [ \"btrfs\" ]`.",
+    "Wired `btrfsSupport` into the `extendModules` module list: `++ [ enrollment installerMarker btrfsSupport ]`.",
+    "Did NOT touch `nixosConfigurations.<host>` (extendModules is ISO-only); no `nixos.autoinstall` anywhere."
+  ],
+  "commands": [
+    {
+      "id": "T2.3-BEFORE",
+      "scenario": "Pre-change state at committed HEAD (git+file rev = 5688845, predates the btrfs module)",
+      "command": "nix eval --impure --raw --expr '...builtins.getFlake \"git+file:///home/mei/nixos-wt/thinkpad-zero-touch-install-wave1?rev=5688845b1bddf072995b389868e5e141b2ea61cd\"... supportedFilesystems/kernelModules/fsPackages'",
+      "result": "antagony: supportedFilesystems={iso9660,overlay,squashfs,tmpfs} (NO btrfs/vfat), kernelModules has no btrfs, fsPackages=[dosfstools] (NO btrfs-progs). remembrance already had btrfs via its enrolled config.",
+      "pass": true
+    },
+    {
+      "id": "T2.1-AFTER-run1",
+      "scenario": "HAPPY: post-change eval for both hosts (run 1)",
+      "command": "nix eval --impure --raw --expr '... supportedFilesystems/kernelModules/fsPackages for antagony + remembrance'",
+      "result": "BOTH hosts: supportedFilesystems={btrfs:true,iso9660,vfat:true,overlay,squashfs,tmpfs}; kernelModules includes btrfs; fsPackages includes btrfs-progs.",
+      "pass": true
+    },
+    {
+      "id": "T2.2-AFTER-run2",
+      "scenario": "STALE_STATE probe: same eval run a second time, identical output",
+      "command": "same as T2.1 (run 2)",
+      "result": "identical JSON, btrfs:true + vfat:true + btrfs-progs for both hosts",
+      "pass": true
+    },
+    {
+      "id": "T2.4-DRYRUN",
+      "scenario": "Both ISOs still evaluate: nix build --dry-run",
+      "command": "nix build .#iso.antagony --dry-run ; nix build .#iso.remembrance --dry-run",
+      "result": "DRYRUN_RC=0 and DRYRUN_REMEMBRANCE_RC=0 (dry-run only, no ISO built)",
+      "pass": true
+    },
+    {
+      "id": "T2.5-PROBES",
+      "scenario": "grep probes: module present, wired into extendModules list, no nixosConfigurations host mutation, no nixos.autoinstall",
+      "command": "grep -n 'btrfsSupport|supportedFilesystems|kernelModules' ; grep -n 'enrollment installerMarker' ; grep -rn 'nixos.autoinstall'",
+      "result": "iso-images.nix:62-64 btrfsSupport defined; :70 wired; only reference to nixosConfigurations is the `.extendModules` call at :67; NO_AUTOINSTALL_OK",
+      "pass": true
+    }
+  ],
+  "result": "PASS",
+  "note": "The plan's failure scenario asked to confirm the pre-change values are gone; T2.3 (before) vs T2.1/T2.2 (after) captures exactly that: antagony went from no btrfs/vfat/btrfs-progs to all present."
+}

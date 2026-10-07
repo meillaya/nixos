@@ -1,0 +1,115 @@
+# task-4 evidence — host-install.sh --extra-files/--chown + attempt marker
+# branch thinkpad-zero-touch-install/wave1, pre-commit
+
+$ bash -n bin/host-install.sh && echo SYNTAX_OK
+SYNTAX_OK
+[rc=0]
+
+$ bash bin/host-install.sh --dry-run --host antagony --extra-files /tmp/x --chown home/mei/.config 1000:100
+0. PYTHONPATH=/home/mei/nixos-wt/thinkpad-zero-touch-install-wave1 python3 scripts/hardware/gen_trust.py --host antagony -o /tmp/nix-shell.tHvAMN/host-install.2565450/trust.json
+1. ssh root@<ip> 'mkdir -p /root/enroll'
+2. scp trust.json root@<ip>:/root/enroll/
+3. ssh root@<ip> 'systemctl start hardware-enroll'
+4. scp -r root@<ip>:/root/enroll/ /tmp/nix-shell.tHvAMN/host-install.2565450/
+5. cp /tmp/nix-shell.tHvAMN/host-install.2565450/antagony.json config/hosts/intake/antagony.json
+   cp /tmp/nix-shell.tHvAMN/host-install.2565450/antagony.intake.json config/hosts/intake/antagony.intake.json
+6. bin/nix-config-host-key-enroll /tmp/nix-shell.tHvAMN/host-install.2565450/antagony.host-key antagony
+7. git add config/hosts/intake/ [secrets/remembrance-keys.yaml] && git commit -m "enroll: refresh antagony"
+8. nh os build . -H antagony
+9. : > /run/autoinstall-done
+   nix run github:nix-community/nixos-anywhere -- --flake .#antagony --target-host root@<ip> --extra-files /tmp/x --chown home/mei/.config 1000:100
+   REFUSING: install requires --yes
+10. nh os switch . -H antagony --target-host <ip>
+[rc=0]
+
+$ bash bin/host-install.sh --dry-run --target-host 1.2.3.4 --extra-files /s --chown home/mei/.config 1000:100 --chown root/.ssh 0:0 --yes
+0. PYTHONPATH=/home/mei/nixos-wt/thinkpad-zero-touch-install-wave1 python3 scripts/hardware/gen_trust.py --host remembrance -o /tmp/nix-shell.tHvAMN/host-install.2565466/trust.json
+1. ssh root@1.2.3.4 'mkdir -p /root/enroll'
+2. scp trust.json root@1.2.3.4:/root/enroll/
+3. ssh root@1.2.3.4 'systemctl start hardware-enroll'
+4. scp -r root@1.2.3.4:/root/enroll/ /tmp/nix-shell.tHvAMN/host-install.2565466/
+5. cp /tmp/nix-shell.tHvAMN/host-install.2565466/remembrance.json config/hosts/intake/remembrance.json
+   cp /tmp/nix-shell.tHvAMN/host-install.2565466/remembrance.intake.json config/hosts/intake/remembrance.intake.json
+6. bin/nix-config-host-key-enroll /tmp/nix-shell.tHvAMN/host-install.2565466/remembrance.host-key remembrance
+7. git add config/hosts/intake/ [secrets/remembrance-keys.yaml] && git commit -m "enroll: refresh remembrance"
+8. nh os build . -H remembrance
+9. : > /run/autoinstall-done
+   nix run github:nix-community/nixos-anywhere -- --flake .#remembrance --target-host root@1.2.3.4 --extra-files /s --chown home/mei/.config 1000:100 --chown root/.ssh 0:0
+10. nh os switch . -H remembrance --target-host 1.2.3.4
+[rc=0]
+
+$ bash bin/host-install.sh --dry-run --host antagony --chown home/mei/.config; echo rc=$?
+rc=64
+usage: bin/host-install.sh --target-host <ip> [options]
+
+Enroll a freshly ISO-booted host, fold the artifacts into this repo, then
+(optionally) install NixOS via nixos-anywhere and verify with nh.
+
+options:
+  --target-host <ip>  IP of the ISO-booted target (required)
+  --host <name>       flake hostname to enroll/install (default: remembrance)
+  --yes               confirm the destructive nixos-anywhere install
+  --skip-install      enroll + fold + commit only; no build/install/verify
+  --install-only      skip enroll/fold; run the build gate + install on the
+                      already-enrolled worktree
+  --skip-fold         keep the host key local: copy + commit the intake but do
+                      not fold the host private key into the sops store
+  --skip-verify       skip the post-install nh os switch stage
+  --dry-run           print the exact command plan; execute nothing
+  --extra-files <dir> stage <dir> into the target's /mnt before install
+                      (forwarded to nixos-anywhere --extra-files)
+  --chown <path> <owner>
+                      chown -R /mnt/<path> <owner> after the extra-files copy;
+                      repeatable (forwarded to nixos-anywhere --chown)
+[rc=0]
+
+$ bash bin/host-install.sh --dry-run --host antagony --extra-files; echo rc=$?
+rc=64
+usage: bin/host-install.sh --target-host <ip> [options]
+
+Enroll a freshly ISO-booted host, fold the artifacts into this repo, then
+(optionally) install NixOS via nixos-anywhere and verify with nh.
+
+options:
+  --target-host <ip>  IP of the ISO-booted target (required)
+  --host <name>       flake hostname to enroll/install (default: remembrance)
+  --yes               confirm the destructive nixos-anywhere install
+  --skip-install      enroll + fold + commit only; no build/install/verify
+  --install-only      skip enroll/fold; run the build gate + install on the
+                      already-enrolled worktree
+  --skip-fold         keep the host key local: copy + commit the intake but do
+                      not fold the host private key into the sops store
+  --skip-verify       skip the post-install nh os switch stage
+  --dry-run           print the exact command plan; execute nothing
+  --extra-files <dir> stage <dir> into the target's /mnt before install
+                      (forwarded to nixos-anywhere --extra-files)
+  --chown <path> <owner>
+                      chown -R /mnt/<path> <owner> after the extra-files copy;
+                      repeatable (forwarded to nixos-anywhere --chown)
+[rc=0]
+
+$ grep -n 'autoinstall-done\|nixos-anywhere -- --flake' bin/host-install.sh
+136:  echo "9. : > /run/autoinstall-done"
+137:  echo "   nix run github:nix-community/nixos-anywhere -- --flake .#${host} --target-host root@${target_host}${transport}"
+238:  # ConditionPathExists=!/run/autoinstall-done) does not fire nixos-anywhere twice.
+239:  : > /run/autoinstall-done
+241:  if ! nix run github:nix-community/nixos-anywhere -- --flake ".#${host}" --target-host "root@${target_host}" "${transport[@]}"; then
+[rc=0]
+
+$ bash bin/host-install.sh --dry-run --host antagony 2>&1 | grep -c 'extra-files'
+0
+[rc=1]
+
+## POST-COMMIT (18fc43e)
+$ git show --stat HEAD
+18fc43e feat(install): forward --extra-files/--chown and record the destructive attempt
+ bin/host-install.sh | 50 +++++++++++++++++++++++++++++++++++++++++++++-----
+ 1 file changed, 45 insertions(+), 5 deletions(-)
+
+$ bash -n bin/host-install.sh && echo SYNTAX_OK && bash bin/host-install.sh --dry-run --host antagony --extra-files /tmp/x --chown home/mei/.config 1000:100 | grep -E -- '--extra-files|--chown|autoinstall-done'
+SYNTAX_OK
+9. : > /run/autoinstall-done
+   nix run github:nix-community/nixos-anywhere -- --flake .#antagony --target-host root@<ip> --extra-files /tmp/x --chown home/mei/.config 1000:100
+[rc=0]
+
+cleanup: none — dry-run executes nothing (no process, port, tmux, or temp file spawned); evidence dir is the requested artifact location.

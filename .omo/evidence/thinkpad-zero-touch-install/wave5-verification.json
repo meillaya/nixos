@@ -1,0 +1,117 @@
+{
+  "wave": 5,
+  "plan": ".omo/plans/thinkpad-zero-touch-install.md",
+  "todos_verified": ["17", "18", "19"],
+  "worktree": "/home/mei/nixos-wt/thinkpad-zero-touch-install-wave5",
+  "branch": "thinkpad-zero-touch-install/wave5",
+  "verified_tip": "11f544ab7bc2607bc65faaccb33c7428cd5b1ada",
+  "chain": ["7689b0c", "006c314", "be2ac14", "11f544a"],
+  "verdict": "confirmed",
+  "verified_at": "2026-10-06T19:33Z",
+  "verifier": "independent adversarial verifier (did not implement this work)",
+
+  "todos": {
+    "17": {
+      "title": "drop the unused staging_plan helper",
+      "verdict": "confirmed",
+      "confidence": "high",
+      "claim_under_test": "staging_plan() had zero call sites; removal is dead-code-only and changes no other helper.",
+      "evidence": [
+        "grep -rn 'staging_plan' bin/ apps/ tests/ modules/  => rc=1, 0 hits",
+        "grep -rn 'staging_plan' . (whole tree, --exclude-dir=.git)  => rc=1, 0 hits (no docs/tests reference either)",
+        "bash -n bin/_install-staging.sh  => rc=0",
+        "git show --stat 006c314 => 'bin/_install-staging.sh | 11 -----------  1 file changed, 11 deletions(-)' (only that file)",
+        "git show 006c314 => the hunk removes exactly staging_plan() (a pure 'cat <<EOF' heredoc, lines 162-173) plus one trailing blank line; no other line touched",
+        "remaining helpers intact: _staging_die, _staging_cleanup, _staging_tmpfs_base, staging_init, staging_password, staging_artifacts, staging_identity still present (grep -n function defs); the sourced helper is exercised end-to-end by tests/install-staging.sh which PASSes (see todo 18)"
+      ],
+      "repro": [
+        "cd <worktree> && grep -rn 'staging_plan' bin/ apps/ tests/ modules/; echo rc=$?   # expect rc=1",
+        "cd <worktree> && bash -n bin/_install-staging.sh && echo rc=$?                  # expect rc=0",
+        "cd <worktree> && git show --stat 006c314"
+      ]
+    },
+
+    "18": {
+      "title": "execute the staging generator in the pinned check",
+      "verdict": "confirmed",
+      "confidence": "high",
+      "claim_under_test": "tests/install-staging.sh now runs the real generator (staging_init + staging_password against pkgs.mkpasswd) and asserts its produced artifact; the block fails under a garbage mkpasswd; pkgs.mkpasswd is on the check's PATH.",
+      "evidence": [
+        "bash tests/install-staging.sh (PATH=<pinned mkpasswd>/bin) run 1 => 'install-staging: behavioral generator block PASS' + 'install-staging=PASS', rc=0",
+        "bash tests/install-staging.sh (same) run 2 => identical, rc=0 (deterministic; no timing/flake)",
+        "nix build --no-link --rebuild -L .#checks.x86_64-linux.install-staging => REBUILD_RC=0; the forced rebuild re-ran the derivation and its log shows 'install-staging> install-staging: behavioral generator block PASS' then 'install-staging> install-staging=PASS' => the behavioral block executes inside the sandbox, i.e. staging_init found the sandbox tmpfs and staging_password ran the REAL pkgs.mkpasswd",
+        "code read: the block '. \"$helper\"' sources bin/_install-staging.sh, calls staging_init directly (not in a substitution, so the EXIT trap does not delete the stage early), then staging_password, and asserts on the PRODUCED artifact: hash_file exists at var/lib/nixos-bootstrap/<user>-password.hash; dir mode 0700; file mode 0600; file bytes match ^\\$y\\$[./A-Za-z0-9]+\\$[./A-Za-z0-9]{1,86}\\$[./A-Za-z0-9]{43}$; the 'password for <user>: ' line printed exactly once; the hash is not printed; no plaintext leaked into the stage. This is behavioral, not a token grep.",
+        "modules/flake/checks.nix install-staging nativeBuildInputs now = [ pkgs.bash pkgs.coreutils pkgs.gnugrep pkgs.mkpasswd pkgs.nix pkgs.python3 ] (pkgs.mkpasswd ADDED, with an explanatory comment)"
+      ],
+      "repro": [
+        "MK=/nix/store/vn4jxcayjiid198w0dwpnbkxr6blwrpf-mkpasswd-5.6.6/bin; cd <worktree> && PATH=$MK:$PATH bash tests/install-staging.sh; echo rc=$?",
+        "cd <worktree> && nix build --no-link --rebuild -L .#checks.x86_64-linux.install-staging; echo rc=$?   # expect 0 + behavioral line",
+        "garbage-stub mutation (scratch under /tmp): mkdir -p $S/stubbin; printf '#!/usr/bin/env bash\\necho \"GARBAGE-not-a-hash\"\\n' > $S/stubbin/mkpasswd; chmod +x $S/stubbin/mkpasswd; (cd $S && PATH=\"$S/stubbin:$PATH\" bash tests/install-staging.sh); echo rc=$?   # expect rc=1"
+      ]
+    },
+
+    "19": {
+      "title": "make the unit-script assertion non-tautological",
+      "verdict": "confirmed",
+      "confidence": "high",
+      "claim_under_test": "The old 'hasInfix \"install\" ... .script' was near-tautological (the embedded /nix/store/...-install/bin/install store path contains 'install'); the replacement pins the app-wrapper store path AND '--host antagony' AND retains '--rescue-identity', and rejects mutations the old form accepted.",
+      "evidence": [
+        "git show be2ac14 => single hunk, 1 deletion / 4 insertions, only tests/dendritic-config-eval.nix: replaces 'assert hasInfix \"install\" isoAutoinstallUnit.script;' with 'assert hasInfix (builtins.unsafeDiscardStringContext flake.apps.x86_64-linux.install.program) isoAutoinstallUnit.script;' + 'assert hasInfix \"--host antagony\" isoAutoinstallUnit.script;' (+2 comment lines). No other assertion weakened or renumbered.",
+        "nix-instantiate --eval --strict --expr 'import ./tests/dendritic-config-eval.nix {}' => \"dendritic-config-eval=PASS\", rc=0",
+        "flip A in /tmp scratch (drop ' --host <host>' from the unit script at iso-images.nix:107) => FAILS: assertion '(hasInfix \"--host antagony\" (isoAutoinstallUnit).script)' failed at tests/dendritic-config-eval.nix:295",
+        "flip B in /tmp scratch (strip the leading wrapper store-path token from the unit script) => FAILS: assertion '(hasInfix ((builtins).unsafeDiscardStringContext (flake).apps.x86_64-linux.install.program) (isoAutoinstallUnit).script)' failed at :294",
+        "DECISIVE negative control: with the PRE-CHANGE assertion ('hasInfix \"install\"') restored in the same scratch tree, flip A evaluates to \"dendritic-config-eval=PASS\" => the old assertion genuinely accepted the mutation that dropped the plan's --host flag. The tightened assertion catches it. The change is a real tightening, not cosmetic.",
+        "confirmed unit script (modules/flake/iso-images.nix:106-108) is '${config.flake.apps.x86_64-linux.install.program} --host ${host} --yes --rescue-identity' with host=antagony; unsafeDiscardStringContext is required because a store-path string cannot be used as a regex pattern (matches the recalled note)"
+      ],
+      "repro": [
+        "cd <worktree> && nix-instantiate --eval --strict --expr 'import ./tests/dendritic-config-eval.nix {}'   # expect PASS",
+        "scratch: git archive HEAD | tar -x -C $S; sed -i 's/ --host [^ ]*//' $S/modules/flake/iso-images.nix; (cd $S && nix-instantiate ... ; expect FAIL at :295)",
+        "scratch: sed -i '/--rescue-identity/ s|^\\( *\\)[^ ]* |\\1|' $S/modules/flake/iso-images.nix; (cd $S && nix-instantiate ... ; expect FAIL at :294)"
+      ]
+    }
+  },
+
+  "cross_cutting": {
+    "flake_check": {
+      "command": "cd <worktree> && nix flake check --all-systems --no-build",
+      "rc": 0,
+      "note": "all x86_64-linux and aarch64-darwin checks evaluated, including 'checks.x86_64-linux.install-staging' and 'checks.x86_64-linux.dendritic-config-eval'; log: .omo/evidence/thinkpad-zero-touch-install/wave5-flakecheck.log"
+    },
+    "worktree_clean": {
+      "git_status_porcelain": "",
+      "head": "11f544ab7bc2607bc65faaccb33c7428cd5b1ada",
+      "note": "worktree was read-only for this verification; every scratch probe ran on a git-archive copy under /tmp"
+    },
+    "per_commit_file_scopes": {
+      "006c314": ["bin/_install-staging.sh"],
+      "be2ac14": ["tests/dendritic-config-eval.nix"],
+      "11f544a": ["modules/flake/checks.nix", "tests/install-staging.sh"],
+      "match_brief": true
+    }
+  },
+
+  "adversarial": {
+    "misleading_success_output": "PASS - a scratch copy with a mkpasswd stub emitting 'GARBAGE-not-a-hash' makes tests/install-staging.sh exit rc=1 with 'install-staging: generated hash does not match the bootstrap validator regex'; the same scratch copy with the real mkpasswd PASSes. The behavioral block cannot pass on a fake generator.",
+    "tautology_negative_control": "PASS - restoring the pre-change 'hasInfix \"install\"' in a scratch tree lets the flip-A mutation (dropped --host antagony) evaluate to PASS, proving the original assertion was tautological and the replacement is a genuine tightening.",
+    "stale_state_determinism": "PASS - tests/install-staging.sh run twice, byte-identical results, rc=0 both times.",
+    "dirty_worktree": "PASS - each commit's file scope matches the brief and the claim; no sibling-lane files leaked into a commit; porcelain empty at the end.",
+    "worktree_immutability": "PASS - no file in the worktree was written; all mutations happened on /tmp copies; final porcelain empty at tip 11f544a."
+  },
+
+  "artifacts": [
+    ".omo/evidence/thinkpad-zero-touch-install/wave5-verification.json (this file)",
+    ".omo/evidence/thinkpad-zero-touch-install/wave5-flakecheck.log",
+    ".omo/evidence/thinkpad-zero-touch-install/wave5-rebuild.log",
+    ".omo/evidence/thinkpad-zero-touch-install/wave5-probes.sh",
+    ".omo/evidence/thinkpad-zero-touch-install/wave5-negctl.sh"
+  ],
+
+  "cleanup": [
+    "rm -rf /tmp/ulw-w5-scratch.AxtwJl (todo 18/19 probe scratch) => 'removed'",
+    "rm -rf /tmp/ulw-w5-negctl.fAAMeZ (negative-control scratch) => 'removed'",
+    "rm -f /tmp/ulw-w5-probes.sh /tmp/ulw-w5-negctl.sh (copied into the evidence dir first)",
+    "ls -d /tmp/ulw-w5-scratch.* /tmp/ulw-w5-negctl.* /tmp/ulw-stub-* => 'no scratch dirs remain in /tmp'",
+    "ls /dev/shm | grep nixos-install-staging => 'no /dev/shm stage dirs'",
+    "background flake-check session bash_17 completed (exit 0); no servers, ports, containers or tmux sessions were spawned; no nix store gc run"
+  ]
+}

@@ -1,0 +1,28 @@
+=== railway-nix-agent:omo ===
+  container: status=running oom=false
+  memory:    36.69MB / 1.074GB
+  image:     1.04 GB
+-- auth gate (the release condition) --
+  PASS  unauthenticated GET /                                    401
+  PASS  unauthenticated GET /token                               401
+  PASS  wrong password                                           401
+  PASS  empty password                                           401
+  PASS  forged loopback Host header                              401
+  FAIL  healthcheck path, unauthenticated                        expected=200 got=404
+  PASS  authenticated GET /                                      200
+-- agent must not be reachable off loopback --
+  FAIL  public 8080 bound on 0.0.0.0                             expected=yes got=no
+  PASS  agent 7681 bound on 127.0.0.1                            yes
+-- runtime package acquisition (zix) --
+  PASS  zix get ripgrep (latest, fast road)                      0
+        elapsed: 5s
+  PASS  zix get hello@2.10 (pinned, fast road)                   0
+        elapsed: 2s
+  PASS  exact version runs                                       hello (GNU Hello) 2.10
+  PASS  zix get jq (warm)                                        0
+        elapsed: 5s
+  PASS  zix get --list                                           0
+  PASS  zix get hello@2.10 is idempotent                         0
+        memory.peak: 342044672 bytes
+-- summary: 13 pass / 2 fail --
+VALIDATE3_EXIT=1

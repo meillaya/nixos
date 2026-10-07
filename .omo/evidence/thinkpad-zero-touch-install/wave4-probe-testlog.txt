@@ -1,0 +1,1634 @@
+got build log for '/nix/store/wiwz9165lrh1c1nh0sidzwry0v11gi4k-vm-test-run-iso-autostart-vm.drv' from 'daemon'
+Machine state will be reset. To keep it, pass --keep-machine-state
+[1m[32mstart all VLans[0m
+(finished: start all VLans, in 0.01 seconds)
+Test will time out and terminate in 3600.0 seconds
+[1m[32mrun the VM test script[0m
+additionally exposed symbols:
+    gatedBoot, plainBoot,
+    vlan1,
+    start_all, test_script, machines, machines_qemu, machines_nspawn, vlans, driver, log, os, create_machine, subtest, run_tests, join_all, retry, serial_stdout_off, serial_stdout_on, polling_condition, BaseMachine, QemuMachine, NspawnMachine, t, debug, dump_machine_ssh
+[1m[32mstart all VMs[0m
+gatedBoot: starting vm
+plainBoot: starting vm
+[2mgatedBoot # Disk image does not exist, creating the virtualisation disk image...[0m
+plainBoot: QEMU running (pid 48)
+[2mgatedBoot # Formatting '/build/vm-state-gatedBoot/tmp.ms2IyYNnNn', fmt=raw size=1073741824[0m
+gatedBoot: QEMU running (pid 47)
+[2mplainBoot # Disk image does not exist, creating the virtualisation disk image...[0m
+[2mgatedBoot # mke2fs 1.47.4 (6-Mar-2025)[0m
+[2mplainBoot # Formatting '/build/vm-state-plainBoot/tmp.yDvE0w5umJ', fmt=raw size=1073741824[0m
+[2mgatedBoot # Discarding device blocks:      0/262144             done[0m
+[2mplainBoot # mke2fs 1.47.4 (6-Mar-2025)[0m
+[2mgatedBoot # Creating filesystem with 262144 4k blocks and 65536 inodes[0m
+(finished: start all VMs, in 0.20 seconds)
+[2mgatedBoot # Filesystem UUID: ae171891-0cce-44b7-af8c-b3a57baaf0f8[0m
+plainBoot: [1m[32mwaiting for unit multi-user.target[0m
+[2mgatedBoot # Superblock backups stored on blocks:[0m
+[2mgatedBoot # 	32768, 98304, 163840, 229376[0m
+[2mplainBoot # Discarding device blocks:      0/262144             done[0m
+[2mgatedBoot # [0m
+[2mplainBoot # Creating filesystem with 262144 4k blocks and 65536 inodes[0m
+[2mgatedBoot # Allocating group tables: 0/8   done[0m
+[2mplainBoot # Filesystem UUID: b1634646-7946-407b-80ae-305e3eb716fc[0m
+[2mplainBoot # Superblock backups stored on blocks:[0m
+plainBoot: [1m[32mwaiting for the VM to finish booting[0m
+[2mgatedBoot # Writing inode tables: 0/8   done[0m
+[2mplainBoot # 	32768, 98304, 163840, 229376[0m
+[2mplainBoot # [0m
+[2mplainBoot # Allocating group tables: 0/8   done[0m
+[2mgatedBoot # Creating journal (8192 blocks): done[0m
+[2mplainBoot # Writing inode tables: 0/8   done[0m
+[2mgatedBoot # Writing superblocks and filesystem accounting information: 0/8   done[0m
+[2mplainBoot # Creating journal (8192 blocks): done[0m
+[2mgatedBoot # [0m
+[2mplainBoot # Writing superblocks and filesystem accounting information: 0/8   done[0m
+[2mgatedBoot # Virtualisation disk image created.[0m
+[2mplainBoot # [0m
+[2mgatedBoot # Formatting 'empty0.qcow2', fmt=qcow2 cluster_size=65536 extended_l2=off compression_type=zlib size=33554432 lazy_refcounts=off refcount_bits=16[0m
+[2mplainBoot # Virtualisation disk image created.[0m
+[2mgatedBoot # Starting virtiofs daemons...[0m
+[2mplainBoot # Formatting 'empty0.qcow2', fmt=qcow2 cluster_size=65536 extended_l2=off compression_type=zlib size=33554432 lazy_refcounts=off refcount_bits=16[0m
+[2mgatedBoot # [2026-10-06T23:02:04Z WARN  virtiofsd::passthrough] Failed to open file handle for the root node: Operation not permitted (os error 1)[0m
+[2mplainBoot # Starting virtiofs daemons...[0m
+[2mgatedBoot # [2026-10-06T23:02:04Z WARN  virtiofsd::passthrough] File handles do not appear safe to use, disabling file handles altogether[0m
+[2mplainBoot # [2026-10-06T23:02:04Z WARN  virtiofsd::passthrough] Failed to open file handle for the root node: Operation not permitted (os error 1)[0m
+[2mgatedBoot # [2026-10-06T23:02:04Z INFO  virtiofsd] Waiting for vhost-user socket connection...[0m
+[2mplainBoot # [2026-10-06T23:02:04Z WARN  virtiofsd::passthrough] File handles do not appear safe to use, disabling file handles altogether[0m
+[2mgatedBoot # [2026-10-06T23:02:04Z WARN  virtiofsd::passthrough] Failed to open file handle for the root node: Operation not permitted (os error 1)[0m
+[2mplainBoot # [2026-10-06T23:02:04Z INFO  virtiofsd] Waiting for vhost-user socket connection...[0m
+[2mgatedBoot # [2026-10-06T23:02:04Z WARN  virtiofsd::passthrough] File handles do not appear safe to use, disabling file handles altogether[0m
+[2mplainBoot # [2026-10-06T23:02:04Z WARN  virtiofsd::passthrough] Failed to open file handle for the root node: Operation not permitted (os error 1)[0m
+[2mgatedBoot # [2026-10-06T23:02:04Z WARN  virtiofsd::passthrough] Failed to open file handle for the root node: Operation not permitted (os error 1)[0m
+[2mplainBoot # [2026-10-06T23:02:04Z WARN  virtiofsd::passthrough] File handles do not appear safe to use, disabling file handles altogether[0m
+[2mgatedBoot # [2026-10-06T23:02:04Z WARN  virtiofsd::passthrough] File handles do not appear safe to use, disabling file handles altogether[0m
+[2mplainBoot # [2026-10-06T23:02:04Z INFO  virtiofsd] Waiting for vhost-user socket connection...[0m
+[2mgatedBoot # [2026-10-06T23:02:04Z INFO  virtiofsd] Waiting for vhost-user socket connection...[0m
+[2mplainBoot # [2026-10-06T23:02:04Z WARN  virtiofsd::passthrough] Failed to open file handle for the root node: Operation not permitted (os error 1)[0m
+[2mgatedBoot # [2026-10-06T23:02:04Z INFO  virtiofsd] Waiting for vhost-user socket connection...[0m
+[2mplainBoot # [2026-10-06T23:02:04Z WARN  virtiofsd::passthrough] File handles do not appear safe to use, disabling file handles altogether[0m
+[2mgatedBoot # [2026-10-06T23:02:04Z INFO  virtiofsd] Client connected, servicing requests[0m
+[2mplainBoot # [2026-10-06T23:02:04Z INFO  virtiofsd] Waiting for vhost-user socket connection...[0m
+[2mgatedBoot # [2026-10-06T23:02:04Z INFO  virtiofsd] Client connected, servicing requests[0m
+[2mplainBoot # [2026-10-06T23:02:04Z INFO  virtiofsd] Client connected, servicing requests[0m
+[2mgatedBoot # [2026-10-06T23:02:04Z INFO  virtiofsd] Client connected, servicing requests[0m
+[2mplainBoot # [2026-10-06T23:02:04Z INFO  virtiofsd] Client connected, servicing requests[0m
+[2mplainBoot # [2026-10-06T23:02:04Z INFO  virtiofsd] Client connected, servicing requests[0m
+[2mplainBoot # c[?7l[2J[0mSeaBIOS (version rel-1.17.0-0-gb52ca86e094d-prebuilt.qemu.org)[0m
+[2mgatedBoot # c[?7l[2J[0mSeaBIOS (version rel-1.17.0-0-gb52ca86e094d-prebuilt.qemu.org)[0m
+[2mgatedBoot # [0m
+[2mgatedBoot # [0m
+[2mplainBoot # [0m
+[2mplainBoot # [0m
+[2mgatedBoot # iPXE (http://ipxe.org) 00:02.0 CA00 PCI2.10 PnP PMM+7EFCC5C0+7EF2C5C0 CA00[0m
+[2mplainBoot # iPXE (http://ipxe.org) 00:02.0 CA00 PCI2.10 PnP PMM+7EFCC5C0+7EF2C5C0 CA00[0m
+[2mgatedBoot # Press Ctrl-B to configure iPXE (PCI 00:02.0)...[0m
+[2mgatedBoot # [0m
+[2mgatedBoot # [0m
+[2mgatedBoot # [0m
+[2mgatedBoot # [0m
+[2mplainBoot # Press Ctrl-B to configure iPXE (PCI 00:02.0)...[0m
+[2mplainBoot # [0m
+[2mplainBoot # [0m
+[2mplainBoot # [0m
+[2mplainBoot # [0m
+[2mgatedBoot # iPXE (http://ipxe.org) 00:06.0 CB00 PCI2.10 PnP PMM 7EFCC5C0 7EF2C5C0 CB00[0m
+[2mplainBoot # iPXE (http://ipxe.org) 00:06.0 CB00 PCI2.10 PnP PMM 7EFCC5C0 7EF2C5C0 CB00[0m
+[2mgatedBoot # Press Ctrl-B to configure iPXE (PCI 00:06.0)...[0m
+[2mgatedBoot # [0m
+[2mgatedBoot # [0m
+[2mplainBoot # Press Ctrl-B to configure iPXE (PCI 00:06.0)...[0m
+[2mplainBoot # [0m
+[2mplainBoot # [0m
+[2mplainBoot # Booting from ROM...[0m
+[2mgatedBoot # Booting from ROM...[0m
+[2mplainBoot # Probing EDD (edd=off to disable)... oc[?7l[2J[0mk[    0.000000] Linux version 7.2.7 (nixbld@localhost) (gcc (GCC) 15.3.0, GNU ld (GNU Binutils) 2.46) #1-NixOS SMP PREEMPT_DYNAMIC Mon Sep 21 13:09:00 UTC 2026[0m
+[2mgatedBoot # Probing EDD (edd=off to disable)... oc[?7l[2J[0mk[    0.000000] Linux version 7.2.7 (nixbld@localhost) (gcc (GCC) 15.3.0, GNU ld (GNU Binutils) 2.46) #1-NixOS SMP PREEMPT_DYNAMIC Mon Sep 21 13:09:00 UTC 2026[0m
+[2mplainBoot # [    0.000000] Command line: console=ttyS0 console=tty0 panic=1 boot.panic_on_fail clocksource=acpi_pm root=fstab loglevel=7 net.ifnames=0 lsm=landlock,yama,bpf init=/nix/store/xp2ssinzx2i2avyizy79pws07hsn7lwa-nixos-system-antagony-test/init regInfo=/nix/.ro-store/gwh69jakaz6p25c76np0ksmhbh321q3y-closure-info/registration console=ttyS0,115200n8 console=tty0[0m
+[2mgatedBoot # [    0.000000] Command line: console=ttyS0 console=tty0 panic=1 boot.panic_on_fail clocksource=acpi_pm nixos.autoinstall=1 root=fstab loglevel=7 net.ifnames=0 lsm=landlock,yama,bpf init=/nix/store/prkcsljjj9g2vj7k19dj96k2dj0m4264-nixos-system-antagony-test/init regInfo=/nix/.ro-store/afhyhvip8d42ic9b106b7qgk0x5nbn5c-closure-info/registration console=ttyS0,115200n8 console=tty0[0m
+[2mplainBoot # [    0.000000] x86/CPU: Model not found in latest microcode list[0m
+[2mplainBoot # [    0.000000] BIOS-provided physical RAM map:[0m
+[2mgatedBoot # [    0.000000] x86/CPU: Model not found in latest microcode list[0m
+[2mgatedBoot # [    0.000000] BIOS-provided physical RAM map:[0m
+[2mplainBoot # [    0.000000] BIOS-e820: [mem 0x0000000000000000-0x000000000009fbff]  System RAM[0m
+[2mgatedBoot # [    0.000000] BIOS-e820: [mem 0x0000000000000000-0x000000000009fbff]  System RAM[0m
+[2mplainBoot # [    0.000000] BIOS-e820: [mem 0x000000000009fc00-0x000000000009ffff]  device reserved[0m
+[2mgatedBoot # [    0.000000] BIOS-e820: [mem 0x000000000009fc00-0x000000000009ffff]  device reserved[0m
+[2mplainBoot # [    0.000000] BIOS-e820: [gap 0x00000000000a0000-0x00000000000effff][0m
+[2mgatedBoot # [    0.000000] BIOS-e820: [gap 0x00000000000a0000-0x00000000000effff][0m
+[2mplainBoot # [    0.000000] BIOS-e820: [mem 0x00000000000f0000-0x00000000000fffff]  device reserved[0m
+[2mgatedBoot # [    0.000000] BIOS-e820: [mem 0x00000000000f0000-0x00000000000fffff]  device reserved[0m
+[2mplainBoot # [    0.000000] BIOS-e820: [mem 0x0000000000100000-0x000000007ffd4fff]  System RAM[0m
+[2mgatedBoot # [    0.000000] BIOS-e820: [mem 0x0000000000100000-0x000000007ffd4fff]  System RAM[0m
+[2mplainBoot # [    0.000000] BIOS-e820: [mem 0x000000007ffd5000-0x000000007fffffff]  device reserved[0m
+[2mgatedBoot # [    0.000000] BIOS-e820: [mem 0x000000007ffd5000-0x000000007fffffff]  device reserved[0m
+[2mplainBoot # [    0.000000] BIOS-e820: [gap 0x0000000080000000-0x00000000afffffff][0m
+[2mgatedBoot # [    0.000000] BIOS-e820: [gap 0x0000000080000000-0x00000000afffffff][0m
+[2mplainBoot # [    0.000000] BIOS-e820: [mem 0x00000000b0000000-0x00000000bfffffff]  device reserved[0m
+[2mgatedBoot # [    0.000000] BIOS-e820: [mem 0x00000000b0000000-0x00000000bfffffff]  device reserved[0m
+[2mplainBoot # [    0.000000] BIOS-e820: [gap 0x00000000c0000000-0x00000000fed1bfff][0m
+[2mgatedBoot # [    0.000000] BIOS-e820: [gap 0x00000000c0000000-0x00000000fed1bfff][0m
+[2mplainBoot # [    0.000000] BIOS-e820: [mem 0x00000000fed1c000-0x00000000fed1ffff]  device reserved[0m
+[2mgatedBoot # [    0.000000] BIOS-e820: [mem 0x00000000fed1c000-0x00000000fed1ffff]  device reserved[0m
+[2mplainBoot # [    0.000000] BIOS-e820: [gap 0x00000000fed20000-0x00000000feffbfff][0m
+[2mgatedBoot # [    0.000000] BIOS-e820: [gap 0x00000000fed20000-0x00000000feffbfff][0m
+[2mplainBoot # [    0.000000] BIOS-e820: [mem 0x00000000feffc000-0x00000000feffffff]  device reserved[0m
+[2mgatedBoot # [    0.000000] BIOS-e820: [mem 0x00000000feffc000-0x00000000feffffff]  device reserved[0m
+[2mplainBoot # [    0.000000] BIOS-e820: [gap 0x00000000ff000000-0x00000000fffbffff][0m
+[2mgatedBoot # [    0.000000] BIOS-e820: [gap 0x00000000ff000000-0x00000000fffbffff][0m
+[2mplainBoot # [    0.000000] BIOS-e820: [mem 0x00000000fffc0000-0x00000000ffffffff]  device reserved[0m
+[2mgatedBoot # [    0.000000] BIOS-e820: [mem 0x00000000fffc0000-0x00000000ffffffff]  device reserved[0m
+[2mplainBoot # [    0.000000] NX (Execute Disable) protection: active[0m
+[2mgatedBoot # [    0.000000] NX (Execute Disable) protection: active[0m
+[2mplainBoot # [    0.000000] APIC: Static calls initialized[0m
+[2mgatedBoot # [    0.000000] APIC: Static calls initialized[0m
+[2mplainBoot # [    0.000000] DMI: SMBIOS 2.8 present.[0m
+[2mgatedBoot # [    0.000000] DMI: SMBIOS 2.8 present.[0m
+[2mplainBoot # [    0.000000] DMI: QEMU Standard PC (Q35 + ICH9, 2009), BIOS rel-1.17.0-0-gb52ca86e094d-prebuilt.qemu.org 04/01/2014[0m
+[2mgatedBoot # [    0.000000] DMI: QEMU Standard PC (Q35 + ICH9, 2009), BIOS rel-1.17.0-0-gb52ca86e094d-prebuilt.qemu.org 04/01/2014[0m
+[2mplainBoot # [    0.000000] DMI: Memory slots populated: 1/1[0m
+[2mgatedBoot # [    0.000000] DMI: Memory slots populated: 1/1[0m
+[2mplainBoot # [    0.000000] Hypervisor detected: KVM[0m
+[2mgatedBoot # [    0.000000] Hypervisor detected: KVM[0m
+[2mplainBoot # [    0.000000] last_pfn = 0x7ffd5 max_arch_pfn = 0x400000000[0m
+[2mgatedBoot # [    0.000000] last_pfn = 0x7ffd5 max_arch_pfn = 0x400000000[0m
+[2mplainBoot # [    0.000000] kvm-clock: Using msrs 4b564d01 and 4b564d00[0m
+[2mgatedBoot # [    0.000000] kvm-clock: Using msrs 4b564d01 and 4b564d00[0m
+[2mplainBoot # [    0.000001] kvm-clock: using sched offset of 495792758 cycles[0m
+[2mgatedBoot # [    0.000000] kvm-clock: using sched offset of 497622012 cycles[0m
+[2mplainBoot # [    0.000002] clocksource: kvm-clock: mask: 0xffffffffffffffff max_cycles: 0x1cd42e4dffb, max_idle_ns: 881590591483 ns[0m
+[2mgatedBoot # [    0.000002] clocksource: kvm-clock: mask: 0xffffffffffffffff max_cycles: 0x1cd42e4dffb, max_idle_ns: 881590591483 ns[0m
+[2mplainBoot # [    0.000004] tsc: Detected 2711.998 MHz processor[0m
+[2mgatedBoot # [    0.000005] tsc: Detected 2711.998 MHz processor[0m
+[2mplainBoot # [    0.000747] last_pfn = 0x7ffd5 max_arch_pfn = 0x400000000[0m
+[2mgatedBoot # [    0.000758] last_pfn = 0x7ffd5 max_arch_pfn = 0x400000000[0m
+[2mplainBoot # [    0.000773] MTRR map: 4 entries (3 fixed + 1 variable; max 19), built from 8 variable MTRRs[0m
+[2mgatedBoot # [    0.000785] MTRR map: 4 entries (3 fixed + 1 variable; max 19), built from 8 variable MTRRs[0m
+[2mplainBoot # [    0.000776] x86/PAT: Configuration [0-7]: WB  WC  UC- UC  WB  WP  UC- WT[0m
+[2mgatedBoot # [    0.000787] x86/PAT: Configuration [0-7]: WB  WC  UC- UC  WB  WP  UC- WT[0m
+[2mplainBoot # [    0.007015] found SMP MP-table at [mem 0x000f5450-0x000f545f][0m
+[2mgatedBoot # [    0.007022] found SMP MP-table at [mem 0x000f5450-0x000f545f][0m
+[2mplainBoot # [    0.007029] Using GB pages for direct mapping[0m
+[2mgatedBoot # [    0.007035] Using GB pages for direct mapping[0m
+[2mplainBoot # [    0.007086] RAMDISK: [mem 0x7e28b000-0x7ffcffff][0m
+[2mgatedBoot # [    0.007086] RAMDISK: [mem 0x7e28a000-0x7ffcffff][0m
+[2mplainBoot # [    0.007091] ACPI: Early table checksum verification disabled[0m
+[2mgatedBoot # [    0.007091] ACPI: Early table checksum verification disabled[0m
+[2mplainBoot # [    0.007094] ACPI: RSDP 0x00000000000F5270 000014 (v00 BOCHS )[0m
+[2mgatedBoot # [    0.007094] ACPI: RSDP 0x00000000000F5270 000014 (v00 BOCHS )[0m
+[2mplainBoot # [    0.007098] ACPI: RSDT 0x000000007FFE248E 000038 (v01 BOCHS  BXPC     00000001 BXPC 00000001)[0m
+[2mgatedBoot # [    0.007098] ACPI: RSDT 0x000000007FFE248E 000038 (v01 BOCHS  BXPC     00000001 BXPC 00000001)[0m
+[2mplainBoot # [    0.007103] ACPI: FACP 0x000000007FFE227E 0000F4 (v03 BOCHS  BXPC     00000001 BXPC 00000001)[0m
+[2mgatedBoot # [    0.007103] ACPI: FACP 0x000000007FFE227E 0000F4 (v03 BOCHS  BXPC     00000001 BXPC 00000001)[0m
+[2mplainBoot # [    0.007110] ACPI: DSDT 0x000000007FFE0040 00223E (v01 BOCHS  BXPC     00000001 BXPC 00000001)[0m
+[2mgatedBoot # [    0.007110] ACPI: DSDT 0x000000007FFE0040 00223E (v01 BOCHS  BXPC     00000001 BXPC 00000001)[0m
+[2mplainBoot # [    0.007113] ACPI: FACS 0x000000007FFE0000 000040[0m
+[2mgatedBoot # [    0.007114] ACPI: FACS 0x000000007FFE0000 000040[0m
+[2mplainBoot # [    0.007116] ACPI: APIC 0x000000007FFE2372 000080 (v03 BOCHS  BXPC     00000001 BXPC 00000001)[0m
+[2mgatedBoot # [    0.007116] ACPI: APIC 0x000000007FFE2372 000080 (v03 BOCHS  BXPC     00000001 BXPC 00000001)[0m
+[2mplainBoot # [    0.007119] ACPI: HPET 0x000000007FFE23F2 000038 (v01 BOCHS  BXPC     00000001 BXPC 00000001)[0m
+[2mgatedBoot # [    0.007119] ACPI: HPET 0x000000007FFE23F2 000038 (v01 BOCHS  BXPC     00000001 BXPC 00000001)[0m
+[2mgatedBoot # [    0.007122] ACPI: MCFG 0x000000007FFE242A 00003C (v01 BOCHS  BXPC     00000001 BXPC 00000001)[0m
+[2mplainBoot # [    0.007122] ACPI: MCFG 0x000000007FFE242A 00003C (v01 BOCHS  BXPC     00000001 BXPC 00000001)[0m
+[2mgatedBoot # [    0.007125] ACPI: WAET 0x000000007FFE2466 000028 (v01 BOCHS  BXPC     00000001 BXPC 00000001)[0m
+[2mplainBoot # [    0.007125] ACPI: WAET 0x000000007FFE2466 000028 (v01 BOCHS  BXPC     00000001 BXPC 00000001)[0m
+[2mgatedBoot # [    0.007127] ACPI: Reserving FACP table memory at [mem 0x7ffe227e-0x7ffe2371][0m
+[2mplainBoot # [    0.007127] ACPI: Reserving FACP table memory at [mem 0x7ffe227e-0x7ffe2371][0m
+[2mgatedBoot # [    0.007129] ACPI: Reserving DSDT table memory at [mem 0x7ffe0040-0x7ffe227d][0m
+[2mplainBoot # [    0.007128] ACPI: Reserving DSDT table memory at [mem 0x7ffe0040-0x7ffe227d][0m
+[2mgatedBoot # [    0.007129] ACPI: Reserving FACS table memory at [mem 0x7ffe0000-0x7ffe003f][0m
+[2mplainBoot # [    0.007129] ACPI: Reserving FACS table memory at [mem 0x7ffe0000-0x7ffe003f][0m
+[2mgatedBoot # [    0.007130] ACPI: Reserving APIC table memory at [mem 0x7ffe2372-0x7ffe23f1][0m
+[2mplainBoot # [    0.007129] ACPI: Reserving APIC table memory at [mem 0x7ffe2372-0x7ffe23f1][0m
+[2mgatedBoot # [    0.007130] ACPI: Reserving HPET table memory at [mem 0x7ffe23f2-0x7ffe2429][0m
+[2mplainBoot # [    0.007130] ACPI: Reserving HPET table memory at [mem 0x7ffe23f2-0x7ffe2429][0m
+[2mgatedBoot # [    0.007131] ACPI: Reserving MCFG table memory at [mem 0x7ffe242a-0x7ffe2465][0m
+[2mplainBoot # [    0.007130] ACPI: Reserving MCFG table memory at [mem 0x7ffe242a-0x7ffe2465][0m
+[2mgatedBoot # [    0.007131] ACPI: Reserving WAET table memory at [mem 0x7ffe2466-0x7ffe248d][0m
+[2mplainBoot # [    0.007131] ACPI: Reserving WAET table memory at [mem 0x7ffe2466-0x7ffe248d][0m
+[2mgatedBoot # [    0.007600] No NUMA configuration found[0m
+[2mplainBoot # [    0.007571] No NUMA configuration found[0m
+[2mgatedBoot # [    0.007601] Faking a node at [mem 0x0000000000000000-0x000000007ffd4fff][0m
+[2mplainBoot # [    0.007572] Faking a node at [mem 0x0000000000000000-0x000000007ffd4fff][0m
+[2mgatedBoot # [    0.007604] NODE_DATA(0) allocated [mem 0x7e284780-0x7e289fff][0m
+[2mplainBoot # [    0.007575] NODE_DATA(0) allocated [mem 0x7e285780-0x7e28afff][0m
+[2mgatedBoot # [    0.008636] ACPI: PM-Timer IO Port: 0x608[0m
+[2mplainBoot # [    0.008626] ACPI: PM-Timer IO Port: 0x608[0m
+[2mgatedBoot # [    0.008649] ACPI: LAPIC_NMI (acpi_id[0xff] dfl dfl lint[0x1])[0m
+[2mplainBoot # [    0.008638] ACPI: LAPIC_NMI (acpi_id[0xff] dfl dfl lint[0x1])[0m
+[2mgatedBoot # [    0.008675] IOAPIC[0]: apic_id 0, version 17, address 0xfec00000, GSI 0-23[0m
+[2mplainBoot # [    0.008664] IOAPIC[0]: apic_id 0, version 17, address 0xfec00000, GSI 0-23[0m
+[2mgatedBoot # [    0.008678] ACPI: INT_SRC_OVR (bus 0 bus_irq 0 global_irq 2 dfl dfl)[0m
+[2mplainBoot # [    0.008667] ACPI: INT_SRC_OVR (bus 0 bus_irq 0 global_irq 2 dfl dfl)[0m
+[2mgatedBoot # [    0.008679] ACPI: INT_SRC_OVR (bus 0 bus_irq 5 global_irq 5 high level)[0m
+[2mplainBoot # [    0.008669] ACPI: INT_SRC_OVR (bus 0 bus_irq 5 global_irq 5 high level)[0m
+[2mgatedBoot # [    0.008680] ACPI: INT_SRC_OVR (bus 0 bus_irq 9 global_irq 9 high level)[0m
+[2mplainBoot # [    0.008670] ACPI: INT_SRC_OVR (bus 0 bus_irq 9 global_irq 9 high level)[0m
+[2mgatedBoot # [    0.008681] ACPI: INT_SRC_OVR (bus 0 bus_irq 10 global_irq 10 high level)[0m
+[2mplainBoot # [    0.008671] ACPI: INT_SRC_OVR (bus 0 bus_irq 10 global_irq 10 high level)[0m
+[2mgatedBoot # [    0.008682] ACPI: INT_SRC_OVR (bus 0 bus_irq 11 global_irq 11 high level)[0m
+[2mplainBoot # [    0.008671] ACPI: INT_SRC_OVR (bus 0 bus_irq 11 global_irq 11 high level)[0m
+[2mgatedBoot # [    0.008686] ACPI: Using ACPI (MADT) for SMP configuration information[0m
+[2mplainBoot # [    0.008675] ACPI: Using ACPI (MADT) for SMP configuration information[0m
+[2mgatedBoot # [    0.008687] ACPI: HPET id: 0x8086a201 base: 0xfed00000[0m
+[2mplainBoot # [    0.008677] ACPI: HPET id: 0x8086a201 base: 0xfed00000[0m
+[2mgatedBoot # [    0.008689] TSC deadline timer available[0m
+[2mplainBoot # [    0.008680] TSC deadline timer available[0m
+[2mgatedBoot # [    0.008692] CPU topo: Max. logical packages:   1[0m
+[2mplainBoot # [    0.008682] CPU topo: Max. logical packages:   1[0m
+[2mgatedBoot # [    0.008692] CPU topo: Max. logical nodes:      1[0m
+[2mplainBoot # [    0.008682] CPU topo: Max. logical nodes:      1[0m
+[2mgatedBoot # [    0.008693] CPU topo: Num. nodes per package:  1[0m
+[2mplainBoot # [    0.008683] CPU topo: Num. nodes per package:  1[0m
+[2mgatedBoot # [    0.008695] CPU topo: Max. logical dies:       1[0m
+[2mplainBoot # [    0.008685] CPU topo: Max. logical dies:       1[0m
+[2mgatedBoot # [    0.008695] CPU topo: Max. dies per package:   1[0m
+[2mplainBoot # [    0.008685] CPU topo: Max. dies per package:   1[0m
+[2mgatedBoot # [    0.008698] CPU topo: Max. threads per core:   1[0m
+[2mplainBoot # [    0.008689] CPU topo: Max. threads per core:   1[0m
+[2mgatedBoot # [    0.008699] CPU topo: Num. cores per package:     2[0m
+[2mplainBoot # [    0.008689] CPU topo: Num. cores per package:     2[0m
+[2mgatedBoot # [    0.008699] CPU topo: Num. threads per package:   2[0m
+[2mplainBoot # [    0.008689] CPU topo: Num. threads per package:   2[0m
+[2mgatedBoot # [    0.008700] CPU topo: Allowing 2 present CPUs plus 0 hotplug CPUs[0m
+[2mplainBoot # [    0.008690] CPU topo: Allowing 2 present CPUs plus 0 hotplug CPUs[0m
+[2mgatedBoot # [    0.008712] kvm-guest: APIC: eoi() replaced with kvm_guest_apic_eoi_write()[0m
+[2mplainBoot # [    0.008702] kvm-guest: APIC: eoi() replaced with kvm_guest_apic_eoi_write()[0m
+[2mgatedBoot # [    0.008722] kvm-guest: KVM setup pv remote TLB flush[0m
+[2mplainBoot # [    0.008712] kvm-guest: KVM setup pv remote TLB flush[0m
+[2mgatedBoot # [    0.008725] kvm-guest: setup PV sched yield[0m
+[2mplainBoot # [    0.008714] kvm-guest: setup PV sched yield[0m
+[2mgatedBoot # [    0.008729] PM: hibernation: Registered nosave memory: [mem 0x00000000-0x00000fff][0m
+[2mplainBoot # [    0.008719] PM: hibernation: Registered nosave memory: [mem 0x00000000-0x00000fff][0m
+[2mgatedBoot # [    0.008731] PM: hibernation: Registered nosave memory: [mem 0x0009f000-0x000fffff][0m
+[2mplainBoot # [    0.008720] PM: hibernation: Registered nosave memory: [mem 0x0009f000-0x000fffff][0m
+[2mgatedBoot # [    0.008732] [gap 0xc0000000-0xfed1bfff] available for PCI devices[0m
+[2mplainBoot # [    0.008722] [gap 0xc0000000-0xfed1bfff] available for PCI devices[0m
+[2mgatedBoot # [    0.008732] Booting paravirtualized kernel on KVM[0m
+[2mplainBoot # [    0.008722] Booting paravirtualized kernel on KVM[0m
+[2mgatedBoot # [    0.008734] clocksource: refined-jiffies: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 1910969940391419 ns[0m
+[2mgatedBoot # [    0.013219] Zone ranges:[0m
+[2mplainBoot # [    0.008724] clocksource: refined-jiffies: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 1910969940391419 ns[0m
+[2mplainBoot # [    0.013242] Zone ranges:[0m
+[2mgatedBoot # [    0.013220]   DMA      [mem 0x0000000000001000-0x0000000000ffffff][0m
+[2mplainBoot # [    0.013243]   DMA      [mem 0x0000000000001000-0x0000000000ffffff][0m
+[2mgatedBoot # [    0.013221]   DMA32    [mem 0x0000000001000000-0x000000007ffd4fff][0m
+[2mgatedBoot # [    0.013222]   Normal   empty[0m
+[2mplainBoot # [    0.013245]   DMA32    [mem 0x0000000001000000-0x000000007ffd4fff][0m
+[2mgatedBoot # [    0.013223]   Device   empty[0m
+[2mplainBoot # [    0.013246]   Normal   empty[0m
+[2mgatedBoot # [    0.013223] Movable zone start for each node[0m
+[2mplainBoot # [    0.013247]   Device   empty[0m
+[2mgatedBoot # [    0.013224] Early memory node ranges[0m
+[2mplainBoot # [    0.013247] Movable zone start for each node[0m
+[2mplainBoot # [    0.013248] Early memory node ranges[0m
+[2mgatedBoot # [    0.013224]   node   0: [mem 0x0000000000001000-0x000000000009efff][0m
+[2mplainBoot # [    0.013248]   node   0: [mem 0x0000000000001000-0x000000000009efff][0m
+[2mgatedBoot # [    0.013225]   node   0: [mem 0x0000000000100000-0x000000007ffd4fff][0m
+[2mplainBoot # [    0.013250]   node   0: [mem 0x0000000000100000-0x000000007ffd4fff][0m
+[2mgatedBoot # [    0.013227] Initmem setup node 0 [mem 0x0000000000001000-0x000000007ffd4fff][0m
+[2mplainBoot # [    0.013251] Initmem setup node 0 [mem 0x0000000000001000-0x000000007ffd4fff][0m
+[2mgatedBoot # [    0.013238] On node 0, zone DMA: 1 pages in unavailable ranges[0m
+[2mplainBoot # [    0.013262] On node 0, zone DMA: 1 pages in unavailable ranges[0m
+[2mgatedBoot # [    0.013383] On node 0, zone DMA: 97 pages in unavailable ranges[0m
+[2mplainBoot # [    0.013406] On node 0, zone DMA: 97 pages in unavailable ranges[0m
+[2mgatedBoot # [    0.032270] On node 0, zone DMA32: 43 pages in unavailable ranges[0m
+[2mplainBoot # [    0.032684] On node 0, zone DMA32: 43 pages in unavailable ranges[0m
+[2mgatedBoot # [    0.032279] setup_percpu: NR_CPUS:384 nr_cpumask_bits:2 nr_cpu_ids:2 nr_node_ids:1[0m
+[2mplainBoot # [    0.032693] setup_percpu: NR_CPUS:384 nr_cpumask_bits:2 nr_cpu_ids:2 nr_node_ids:1[0m
+[2mgatedBoot # [    0.033492] percpu: Embedded 99 pages/cpu s282624 r8192 d114688 u1048576[0m
+[2mgatedBoot # [    0.033527] kvm-guest: PV spinlocks enabled[0m
+[2mplainBoot # [    0.033919] percpu: Embedded 99 pages/cpu s282624 r8192 d114688 u1048576[0m
+[2mplainBoot # [    0.033958] kvm-guest: PV spinlocks enabled[0m
+[2mgatedBoot # [    0.033529] PV qspinlock hash table entries: 256 (order: 0, 4096 bytes, linear)[0m
+[2mplainBoot # [    0.033960] PV qspinlock hash table entries: 256 (order: 0, 4096 bytes, linear)[0m
+[2mgatedBoot # [    0.033532] Kernel command line: console=ttyS0 console=tty0 panic=1 boot.panic_on_fail clocksource=acpi_pm nixos.autoinstall=1 root=fstab loglevel=7 net.ifnames=0 lsm=landlock,yama,bpf init=/nix/store/prkcsljjj9g2vj7k19dj96k2dj0m4264-nixos-system-antagony-test/init regInfo=/nix/.ro-store/afhyhvip8d42ic9b106b7qgk0x5nbn5c-closure-info/registration console=ttyS0,115200n8 console=tty0[0m
+[2mplainBoot # [    0.033962] Kernel command line: console=ttyS0 console=tty0 panic=1 boot.panic_on_fail clocksource=acpi_pm root=fstab loglevel=7 net.ifnames=0 lsm=landlock,yama,bpf init=/nix/store/xp2ssinzx2i2avyizy79pws07hsn7lwa-nixos-system-antagony-test/init regInfo=/nix/.ro-store/gwh69jakaz6p25c76np0ksmhbh321q3y-closure-info/registration console=ttyS0,115200n8 console=tty0[0m
+[2mgatedBoot # [    0.033639] Unknown kernel command line parameters "regInfo=/nix/.ro-store/afhyhvip8d42ic9b106b7qgk0x5nbn5c-closure-info/registration", will be passed to user space.[0m
+[2mgatedBoot # [    0.033663] random: crng init done[0m
+[2mplainBoot # [    0.034060] Unknown kernel command line parameters "regInfo=/nix/.ro-store/gwh69jakaz6p25c76np0ksmhbh321q3y-closure-info/registration", will be passed to user space.[0m
+[2mplainBoot # [    0.034083] random: crng init done[0m
+[2mgatedBoot # [    0.033664] printk: log buffer data + meta data: 262144 + 1114112 = 1376256 bytes[0m
+[2mplainBoot # [    0.034083] printk: log buffer data + meta data: 262144 + 1114112 = 1376256 bytes[0m
+[2mgatedBoot # [    0.034837] Dentry cache hash table entries: 262144 (order: 9, 2097152 bytes, linear)[0m
+[2mplainBoot # [    0.035252] Dentry cache hash table entries: 262144 (order: 9, 2097152 bytes, linear)[0m
+[2mgatedBoot # [    0.035423] Inode-cache hash table entries: 131072 (order: 8, 1048576 bytes, linear)[0m
+[2mgatedBoot # [    0.035492] Fallback order for Node 0: 0[0m
+[2mplainBoot # [    0.035839] Inode-cache hash table entries: 131072 (order: 8, 1048576 bytes, linear)[0m
+[2mplainBoot # [    0.035922] Fallback order for Node 0: 0[0m
+[2mgatedBoot # [    0.035494] Built 1 zonelists, mobility grouping on.  Total pages: 524147[0m
+[2mgatedBoot # [    0.035495] Policy zone: DMA32[0m
+[2mplainBoot # [    0.035928] Built 1 zonelists, mobility grouping on.  Total pages: 524147[0m
+[2mplainBoot # [    0.035930] Policy zone: DMA32[0m
+[2mgatedBoot # [    0.036900] mem auto-init: stack:all(zero), heap alloc:on, heap free:off[0m
+[2mplainBoot # [    0.037343] mem auto-init: stack:all(zero), heap alloc:on, heap free:off[0m
+[2mgatedBoot # [    0.042339] SLUB: HWalign=64, Order=0-3, MinObjects=0, CPUs=2, Nodes=1[0m
+[2mgatedBoot # [    0.044749] allocated 4194304 bytes of page_ext[0m
+[2mplainBoot # [    0.042780] SLUB: HWalign=64, Order=0-3, MinObjects=0, CPUs=2, Nodes=1[0m
+[2mgatedBoot # [    0.044762] Kernel/User page tables isolation: enabled[0m
+[2mplainBoot # [    0.045254] allocated 4194304 bytes of page_ext[0m
+[2mgatedBoot # [    0.051529] ftrace: allocating 49801 entries in 196 pages[0m
+[2mplainBoot # [    0.045268] Kernel/User page tables isolation: enabled[0m
+[2mgatedBoot # [    0.051530] ftrace: allocated 196 pages with 3 groups[0m
+[2mplainBoot # [    0.051999] ftrace: allocating 49801 entries in 196 pages[0m
+[2mgatedBoot # [    0.052167] Dynamic Preempt: lazy[0m
+[2mplainBoot # [    0.052001] ftrace: allocated 196 pages with 3 groups[0m
+[2mgatedBoot # [    0.052354] rcu: Preemptible hierarchical RCU implementation.[0m
+[2mplainBoot # [    0.052650] Dynamic Preempt: lazy[0m
+[2mgatedBoot # [    0.052355] rcu: 	RCU event tracing is enabled.[0m
+[2mplainBoot # [    0.052770] rcu: Preemptible hierarchical RCU implementation.[0m
+[2mplainBoot # [    0.052771] rcu: 	RCU event tracing is enabled.[0m
+[2mgatedBoot # [    0.052355] rcu: 	RCU restricting CPUs from NR_CPUS=384 to nr_cpu_ids=2.[0m
+[2mgatedBoot # [    0.052357] 	Trampoline variant of Tasks RCU enabled.[0m
+[2mplainBoot # [    0.052771] rcu: 	RCU restricting CPUs from NR_CPUS=384 to nr_cpu_ids=2.[0m
+[2mgatedBoot # [    0.052357] 	Rude variant of Tasks RCU enabled.[0m
+[2mplainBoot # [    0.052773] 	Trampoline variant of Tasks RCU enabled.[0m
+[2mgatedBoot # [    0.052357] 	Tracing variant of Tasks RCU enabled.[0m
+[2mplainBoot # [    0.052773] 	Rude variant of Tasks RCU enabled.[0m
+[2mplainBoot # [    0.052773] 	Tracing variant of Tasks RCU enabled.[0m
+[2mgatedBoot # [    0.052358] rcu: RCU calculated value of scheduler-enlistment delay is 100 jiffies.[0m
+[2mgatedBoot # [    0.052359] rcu: Adjusting geometry for rcu_fanout_leaf=16, nr_cpu_ids=2[0m
+[2mplainBoot # [    0.052774] rcu: RCU calculated value of scheduler-enlistment delay is 100 jiffies.[0m
+[2mplainBoot # [    0.052774] rcu: Adjusting geometry for rcu_fanout_leaf=16, nr_cpu_ids=2[0m
+[2mgatedBoot # [    0.052369] RCU Tasks: Setting shift to 1 and lim to 1 rcu_task_cb_adjust=1 rcu_task_cpu_ids=2.[0m
+[2mplainBoot # [    0.052784] RCU Tasks: Setting shift to 1 and lim to 1 rcu_task_cb_adjust=1 rcu_task_cpu_ids=2.[0m
+[2mgatedBoot # [    0.052370] RCU Tasks Rude: Setting shift to 1 and lim to 1 rcu_task_cb_adjust=1 rcu_task_cpu_ids=2.[0m
+[2mgatedBoot # [    0.057321] NR_IRQS: 24832, nr_irqs: 440, preallocated irqs: 16[0m
+[2mplainBoot # [    0.052785] RCU Tasks Rude: Setting shift to 1 and lim to 1 rcu_task_cb_adjust=1 rcu_task_cpu_ids=2.[0m
+[2mgatedBoot # [    0.057580] rcu: srcu_init: Setting srcu_struct sizes based on contention.[0m
+[2mplainBoot # [    0.057309] NR_IRQS: 24832, nr_irqs: 440, preallocated irqs: 16[0m
+[2mplainBoot # [    0.057566] rcu: srcu_init: Setting srcu_struct sizes based on contention.[0m
+[2mgatedBoot # [    0.057617] clocksource: jiffies: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 1911260446275000 ns[0m
+[2mplainBoot # [    0.057583] clocksource: jiffies: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 1911260446275000 ns[0m
+[2mgatedBoot # [    0.057820] kfence: initialized - using 2097152 bytes for 255 objects at 0x(____ptrval____)-0x(____ptrval____)[0m
+[2mgatedBoot # [    0.064683] Console: colour VGA+ 80x25[0m
+[2mplainBoot # [    0.057717] kfence: initialized - using 2097152 bytes for 255 objects at 0x(____ptrval____)-0x(____ptrval____)[0m
+[2mgatedBoot # [    0.064688] printk: legacy console [tty0] enabled[0m
+[2mplainBoot # [    0.064901] Console: colour VGA+ 80x25[0m
+[2mgatedBoot # [    0.109311] printk: legacy console [ttyS0] enabled[0m
+[2mplainBoot # [    0.064906] printk: legacy console [tty0] enabled[0m
+[2mgatedBoot # [    0.299510] ACPI: Core revision 20260408[0m
+[2mplainBoot # [    0.110107] printk: legacy console [ttyS0] enabled[0m
+[2mplainBoot # [    0.302823] ACPI: Core revision 20260408[0m
+[2mgatedBoot # [    0.300878] clocksource: hpet: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 19112604467 ns[0m
+[2mplainBoot # [    0.304350] clocksource: hpet: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 19112604467 ns[0m
+[2mgatedBoot # [    0.303592] APIC: Switch to symmetric I/O mode setup[0m
+[2mgatedBoot # [    0.309986] x2apic enabled[0m
+[2mplainBoot # [    0.306834] APIC: Switch to symmetric I/O mode setup[0m
+[2mplainBoot # [    0.313546] x2apic enabled[0m
+[2mgatedBoot # [    0.311161] APIC: Switched APIC routing to: physical x2apic[0m
+[2mplainBoot # [    0.314792] APIC: Switched APIC routing to: physical x2apic[0m
+[2mgatedBoot # [    0.312980] kvm-guest: APIC: send_IPI_mask() replaced with kvm_send_ipi_mask()[0m
+[2mplainBoot # [    0.316475] kvm-guest: APIC: send_IPI_mask() replaced with kvm_send_ipi_mask()[0m
+[2mgatedBoot # [    0.315291] kvm-guest: APIC: send_IPI_mask_allbutself() replaced with kvm_send_ipi_mask_allbutself()[0m
+[2mgatedBoot # [    0.318777] kvm-guest: setup PV IPIs[0m
+[2mplainBoot # [    0.318858] kvm-guest: APIC: send_IPI_mask_allbutself() replaced with kvm_send_ipi_mask_allbutself()[0m
+[2mplainBoot # [    0.322143] kvm-guest: setup PV IPIs[0m
+[2mgatedBoot # [    0.321444] ..TIMER: vector=0x30 apic1=0 pin1=2 apic2=-1 pin2=-1[0m
+[2mplainBoot # [    0.324335] ..TIMER: vector=0x30 apic1=0 pin1=2 apic2=-1 pin2=-1[0m
+[2mgatedBoot # [    0.323098] clocksource: tsc-early: mask: 0xffffffffffffffff max_cycles: 0x27178451938, max_idle_ns: 440795251172 ns[0m
+[2mplainBoot # [    0.326075] clocksource: tsc-early: mask: 0xffffffffffffffff max_cycles: 0x27178451938, max_idle_ns: 440795251172 ns[0m
+[2mgatedBoot # [    0.325990] Calibrating delay loop (skipped) preset value.. 5423.99 BogoMIPS (lpj=2711998)[0m
+[2mplainBoot # [    0.329005] Calibrating delay loop (skipped) preset value.. 5423.99 BogoMIPS (lpj=2711998)[0m
+[2mgatedBoot # [    0.327110] x86/cpu: User Mode Instruction Prevention (UMIP) activated[0m
+[2mplainBoot # [    0.330180] x86/cpu: User Mode Instruction Prevention (UMIP) activated[0m
+[2mgatedBoot # [    0.329127] Last level iTLB entries: 4KB 0, 2MB 0, 4MB 0[0m
+[2mplainBoot # [    0.331119] Last level iTLB entries: 4KB 0, 2MB 0, 4MB 0[0m
+[2mgatedBoot # [    0.330990] Last level dTLB entries: 4KB 0, 2MB 0, 4MB 0, 1GB 0[0m
+[2mplainBoot # [    0.332006] Last level dTLB entries: 4KB 0, 2MB 0, 4MB 0, 1GB 0[0m
+[2mgatedBoot # [    0.332007] mitigations: Enabled attack vectors: user_kernel, user_user, guest_host, guest_guest, SMT mitigations: auto[0m
+[2mplainBoot # [    0.334042] mitigations: Enabled attack vectors: user_kernel, user_user, guest_host, guest_guest, SMT mitigations: auto[0m
+[2mgatedBoot # [    0.332990] Speculative Store Bypass: Mitigation: Speculative Store Bypass disabled via prctl[0m
+[2mplainBoot # [    0.336006] Speculative Store Bypass: Mitigation: Speculative Store Bypass disabled via prctl[0m
+[2mgatedBoot # [    0.334990] SRBDS: Unknown: Dependent on hypervisor status[0m
+[2mgatedBoot # [    0.335990] Spectre V2 : Mitigation: IBRS[0m
+[2mplainBoot # [    0.338006] SRBDS: Unknown: Dependent on hypervisor status[0m
+[2mgatedBoot # [    0.337824] RETBleed: Mitigation: IBRS[0m
+[2mplainBoot # [    0.340006] Spectre V2 : Mitigation: IBRS[0m
+[2mgatedBoot # [    0.338991] MDS: Mitigation: Clear CPU buffers[0m
+[2mplainBoot # [    0.342006] RETBleed: Mitigation: IBRS[0m
+[2mplainBoot # [    0.343006] MDS: Mitigation: Clear CPU buffers[0m
+[2mgatedBoot # [    0.339991] MMIO Stale Data: Mitigation: Clear CPU buffers[0m
+[2mplainBoot # [    0.344006] MMIO Stale Data: Mitigation: Clear CPU buffers[0m
+[2mgatedBoot # [    0.341990] Spectre V1 : Mitigation: usercopy/swapgs barriers and __user pointer sanitization[0m
+[2mplainBoot # [    0.345020] Spectre V1 : Mitigation: usercopy/swapgs barriers and __user pointer sanitization[0m
+[2mgatedBoot # [    0.342992] Spectre V2 : Spectre v2 / SpectreRSB: Filling RSB on context switch and VMEXIT[0m
+[2mgatedBoot # [    0.345013] Spectre V2 : Enabling IBPB for BPF[0m
+[2mplainBoot # [    0.346007] Spectre V2 : Spectre v2 / SpectreRSB: Filling RSB on context switch and VMEXIT[0m
+[2mplainBoot # [    0.347030] Spectre V2 : Enabling IBPB for BPF[0m
+[2mgatedBoot # [    0.346993] Spectre V2 : mitigation: Enabling conditional Indirect Branch Prediction Barrier[0m
+[2mplainBoot # [    0.348949] Spectre V2 : mitigation: Enabling conditional Indirect Branch Prediction Barrier[0m
+[2mgatedBoot # [    0.347995] Spectre V2 : Spectre BHI mitigation: SW BHB clearing on syscall and VM exit[0m
+[2mplainBoot # [    0.350011] Spectre V2 : Spectre BHI mitigation: SW BHB clearing on syscall and VM exit[0m
+[2mgatedBoot # [    0.350005] x86/fpu: Supporting XSAVE feature 0x001: 'x87 floating point registers'[0m
+[2mplainBoot # [    0.351021] x86/fpu: Supporting XSAVE feature 0x001: 'x87 floating point registers'[0m
+[2mgatedBoot # [    0.351990] x86/fpu: Supporting XSAVE feature 0x002: 'SSE registers'[0m
+[2mplainBoot # [    0.353006] x86/fpu: Supporting XSAVE feature 0x002: 'SSE registers'[0m
+[2mgatedBoot # [    0.353990] x86/fpu: Supporting XSAVE feature 0x004: 'AVX registers'[0m
+[2mplainBoot # [    0.355006] x86/fpu: Supporting XSAVE feature 0x004: 'AVX registers'[0m
+[2mgatedBoot # [    0.355990] x86/fpu: Supporting XSAVE feature 0x008: 'MPX bounds registers'[0m
+[2mplainBoot # [    0.356020] x86/fpu: Supporting XSAVE feature 0x008: 'MPX bounds registers'[0m
+[2mgatedBoot # [    0.356990] x86/fpu: Supporting XSAVE feature 0x010: 'MPX CSR'[0m
+[2mplainBoot # [    0.357026] x86/fpu: Supporting XSAVE feature 0x010: 'MPX CSR'[0m
+[2mgatedBoot # [    0.357990] x86/fpu: xstate_offset[2]:  576, xstate_sizes[2]:  256[0m
+[2mplainBoot # [    0.358006] x86/fpu: xstate_offset[2]:  576, xstate_sizes[2]:  256[0m
+[2mgatedBoot # [    0.358990] x86/fpu: xstate_offset[3]:  832, xstate_sizes[3]:   64[0m
+[2mplainBoot # [    0.359006] x86/fpu: xstate_offset[3]:  832, xstate_sizes[3]:   64[0m
+[2mgatedBoot # [    0.359991] x86/fpu: xstate_offset[4]:  896, xstate_sizes[4]:   64[0m
+[2mplainBoot # [    0.360006] x86/fpu: xstate_offset[4]:  896, xstate_sizes[4]:   64[0m
+[2mgatedBoot # [    0.361991] x86/fpu: Enabled xstate features 0x1f, context size is 960 bytes, using 'compacted' format.[0m
+[2mplainBoot # [    0.362006] x86/fpu: Enabled xstate features 0x1f, context size is 960 bytes, using 'compacted' format.[0m
+[2mgatedBoot # [    0.388612] pid_max: default: 32768 minimum: 301[0m
+[2mgatedBoot # [    0.390079] landlock: Up and running.[0m
+[2mplainBoot # [    0.388439] pid_max: default: 32768 minimum: 301[0m
+[2mgatedBoot # [    0.390989] Yama: becoming mindful.[0m
+[2mplainBoot # [    0.390085] landlock: Up and running.[0m
+[2mgatedBoot # [    0.392170] LSM support for eBPF active[0m
+[2mplainBoot # [    0.391005] Yama: becoming mindful.[0m
+[2mplainBoot # [    0.392197] LSM support for eBPF active[0m
+[2mgatedBoot # [    0.394009] Mount-cache hash table entries: 4096 (order: 3, 32768 bytes, linear)[0m
+[2mplainBoot # [    0.393161] Mount-cache hash table entries: 4096 (order: 3, 32768 bytes, linear)[0m
+[2mgatedBoot # [    0.395011] Mountpoint-cache hash table entries: 4096 (order: 3, 32768 bytes, linear)[0m
+[2mplainBoot # [    0.395026] Mountpoint-cache hash table entries: 4096 (order: 3, 32768 bytes, linear)[0m
+[2mgatedBoot # [    0.396200] VFS: Finished mounting rootfs on nullfs[0m
+[2mplainBoot # [    0.398189] VFS: Finished mounting rootfs on nullfs[0m
+[2mgatedBoot # [    0.398408] smpboot: CPU0: Intel(R) Xeon(R) E-2176M  CPU @ 2.70GHz (family: 0x6, model: 0x9e, stepping: 0xa)[0m
+[2mplainBoot # [    0.400158] smpboot: CPU0: Intel(R) Xeon(R) E-2176M  CPU @ 2.70GHz (family: 0x6, model: 0x9e, stepping: 0xa)[0m
+[2mgatedBoot # [    0.399432] Performance Events: Skylake events, full-width counters, Intel PMU driver.[0m
+[2mgatedBoot # [    0.400002] ... version:                   2[0m
+[2mplainBoot # [    0.401451] Performance Events: Skylake events, full-width counters, Intel PMU driver.[0m
+[2mgatedBoot # [    0.401011] ... bit width:                 48[0m
+[2mplainBoot # [    0.402035] ... version:                   2[0m
+[2mgatedBoot # [    0.401991] ... generic counters:          4[0m
+[2mplainBoot # [    0.403006] ... bit width:                 48[0m
+[2mplainBoot # [    0.404006] ... generic counters:          4[0m
+[2mgatedBoot # [    0.402991] ... generic bitmap:            000000000000000f[0m
+[2mgatedBoot # [    0.403990] ... fixed-purpose counters:    3[0m
+[2mplainBoot # [    0.405026] ... generic bitmap:            000000000000000f[0m
+[2mplainBoot # [    0.406006] ... fixed-purpose counters:    3[0m
+[2mgatedBoot # [    0.404991] ... fixed-purpose bitmap:      0000000000000007[0m
+[2mplainBoot # [    0.407008] ... fixed-purpose bitmap:      0000000000000007[0m
+[2mgatedBoot # [    0.405991] ... value mask:                0000ffffffffffff[0m
+[2mplainBoot # [    0.408008] ... value mask:                0000ffffffffffff[0m
+[2mgatedBoot # [    0.406991] ... max period:                00007fffffffffff[0m
+[2mplainBoot # [    0.409008] ... max period:                00007fffffffffff[0m
+[2mgatedBoot # [    0.407991] ... global_ctrl mask:          000000070000000f[0m
+[2mgatedBoot # [    0.409145] signal: max sigframe size: 2032[0m
+[2mplainBoot # [    0.410006] ... global_ctrl mask:          000000070000000f[0m
+[2mplainBoot # [    0.411164] signal: max sigframe size: 2032[0m
+[2mgatedBoot # [    0.410077] rcu: Hierarchical SRCU implementation.[0m
+[2mplainBoot # [    0.412077] rcu: Hierarchical SRCU implementation.[0m
+[2mgatedBoot # [    0.410994] rcu: 	Max phase no-delay instances is 400.[0m
+[2mplainBoot # [    0.413010] rcu: 	Max phase no-delay instances is 400.[0m
+[2mgatedBoot # [    0.412097] Timer migration: 1 hierarchy levels; 8 children per group; 1 crossnode level[0m
+[2mplainBoot # [    0.414139] Timer migration: 1 hierarchy levels; 8 children per group; 1 crossnode level[0m
+[2mgatedBoot # [    0.413487] smp: Bringing up secondary CPUs ...[0m
+[2mplainBoot # [    0.415585] smp: Bringing up secondary CPUs ...[0m
+[2mgatedBoot # [    0.414299] smpboot: x86: Booting SMP configuration:[0m
+[2mplainBoot # [    0.416321] smpboot: x86: Booting SMP configuration:[0m
+[2mgatedBoot # [    0.415019] .... node  #0, CPUs:      #1[0m
+[2mgatedBoot # [    0.415123] smp: Brought up 1 node, 2 CPUs[0m
+[2mplainBoot # [    0.417028] .... node  #0, CPUs:      #1[0m
+[2mplainBoot # [    0.417138] smp: Brought up 1 node, 2 CPUs[0m
+[2mgatedBoot # [    0.416993] smpboot: Total of 2 processors activated (10847.99 BogoMIPS)[0m
+[2mplainBoot # [    0.419029] smpboot: Total of 2 processors activated (10847.99 BogoMIPS)[0m
+[2mgatedBoot # [    0.418210] Memory: 1964060K/2096588K available (17833K kernel code, 2924K rwdata, 14524K rodata, 3764K init, 4492K bss, 120956K reserved, 0K cma-reserved)[0m
+[2mplainBoot # [    0.420217] Memory: 1964072K/2096588K available (17833K kernel code, 2924K rwdata, 14524K rodata, 3764K init, 4492K bss, 120956K reserved, 0K cma-reserved)[0m
+[2mgatedBoot # [    0.419219] devtmpfs: initialized[0m
+[2mplainBoot # [    0.421226] devtmpfs: initialized[0m
+[2mgatedBoot # [    0.419987] x86/mm: Memory block size: 128MB[0m
+[2mplainBoot # [    0.422003] x86/mm: Memory block size: 128MB[0m
+[2mgatedBoot # [    0.422128] posixtimers hash table entries: 1024 (order: 2, 16384 bytes, linear)[0m
+[2mplainBoot # [    0.424134] posixtimers hash table entries: 1024 (order: 2, 16384 bytes, linear)[0m
+[2mgatedBoot # [    0.424030] futex hash table entries: 512 (32768 bytes on 1 NUMA nodes, total 32 KiB, linear).[0m
+[2mplainBoot # [    0.427048] futex hash table entries: 512 (32768 bytes on 1 NUMA nodes, total 32 KiB, linear).[0m
+[2mgatedBoot # [    0.427519] PM: RTC time: 23:02:04, date: 2026-10-06[0m
+[2mplainBoot # [    0.429533] PM: RTC time: 23:02:04, date: 2026-10-06[0m
+[2mgatedBoot # [    0.430813] NET: Registered PF_NETLINK/PF_ROUTE protocol family[0m
+[2mplainBoot # [    0.432825] NET: Registered PF_NETLINK/PF_ROUTE protocol family[0m
+[2mgatedBoot # [    0.432330] DMA: preallocated 256 KiB GFP_KERNEL|GFP_DMA pool for atomic allocations[0m
+[2mplainBoot # [    0.434304] DMA: preallocated 256 KiB GFP_KERNEL|GFP_DMA pool for atomic allocations[0m
+[2mgatedBoot # [    0.435184] DMA: preallocated 256 KiB GFP_KERNEL|GFP_DMA32 pool for atomic allocations[0m
+[2mplainBoot # [    0.437233] DMA: preallocated 256 KiB GFP_KERNEL|GFP_DMA32 pool for atomic allocations[0m
+[2mgatedBoot # [    0.437002] audit: initializing netlink subsys (disabled)[0m
+[2mplainBoot # [    0.439017] audit: initializing netlink subsys (disabled)[0m
+[2mgatedBoot # [    0.439056] audit: type=2000 audit(1791327725.210:1): state=initialized audit_enabled=0 res=1[0m
+[2mplainBoot # [    0.441063] audit: type=2000 audit(1791327725.209:1): state=initialized audit_enabled=0 res=1[0m
+[2mgatedBoot # [    0.452378] thermal_sys: Registered thermal governor 'fair_share'[0m
+[2mplainBoot # [    0.454485] thermal_sys: Registered thermal governor 'fair_share'[0m
+[2mgatedBoot # [    0.452382] thermal_sys: Registered thermal governor 'bang_bang'[0m
+[2mplainBoot # [    0.454488] thermal_sys: Registered thermal governor 'bang_bang'[0m
+[2mgatedBoot # [    0.453992] thermal_sys: Registered thermal governor 'step_wise'[0m
+[2mplainBoot # [    0.456008] thermal_sys: Registered thermal governor 'step_wise'[0m
+[2mgatedBoot # [    0.455991] thermal_sys: Registered thermal governor 'user_space'[0m
+[2mplainBoot # [    0.458007] thermal_sys: Registered thermal governor 'user_space'[0m
+[2mgatedBoot # [    0.457992] thermal_sys: Registered thermal governor 'power_allocator'[0m
+[2mgatedBoot # [    0.459022] cpuidle: using governor menu[0m
+[2mplainBoot # [    0.459006] thermal_sys: Registered thermal governor 'power_allocator'[0m
+[2mgatedBoot # [    0.462092] Freeing SMP alternatives memory: 48K[0m
+[2mplainBoot # [    0.461031] cpuidle: using governor menu[0m
+[2mplainBoot # [    0.464174] Freeing SMP alternatives memory: 48K[0m
+[2mgatedBoot # [    0.464039] acpiphp: ACPI Hot Plug PCI Controller Driver version: 0.5[0m
+[2mplainBoot # [    0.466055] acpiphp: ACPI Hot Plug PCI Controller Driver version: 0.5[0m
+[2mgatedBoot # [    0.465257] PCI: ECAM [mem 0xb0000000-0xbfffffff] (base 0xb0000000) for domain 0000 [bus 00-ff][0m
+[2mplainBoot # [    0.467365] PCI: ECAM [mem 0xb0000000-0xbfffffff] (base 0xb0000000) for domain 0000 [bus 00-ff][0m
+[2mgatedBoot # [    0.467993] PCI: ECAM [mem 0xb0000000-0xbfffffff] reserved as E820 entry[0m
+[2mgatedBoot # [    0.470003] PCI: Using configuration type 1 for base access[0m
+[2mplainBoot # [    0.470009] PCI: ECAM [mem 0xb0000000-0xbfffffff] reserved as E820 entry[0m
+[2mplainBoot # [    0.472018] PCI: Using configuration type 1 for base access[0m
+[2mgatedBoot # [    0.472187] kprobes: kprobe jump-optimization is enabled. All kprobes are optimized if possible.[0m
+[2mplainBoot # [    0.474134] kprobes: kprobe jump-optimization is enabled. All kprobes are optimized if possible.[0m
+[2mgatedBoot # [    0.478047] HugeTLB: registered 1.00 GiB page size, pre-allocated 0 pages[0m
+[2mgatedBoot # [    0.479991] HugeTLB: 16380 KiB vmemmap can be freed for a 1.00 GiB page[0m
+[2mplainBoot # [    0.481094] HugeTLB: registered 1.00 GiB page size, pre-allocated 0 pages[0m
+[2mplainBoot # [    0.485026] HugeTLB: 16380 KiB vmemmap can be freed for a 1.00 GiB page[0m
+[2mplainBoot # [    0.487008] HugeTLB: registered 2.00 MiB page size, pre-allocated 0 pages[0m
+[2mgatedBoot # [    0.486991] HugeTLB: registered 2.00 MiB page size, pre-allocated 0 pages[0m
+[2mgatedBoot # [    0.488991] HugeTLB: 28 KiB vmemmap can be freed for a 2.00 MiB page[0m
+[2mplainBoot # [    0.492006] HugeTLB: 28 KiB vmemmap can be freed for a 2.00 MiB page[0m
+[2mgatedBoot # [    0.497535] ACPI: Added _OSI(Module Device)[0m
+[2mgatedBoot # [    0.497992] ACPI: Added _OSI(Processor Device)[0m
+[2mplainBoot # [    0.499482] ACPI: Added _OSI(Module Device)[0m
+[2mgatedBoot # [    0.498992] ACPI: Added _OSI(Processor Aggregator Device)[0m
+[2mplainBoot # [    0.501008] ACPI: Added _OSI(Processor Device)[0m
+[2mplainBoot # [    0.502012] ACPI: Added _OSI(Processor Aggregator Device)[0m
+[2mgatedBoot # [    0.501831] ACPI: 1 ACPI AML tables successfully acquired and loaded[0m
+[2mplainBoot # [    0.505705] ACPI: 1 ACPI AML tables successfully acquired and loaded[0m
+[2mgatedBoot # [    0.503431] ACPI: \_SB_: platform _OSC: OS support mask [002e7eff][0m
+[2mgatedBoot # [    0.505188] ACPI: Interpreter enabled[0m
+[2mplainBoot # [    0.508133] ACPI: \_SB_: platform _OSC: OS support mask [002e7eff][0m
+[2mgatedBoot # [    0.506032] ACPI: PM: (supports S0 S3 S4 S5)[0m
+[2mplainBoot # [    0.510235] ACPI: Interpreter enabled[0m
+[2mgatedBoot # [    0.507991] ACPI: Using IOAPIC for interrupt routing[0m
+[2mplainBoot # [    0.511022] ACPI: PM: (supports S0 S3 S4 S5)[0m
+[2mplainBoot # [    0.512007] ACPI: Using IOAPIC for interrupt routing[0m
+[2mgatedBoot # [    0.509081] PCI: Using host bridge windows from ACPI; if necessary, use "pci=nocrs" and report a bug[0m
+[2mplainBoot # [    0.514034] PCI: Using host bridge windows from ACPI; if necessary, use "pci=nocrs" and report a bug[0m
+[2mgatedBoot # [    0.512005] PCI: Using E820 reservations for host bridge windows[0m
+[2mplainBoot # [    0.516007] PCI: Using E820 reservations for host bridge windows[0m
+[2mgatedBoot # [    0.513179] ACPI: Enabled 2 GPEs in block 00 to 3F[0m
+[2mplainBoot # [    0.518139] ACPI: Enabled 2 GPEs in block 00 to 3F[0m
+[2mgatedBoot # [    0.518261] ACPI: PCI Root Bridge [PCI0] (domain 0000 [bus 00-ff])[0m
+[2mplainBoot # [    0.522127] ACPI: PCI Root Bridge [PCI0] (domain 0000 [bus 00-ff])[0m
+[2mgatedBoot # [    0.519995] acpi PNP0A08:00: _OSC: OS supports [ExtendedConfig ASPM ClockPM Segments MSI HPX-Type3][0m
+[2mplainBoot # [    0.524010] acpi PNP0A08:00: _OSC: OS supports [ExtendedConfig ASPM ClockPM Segments MSI HPX-Type3][0m
+[2mgatedBoot # [    0.522061] acpi PNP0A08:00: _OSC: platform does not support [PCIeHotplug LTR][0m
+[2mplainBoot # [    0.527062] acpi PNP0A08:00: _OSC: platform does not support [PCIeHotplug LTR][0m
+[2mgatedBoot # [    0.525080] acpi PNP0A08:00: _OSC: OS now controls [PME AER PCIeCapability][0m
+[2mplainBoot # [    0.529094] acpi PNP0A08:00: _OSC: OS now controls [PME AER PCIeCapability][0m
+[2mgatedBoot # [    0.527523] PCI host bridge to bus 0000:00[0m
+[2mplainBoot # [    0.531570] PCI host bridge to bus 0000:00[0m
+[2mgatedBoot # [    0.529019] pci_bus 0000:00: root bus resource [io  0x0000-0x0cf7 window][0m
+[2mplainBoot # [    0.533018] pci_bus 0000:00: root bus resource [io  0x0000-0x0cf7 window][0m
+[2mgatedBoot # [    0.530998] pci_bus 0000:00: root bus resource [io  0x0d00-0xffff window][0m
+[2mplainBoot # [    0.535013] pci_bus 0000:00: root bus resource [io  0x0d00-0xffff window][0m
+[2mgatedBoot # [    0.532997] pci_bus 0000:00: root bus resource [mem 0x000a0000-0x000bffff window][0m
+[2mplainBoot # [    0.537009] pci_bus 0000:00: root bus resource [mem 0x000a0000-0x000bffff window][0m
+[2mgatedBoot # [    0.535994] pci_bus 0000:00: root bus resource [mem 0x80000000-0xafffffff window][0m
+[2mplainBoot # [    0.540008] pci_bus 0000:00: root bus resource [mem 0x80000000-0xafffffff window][0m
+[2mgatedBoot # [    0.537993] pci_bus 0000:00: root bus resource [mem 0xc0000000-0xfebfffff window][0m
+[2mplainBoot # [    0.542007] pci_bus 0000:00: root bus resource [mem 0xc0000000-0xfebfffff window][0m
+[2mgatedBoot # [    0.539993] pci_bus 0000:00: root bus resource [mem 0x100000000-0x8ffffffff window][0m
+[2mplainBoot # [    0.544007] pci_bus 0000:00: root bus resource [mem 0x100000000-0x8ffffffff window][0m
+[2mgatedBoot # [    0.542009] pci_bus 0000:00: root bus resource [bus 00-ff][0m
+[2mplainBoot # [    0.546008] pci_bus 0000:00: root bus resource [bus 00-ff][0m
+[2mgatedBoot # [    0.544106] pci 0000:00:00.0: [8086:29c0] type 00 class 0x060000 conventional PCI endpoint[0m
+[2mplainBoot # [    0.548101] pci 0000:00:00.0: [8086:29c0] type 00 class 0x060000 conventional PCI endpoint[0m
+[2mgatedBoot # [    0.546985] pci 0000:00:01.0: [1234:1111] type 00 class 0x030000 conventional PCI endpoint[0m
+[2mplainBoot # [    0.550924] pci 0000:00:01.0: [1234:1111] type 00 class 0x030000 conventional PCI endpoint[0m
+[2mgatedBoot # [    0.555062] pci 0000:00:01.0: BAR 0 [mem 0xfd000000-0xfdffffff pref][0m
+[2mplainBoot # [    0.558072] pci 0000:00:01.0: BAR 0 [mem 0xfd000000-0xfdffffff pref][0m
+[2mgatedBoot # [    0.556037] pci 0000:00:01.0: BAR 2 [mem 0xfebd0000-0xfebd0fff][0m
+[2mplainBoot # [    0.560055] pci 0000:00:01.0: BAR 2 [mem 0xfebd0000-0xfebd0fff][0m
+[2mgatedBoot # [    0.558091] pci 0000:00:01.0: ROM [mem 0xfebc0000-0xfebcffff pref][0m
+[2mplainBoot # [    0.562060] pci 0000:00:01.0: ROM [mem 0xfebc0000-0xfebcffff pref][0m
+[2mgatedBoot # [    0.560190] pci 0000:00:01.0: Video device with shadowed ROM at [mem 0x000c0000-0x000dffff][0m
+[2mplainBoot # [    0.564214] pci 0000:00:01.0: Video device with shadowed ROM at [mem 0x000c0000-0x000dffff][0m
+[2mgatedBoot # [    0.563887] pci 0000:00:02.0: [1af4:1000] type 00 class 0x020000 conventional PCI endpoint[0m
+[2mplainBoot # [    0.567003] pci 0000:00:02.0: [1af4:1000] type 00 class 0x020000 conventional PCI endpoint[0m
+[2mgatedBoot # [    0.568114] pci 0000:00:02.0: BAR 0 [io  0xc180-0xc19f][0m
+[2mplainBoot # [    0.572023] pci 0000:00:02.0: BAR 0 [io  0xc180-0xc19f][0m
+[2mgatedBoot # [    0.570008] pci 0000:00:02.0: BAR 1 [mem 0xfebd1000-0xfebd1fff][0m
+[2mplainBoot # [    0.574022] pci 0000:00:02.0: BAR 1 [mem 0xfebd1000-0xfebd1fff][0m
+[2mgatedBoot # [    0.572070] pci 0000:00:02.0: BAR 4 [mem 0xfe000000-0xfe003fff 64bit pref][0m
+[2mplainBoot # [    0.576061] pci 0000:00:02.0: BAR 4 [mem 0xfe000000-0xfe003fff 64bit pref][0m
+[2mgatedBoot # [    0.574020] pci 0000:00:02.0: ROM [mem 0xfeb40000-0xfeb7ffff pref][0m
+[2mplainBoot # [    0.578046] pci 0000:00:02.0: ROM [mem 0xfeb40000-0xfeb7ffff pref][0m
+[2mgatedBoot # [    0.577293] pci 0000:00:03.0: [1af4:1005] type 00 class 0x00ff00 conventional PCI endpoint[0m
+[2mplainBoot # [    0.581232] pci 0000:00:03.0: [1af4:1005] type 00 class 0x00ff00 conventional PCI endpoint[0m
+[2mgatedBoot # [    0.582006] pci 0000:00:03.0: BAR 0 [io  0xc1a0-0xc1bf][0m
+[2mplainBoot # [    0.585008] pci 0000:00:03.0: BAR 0 [io  0xc1a0-0xc1bf][0m
+[2mgatedBoot # [    0.583008] pci 0000:00:03.0: BAR 1 [mem 0xfebd2000-0xfebd2fff][0m
+[2mplainBoot # [    0.587022] pci 0000:00:03.0: BAR 1 [mem 0xfebd2000-0xfebd2fff][0m
+[2mgatedBoot # [    0.585050] pci 0000:00:03.0: BAR 4 [mem 0xfe004000-0xfe007fff 64bit pref][0m
+[2mplainBoot # [    0.589061] pci 0000:00:03.0: BAR 4 [mem 0xfe004000-0xfe007fff 64bit pref][0m
+[2mgatedBoot # [    0.588214] pci 0000:00:04.0: [1af4:1001] type 00 class 0x010000 conventional PCI endpoint[0m
+[2mplainBoot # [    0.592231] pci 0000:00:04.0: [1af4:1001] type 00 class 0x010000 conventional PCI endpoint[0m
+[2mgatedBoot # [    0.593006] pci 0000:00:04.0: BAR 0 [io  0xc000-0xc07f][0m
+[2mplainBoot # [    0.597022] pci 0000:00:04.0: BAR 0 [io  0xc000-0xc07f][0m
+[2mgatedBoot # [    0.594006] pci 0000:00:04.0: BAR 1 [mem 0xfebd3000-0xfebd3fff][0m
+[2mplainBoot # [    0.598022] pci 0000:00:04.0: BAR 1 [mem 0xfebd3000-0xfebd3fff][0m
+[2mgatedBoot # [    0.596045] pci 0000:00:04.0: BAR 4 [mem 0xfe008000-0xfe00bfff 64bit pref][0m
+[2mplainBoot # [    0.600060] pci 0000:00:04.0: BAR 4 [mem 0xfe008000-0xfe00bfff 64bit pref][0m
+[2mgatedBoot # [    0.599247] pci 0000:00:05.0: [1af4:1001] type 00 class 0x010000 conventional PCI endpoint[0m
+[2mplainBoot # [    0.603202] pci 0000:00:05.0: [1af4:1001] type 00 class 0x010000 conventional PCI endpoint[0m
+[2mplainBoot # [    0.608022] pci 0000:00:05.0: BAR 0 [io  0xc080-0xc0ff][0m
+[2mgatedBoot # [    0.605007] pci 0000:00:05.0: BAR 0 [io  0xc080-0xc0ff][0m
+[2mplainBoot # [    0.610023] pci 0000:00:05.0: BAR 1 [mem 0xfebd4000-0xfebd4fff][0m
+[2mgatedBoot # [    0.606008] pci 0000:00:05.0: BAR 1 [mem 0xfebd4000-0xfebd4fff][0m
+[2mplainBoot # [    0.612110] pci 0000:00:05.0: BAR 4 [mem 0xfe00c000-0xfe00ffff 64bit pref][0m
+[2mgatedBoot # [    0.608060] pci 0000:00:05.0: BAR 4 [mem 0xfe00c000-0xfe00ffff 64bit pref][0m
+[2mgatedBoot # [    0.611370] pci 0000:00:06.0: [1af4:1000] type 00 class 0x020000 conventional PCI endpoint[0m
+[2mplainBoot # [    0.615644] pci 0000:00:06.0: [1af4:1000] type 00 class 0x020000 conventional PCI endpoint[0m
+[2mplainBoot # [    0.618763] pci 0000:00:06.0: BAR 0 [io  0xc1c0-0xc1df][0m
+[2mgatedBoot # [    0.616006] pci 0000:00:06.0: BAR 0 [io  0xc1c0-0xc1df][0m
+[2mplainBoot # [    0.621042] pci 0000:00:06.0: BAR 1 [mem 0xfebd5000-0xfebd5fff][0m
+[2mgatedBoot # [    0.618009] pci 0000:00:06.0: BAR 1 [mem 0xfebd5000-0xfebd5fff][0m
+[2mplainBoot # [    0.622095] pci 0000:00:06.0: BAR 4 [mem 0xfe010000-0xfe013fff 64bit pref][0m
+[2mgatedBoot # [    0.619047] pci 0000:00:06.0: BAR 4 [mem 0xfe010000-0xfe013fff 64bit pref][0m
+[2mplainBoot # [    0.624036] pci 0000:00:06.0: ROM [mem 0xfeb80000-0xfebbffff pref][0m
+[2mgatedBoot # [    0.621006] pci 0000:00:06.0: ROM [mem 0xfeb80000-0xfebbffff pref][0m
+[2mplainBoot # [    0.627229] pci 0000:00:07.0: [1af4:1052] type 00 class 0x090000 conventional PCI endpoint[0m
+[2mgatedBoot # [    0.624398] pci 0000:00:07.0: [1af4:1052] type 00 class 0x090000 conventional PCI endpoint[0m
+[2mplainBoot # [    0.631059] pci 0000:00:07.0: BAR 1 [mem 0xfebd6000-0xfebd6fff][0m
+[2mgatedBoot # [    0.628017] pci 0000:00:07.0: BAR 1 [mem 0xfebd6000-0xfebd6fff][0m
+[2mplainBoot # [    0.638092] pci 0000:00:07.0: BAR 4 [mem 0xfe014000-0xfe017fff 64bit pref][0m
+[2mgatedBoot # [    0.634077] pci 0000:00:07.0: BAR 4 [mem 0xfe014000-0xfe017fff 64bit pref][0m
+[2mplainBoot # [    0.640288] pci 0000:00:08.0: [1af4:105a] type 00 class 0x018000 conventional PCI endpoint[0m
+[2mgatedBoot # [    0.637242] pci 0000:00:08.0: [1af4:105a] type 00 class 0x018000 conventional PCI endpoint[0m
+[2mplainBoot # [    0.644064] pci 0000:00:08.0: BAR 1 [mem 0xfebd7000-0xfebd7fff][0m
+[2mgatedBoot # [    0.641017] pci 0000:00:08.0: BAR 1 [mem 0xfebd7000-0xfebd7fff][0m
+[2mplainBoot # [    0.646076] pci 0000:00:08.0: BAR 4 [mem 0xfe018000-0xfe01bfff 64bit pref][0m
+[2mgatedBoot # [    0.643044] pci 0000:00:08.0: BAR 4 [mem 0xfe018000-0xfe01bfff 64bit pref][0m
+[2mplainBoot # [    0.649210] pci 0000:00:09.0: [1af4:105a] type 00 class 0x018000 conventional PCI endpoint[0m
+[2mgatedBoot # [    0.646176] pci 0000:00:09.0: [1af4:105a] type 00 class 0x018000 conventional PCI endpoint[0m
+[2mplainBoot # [    0.653402] pci 0000:00:09.0: BAR 1 [mem 0xfebd8000-0xfebd8fff][0m
+[2mgatedBoot # [    0.650033] pci 0000:00:09.0: BAR 1 [mem 0xfebd8000-0xfebd8fff][0m
+[2mplainBoot # [    0.655062] pci 0000:00:09.0: BAR 4 [mem 0xfe01c000-0xfe01ffff 64bit pref][0m
+[2mgatedBoot # [    0.652084] pci 0000:00:09.0: BAR 4 [mem 0xfe01c000-0xfe01ffff 64bit pref][0m
+[2mplainBoot # [    0.658270] pci 0000:00:0a.0: [1af4:105a] type 00 class 0x018000 conventional PCI endpoint[0m
+[2mgatedBoot # [    0.655366] pci 0000:00:0a.0: [1af4:105a] type 00 class 0x018000 conventional PCI endpoint[0m
+[2mplainBoot # [    0.661474] pci 0000:00:0a.0: BAR 1 [mem 0xfebd9000-0xfebd9fff][0m
+[2mgatedBoot # [    0.659017] pci 0000:00:0a.0: BAR 1 [mem 0xfebd9000-0xfebd9fff][0m
+[2mplainBoot # [    0.663076] pci 0000:00:0a.0: BAR 4 [mem 0xfe020000-0xfe023fff 64bit pref][0m
+[2mgatedBoot # [    0.660057] pci 0000:00:0a.0: BAR 4 [mem 0xfe020000-0xfe023fff 64bit pref][0m
+[2mplainBoot # [    0.666189] pci 0000:00:0b.0: [1af4:1003] type 00 class 0x078000 conventional PCI endpoint[0m
+[2mgatedBoot # [    0.663163] pci 0000:00:0b.0: [1af4:1003] type 00 class 0x078000 conventional PCI endpoint[0m
+[2mplainBoot # [    0.670838] pci 0000:00:0b.0: BAR 0 [io  0xc100-0xc13f][0m
+[2mgatedBoot # [    0.667731] pci 0000:00:0b.0: BAR 0 [io  0xc100-0xc13f][0m
+[2mplainBoot # [    0.672021] pci 0000:00:0b.0: BAR 1 [mem 0xfebda000-0xfebdafff][0m
+[2mgatedBoot # [    0.669020] pci 0000:00:0b.0: BAR 1 [mem 0xfebda000-0xfebdafff][0m
+[2mplainBoot # [    0.674061] pci 0000:00:0b.0: BAR 4 [mem 0xfe024000-0xfe027fff 64bit pref][0m
+[2mgatedBoot # [    0.671062] pci 0000:00:0b.0: BAR 4 [mem 0xfe024000-0xfe027fff 64bit pref][0m
+[2mplainBoot # [    0.677230] pci 0000:00:0c.0: [1af4:1005] type 00 class 0x00ff00 conventional PCI endpoint[0m
+[2mgatedBoot # [    0.674187] pci 0000:00:0c.0: [1af4:1005] type 00 class 0x00ff00 conventional PCI endpoint[0m
+[2mplainBoot # [    0.681814] pci 0000:00:0c.0: BAR 0 [io  0xc1e0-0xc1ff][0m
+[2mgatedBoot # [    0.677987] pci 0000:00:0c.0: BAR 0 [io  0xc1e0-0xc1ff][0m
+[2mplainBoot # [    0.683041] pci 0000:00:0c.0: BAR 1 [mem 0xfebdb000-0xfebdbfff][0m
+[2mgatedBoot # [    0.680005] pci 0000:00:0c.0: BAR 1 [mem 0xfebdb000-0xfebdbfff][0m
+[2mgatedBoot # [    0.681071] pci 0000:00:0c.0: BAR 4 [mem 0xfe028000-0xfe02bfff 64bit pref][0m
+[2mplainBoot # [    0.685061] pci 0000:00:0c.0: BAR 4 [mem 0xfe028000-0xfe02bfff 64bit pref][0m
+[2mplainBoot # [    0.688302] pci 0000:00:1d.0: [8086:2934] type 00 class 0x0c0300 conventional PCI endpoint[0m
+[2mgatedBoot # [    0.684493] pci 0000:00:1d.0: [8086:2934] type 00 class 0x0c0300 conventional PCI endpoint[0m
+[2mplainBoot # [    0.690957] pci 0000:00:1d.0: BAR 4 [io  0xc200-0xc21f][0m
+[2mgatedBoot # [    0.687985] pci 0000:00:1d.0: BAR 4 [io  0xc200-0xc21f][0m
+[2mplainBoot # [    0.693385] pci 0000:00:1d.1: [8086:2935] type 00 class 0x0c0300 conventional PCI endpoint[0m
+[2mgatedBoot # [    0.689380] pci 0000:00:1d.1: [8086:2935] type 00 class 0x0c0300 conventional PCI endpoint[0m
+[2mplainBoot # [    0.695955] pci 0000:00:1d.1: BAR 4 [io  0xc220-0xc23f][0m
+[2mgatedBoot # [    0.693017] pci 0000:00:1d.1: BAR 4 [io  0xc220-0xc23f][0m
+[2mplainBoot # [    0.698369] pci 0000:00:1d.2: [8086:2936] type 00 class 0x0c0300 conventional PCI endpoint[0m
+[2mgatedBoot # [    0.695384] pci 0000:00:1d.2: [8086:2936] type 00 class 0x0c0300 conventional PCI endpoint[0m
+[2mplainBoot # [    0.701007] pci 0000:00:1d.2: BAR 4 [io  0xc240-0xc25f][0m
+[2mgatedBoot # [    0.697963] pci 0000:00:1d.2: BAR 4 [io  0xc240-0xc25f][0m
+[2mplainBoot # [    0.703474] pci 0000:00:1d.7: [8086:293a] type 00 class 0x0c0320 conventional PCI endpoint[0m
+[2mgatedBoot # [    0.700430] pci 0000:00:1d.7: [8086:293a] type 00 class 0x0c0320 conventional PCI endpoint[0m
+[2mplainBoot # [    0.706943] pci 0000:00:1d.7: BAR 0 [mem 0xfebdc000-0xfebdcfff][0m
+[2mgatedBoot # [    0.703858] pci 0000:00:1d.7: BAR 0 [mem 0xfebdc000-0xfebdcfff][0m
+[2mplainBoot # [    0.708401] pci 0000:00:1f.0: [8086:2918] type 00 class 0x060100 conventional PCI endpoint[0m
+[2mgatedBoot # [    0.705426] pci 0000:00:1f.0: [8086:2918] type 00 class 0x060100 conventional PCI endpoint[0m
+[2mplainBoot # [    0.711700] pci 0000:00:1f.0: quirk: [io  0x0600-0x067f] claimed by ICH6 ACPI/GPIO/TCO[0m
+[2mgatedBoot # [    0.708700] pci 0000:00:1f.0: quirk: [io  0x0600-0x067f] claimed by ICH6 ACPI/GPIO/TCO[0m
+[2mplainBoot # [    0.714472] pci 0000:00:1f.2: [8086:2922] type 00 class 0x010601 conventional PCI endpoint[0m
+[2mgatedBoot # [    0.711463] pci 0000:00:1f.2: [8086:2922] type 00 class 0x010601 conventional PCI endpoint[0m
+[2mplainBoot # [    0.718116] pci 0000:00:1f.2: BAR 4 [io  0xc260-0xc27f][0m
+[2mgatedBoot # [    0.715476] pci 0000:00:1f.2: BAR 4 [io  0xc260-0xc27f][0m
+[2mplainBoot # [    0.719020] pci 0000:00:1f.2: BAR 5 [mem 0xfebdd000-0xfebddfff][0m
+[2mgatedBoot # [    0.717008] pci 0000:00:1f.2: BAR 5 [mem 0xfebdd000-0xfebddfff][0m
+[2mplainBoot # [    0.721640] pci 0000:00:1f.3: [8086:2930] type 00 class 0x0c0500 conventional PCI endpoint[0m
+[2mgatedBoot # [    0.718665] pci 0000:00:1f.3: [8086:2930] type 00 class 0x0c0500 conventional PCI endpoint[0m
+[2mplainBoot # [    0.724978] pci 0000:00:1f.3: BAR 4 [io  0x0700-0x073f][0m
+[2mgatedBoot # [    0.721942] pci 0000:00:1f.3: BAR 4 [io  0x0700-0x073f][0m
+[2mplainBoot # [    0.732529] ACPI: PCI: Interrupt link LNKA configured for IRQ 10[0m
+[2mgatedBoot # [    0.730675] ACPI: PCI: Interrupt link LNKA configured for IRQ 10[0m
+[2mplainBoot # [    0.734145] ACPI: PCI: Interrupt link LNKB configured for IRQ 10[0m
+[2mgatedBoot # [    0.732119] ACPI: PCI: Interrupt link LNKB configured for IRQ 10[0m
+[2mplainBoot # [    0.736163] ACPI: PCI: Interrupt link LNKC configured for IRQ 11[0m
+[2mgatedBoot # [    0.734150] ACPI: PCI: Interrupt link LNKC configured for IRQ 11[0m
+[2mplainBoot # [    0.738155] ACPI: PCI: Interrupt link LNKD configured for IRQ 11[0m
+[2mgatedBoot # [    0.736127] ACPI: PCI: Interrupt link LNKD configured for IRQ 11[0m
+[2mplainBoot # [    0.740153] ACPI: PCI: Interrupt link LNKE configured for IRQ 10[0m
+[2mgatedBoot # [    0.738141] ACPI: PCI: Interrupt link LNKE configured for IRQ 10[0m
+[2mplainBoot # [    0.742159] ACPI: PCI: Interrupt link LNKF configured for IRQ 10[0m
+[2mgatedBoot # [    0.739114] ACPI: PCI: Interrupt link LNKF configured for IRQ 10[0m
+[2mplainBoot # [    0.743206] ACPI: PCI: Interrupt link LNKG configured for IRQ 11[0m
+[2mgatedBoot # [    0.741121] ACPI: PCI: Interrupt link LNKG configured for IRQ 11[0m
+[2mplainBoot # [    0.745175] ACPI: PCI: Interrupt link LNKH configured for IRQ 11[0m
+[2mgatedBoot # [    0.743177] ACPI: PCI: Interrupt link LNKH configured for IRQ 11[0m
+[2mplainBoot # [    0.747057] ACPI: PCI: Interrupt link GSIA configured for IRQ 16[0m
+[2mgatedBoot # [    0.745104] ACPI: PCI: Interrupt link GSIA configured for IRQ 16[0m
+[2mplainBoot # [    0.749018] ACPI: PCI: Interrupt link GSIB configured for IRQ 17[0m
+[2mgatedBoot # [    0.747047] ACPI: PCI: Interrupt link GSIB configured for IRQ 17[0m
+[2mplainBoot # [    0.751040] ACPI: PCI: Interrupt link GSIC configured for IRQ 18[0m
+[2mgatedBoot # [    0.748001] ACPI: PCI: Interrupt link GSIC configured for IRQ 18[0m
+[2mplainBoot # [    0.752037] ACPI: PCI: Interrupt link GSID configured for IRQ 19[0m
+[2mgatedBoot # [    0.750001] ACPI: PCI: Interrupt link GSID configured for IRQ 19[0m
+[2mplainBoot # [    0.754018] ACPI: PCI: Interrupt link GSIE configured for IRQ 20[0m
+[2mgatedBoot # [    0.752028] ACPI: PCI: Interrupt link GSIE configured for IRQ 20[0m
+[2mplainBoot # [    0.756021] ACPI: PCI: Interrupt link GSIF configured for IRQ 21[0m
+[2mgatedBoot # [    0.754018] ACPI: PCI: Interrupt link GSIF configured for IRQ 21[0m
+[2mplainBoot # [    0.757035] ACPI: PCI: Interrupt link GSIG configured for IRQ 22[0m
+[2mgatedBoot # [    0.755017] ACPI: PCI: Interrupt link GSIG configured for IRQ 22[0m
+[2mplainBoot # [    0.759017] ACPI: PCI: Interrupt link GSIH configured for IRQ 23[0m
+[2mgatedBoot # [    0.757027] ACPI: PCI: Interrupt link GSIH configured for IRQ 23[0m
+[2mplainBoot # [    0.762020] iommu: Default domain type: Translated[0m
+[2mgatedBoot # [    0.760190] iommu: Default domain type: Translated[0m
+[2mplainBoot # [    0.763007] iommu: DMA domain TLB invalidation policy: lazy mode[0m
+[2mgatedBoot # [    0.760991] iommu: DMA domain TLB invalidation policy: lazy mode[0m
+[2mplainBoot # [    0.765180] ACPI: bus type USB registered[0m
+[2mgatedBoot # [    0.763176] ACPI: bus type USB registered[0m
+[2mplainBoot # [    0.767062] usbcore: registered new interface driver usbfs[0m
+[2mgatedBoot # [    0.764024] usbcore: registered new interface driver usbfs[0m
+[2mplainBoot # [    0.768019] usbcore: registered new interface driver hub[0m
+[2mgatedBoot # [    0.766004] usbcore: registered new interface driver hub[0m
+[2mplainBoot # [    0.770030] usbcore: registered new device driver usb[0m
+[2mgatedBoot # [    0.768042] usbcore: registered new device driver usb[0m
+[2mplainBoot # [    0.771507] NetLabel: Initializing[0m
+[2mgatedBoot # [    0.769497] NetLabel: Initializing[0m
+[2mplainBoot # [    0.772809] NetLabel:  domain hash size = 128[0m
+[2mgatedBoot # [    0.770992] NetLabel:  domain hash size = 128[0m
+[2mplainBoot # [    0.774008] NetLabel:  protocols = UNLABELED CIPSOv4 CALIPSO[0m
+[2mgatedBoot # [    0.771991] NetLabel:  protocols = UNLABELED CIPSOv4 CALIPSO[0m
+[2mplainBoot # [    0.776095] NetLabel:  unlabeled traffic allowed by default[0m
+[2mgatedBoot # [    0.774113] NetLabel:  unlabeled traffic allowed by default[0m
+[2mplainBoot # [    0.778047] PCI: Using ACPI for IRQ routing[0m
+[2mgatedBoot # [    0.775029] PCI: Using ACPI for IRQ routing[0m
+[2mplainBoot # [    0.877548] e820: register RAM buffer resource [mem 0x0009fc00-0x0009ffff][0m
+[2mgatedBoot # [    0.873324] e820: register RAM buffer resource [mem 0x0009fc00-0x0009ffff][0m
+[2mplainBoot # [    0.879064] e820: register RAM buffer resource [mem 0x7ffd5000-0x7fffffff][0m
+[2mgatedBoot # [    0.875045] e820: register RAM buffer resource [mem 0x7ffd5000-0x7fffffff][0m
+[2mplainBoot # [    0.881115] pci 0000:00:01.0: vgaarb: setting as boot VGA device[0m
+[2mgatedBoot # [    0.877094] pci 0000:00:01.0: vgaarb: setting as boot VGA device[0m
+[2mplainBoot # [    0.882003] pci 0000:00:01.0: vgaarb: bridge control possible[0m
+[2mgatedBoot # [    0.877987] pci 0000:00:01.0: vgaarb: bridge control possible[0m
+[2mplainBoot # [    0.882003] pci 0000:00:01.0: vgaarb: VGA device added: decodes=io+mem,owns=io+mem,locks=none[0m
+[2mplainBoot # [    0.887010] vgaarb: loaded[0m
+[2mgatedBoot # [    0.877987] pci 0000:00:01.0: vgaarb: VGA device added: decodes=io+mem,owns=io+mem,locks=none[0m
+[2mgatedBoot # [    0.882995] vgaarb: loaded[0m
+[2mplainBoot # [    0.888203] hpet0: at MMIO 0xfed00000, IRQs 2, 8, 0[0m
+[2mgatedBoot # [    0.884093] hpet0: at MMIO 0xfed00000, IRQs 2, 8, 0[0m
+[2mplainBoot # [    0.890027] hpet0: 3 comparators, 64-bit 100.000000 MHz counter[0m
+[2mgatedBoot # [    0.885993] hpet0: 3 comparators, 64-bit 100.000000 MHz counter[0m
+[2mplainBoot # [    0.894081] clocksource: Switched to clocksource kvm-clock[0m
+[2mplainBoot # [    0.896078] VFS: Disk quotas dquot_6.6.0[0m
+[2mgatedBoot # [    0.891058] clocksource: Switched to clocksource kvm-clock[0m
+[2mplainBoot # [    0.897359] VFS: Dquot-cache hash table entries: 512 (4096 bytes)[0m
+[2mgatedBoot # [    0.893225] VFS: Disk quotas dquot_6.6.0[0m
+[2mgatedBoot # [    0.894427] VFS: Dquot-cache hash table entries: 512 (4096 bytes)[0m
+[2mplainBoot # [    0.899383] acpi PNP0C01:00: Reserved [mem 0xb0000000-0xbfffffff][0m
+[2mplainBoot # [    0.901197] pnp: PnP ACPI init[0m
+[2mgatedBoot # [    0.896474] acpi PNP0C01:00: Reserved [mem 0xb0000000-0xbfffffff][0m
+[2mplainBoot # [    0.902530] ACPI: IRQ 4 override to edge(!), high(!)[0m
+[2mgatedBoot # [    0.898403] pnp: PnP ACPI init[0m
+[2mplainBoot # [    0.904455] pnp: PnP ACPI: found 4 devices[0m
+[2mgatedBoot # [    0.899587] ACPI: IRQ 4 override to edge(!), high(!)[0m
+[2mgatedBoot # [    0.901430] pnp: PnP ACPI: found 4 devices[0m
+[2mplainBoot # [    0.912483] clocksource: acpi_pm: mask: 0xffffff max_cycles: 0xffffff, max_idle_ns: 2085701024 ns[0m
+[2mplainBoot # [    0.914934] clocksource: Switched to clocksource acpi_pm[0m
+[2mgatedBoot # [    0.909657] clocksource: acpi_pm: mask: 0xffffff max_cycles: 0xffffff, max_idle_ns: 2085701024 ns[0m
+[2mplainBoot # [    0.916617] NET: Registered PF_INET protocol family[0m
+[2mgatedBoot # [    0.912159] clocksource: Switched to clocksource acpi_pm[0m
+[2mgatedBoot # [    0.914000] NET: Registered PF_INET protocol family[0m
+[2mplainBoot # [    0.918514] IP idents hash table entries: 32768 (order: 6, 262144 bytes, linear)[0m
+[2mgatedBoot # [    0.915620] IP idents hash table entries: 32768 (order: 6, 262144 bytes, linear)[0m
+[2mplainBoot # [    0.921429] tcp_listen_portaddr_hash hash table entries: 1024 (order: 2, 16384 bytes, linear)[0m
+[2mgatedBoot # [    0.918377] tcp_listen_portaddr_hash hash table entries: 1024 (order: 2, 16384 bytes, linear)[0m
+[2mplainBoot # [    0.923987] Table-perturb hash table entries: 65536 (order: 6, 262144 bytes, linear)[0m
+[2mgatedBoot # [    0.920974] Table-perturb hash table entries: 65536 (order: 6, 262144 bytes, linear)[0m
+[2mplainBoot # [    0.926305] TCP established hash table entries: 16384 (order: 5, 131072 bytes, linear)[0m
+[2mgatedBoot # [    0.923502] TCP established hash table entries: 16384 (order: 5, 131072 bytes, linear)[0m
+[2mplainBoot # [    0.929134] TCP bind hash table entries: 16384 (order: 7, 524288 bytes, linear)[0m
+[2mgatedBoot # [    0.926060] TCP bind hash table entries: 16384 (order: 7, 524288 bytes, linear)[0m
+[2mplainBoot # [    0.931313] TCP: Hash tables configured (established 16384 bind 16384)[0m
+[2mgatedBoot # [    0.928158] TCP: Hash tables configured (established 16384 bind 16384)[0m
+[2mplainBoot # [    0.933369] MPTCP token hash table entries: 2048 (order: 4, 49152 bytes, linear)[0m
+[2mgatedBoot # [    0.930506] MPTCP token hash table entries: 2048 (order: 4, 49152 bytes, linear)[0m
+[2mplainBoot # [    0.935797] UDP hash table entries: 1024 (order: 4, 65536 bytes, linear)[0m
+[2mplainBoot # [    0.937809] NET: Registered PF_UNIX/PF_LOCAL protocol family[0m
+[2mgatedBoot # [    0.932814] UDP hash table entries: 1024 (order: 4, 65536 bytes, linear)[0m
+[2mplainBoot # [    0.939488] NET: Registered PF_XDP protocol family[0m
+[2mgatedBoot # [    0.934775] NET: Registered PF_UNIX/PF_LOCAL protocol family[0m
+[2mplainBoot # [    0.940825] pci_bus 0000:00: resource 4 [io  0x0000-0x0cf7 window][0m
+[2mgatedBoot # [    0.936271] NET: Registered PF_XDP protocol family[0m
+[2mplainBoot # [    0.942458] pci_bus 0000:00: resource 5 [io  0x0d00-0xffff window][0m
+[2mgatedBoot # [    0.937634] pci_bus 0000:00: resource 4 [io  0x0000-0x0cf7 window][0m
+[2mgatedBoot # [    0.939560] pci_bus 0000:00: resource 5 [io  0x0d00-0xffff window][0m
+[2mplainBoot # [    0.944335] pci_bus 0000:00: resource 6 [mem 0x000a0000-0x000bffff window][0m
+[2mgatedBoot # [    0.941334] pci_bus 0000:00: resource 6 [mem 0x000a0000-0x000bffff window][0m
+[2mplainBoot # [    0.946319] pci_bus 0000:00: resource 7 [mem 0x80000000-0xafffffff window][0m
+[2mgatedBoot # [    0.943419] pci_bus 0000:00: resource 7 [mem 0x80000000-0xafffffff window][0m
+[2mplainBoot # [    0.948395] pci_bus 0000:00: resource 8 [mem 0xc0000000-0xfebfffff window][0m
+[2mgatedBoot # [    0.945324] pci_bus 0000:00: resource 8 [mem 0xc0000000-0xfebfffff window][0m
+[2mplainBoot # [    0.950414] pci_bus 0000:00: resource 9 [mem 0x100000000-0x8ffffffff window][0m
+[2mgatedBoot # [    0.947324] pci_bus 0000:00: resource 9 [mem 0x100000000-0x8ffffffff window][0m
+[2mplainBoot # [    0.953129] ACPI: \_SB_.GSIA: Enabled at IRQ 16[0m
+[2mgatedBoot # [    0.950050] ACPI: \_SB_.GSIA: Enabled at IRQ 16[0m
+[2mplainBoot # [    0.955775] ACPI: \_SB_.GSIB: Enabled at IRQ 17[0m
+[2mgatedBoot # [    0.952728] ACPI: \_SB_.GSIB: Enabled at IRQ 17[0m
+[2mplainBoot # [    0.958358] ACPI: \_SB_.GSIC: Enabled at IRQ 18[0m
+[2mgatedBoot # [    0.955232] ACPI: \_SB_.GSIC: Enabled at IRQ 18[0m
+[2mplainBoot # [    0.960965] ACPI: \_SB_.GSID: Enabled at IRQ 19[0m
+[2mgatedBoot # [    0.957758] ACPI: \_SB_.GSID: Enabled at IRQ 19[0m
+[2mplainBoot # [    0.963364] PCI: CLS 0 bytes, default 64[0m
+[2mgatedBoot # [    0.960200] PCI: CLS 0 bytes, default 64[0m
+[2mplainBoot # [    0.964985] clocksource: tsc: mask: 0xffffffffffffffff max_cycles: 0x27178451938, max_idle_ns: 440795251172 ns[0m
+[2mplainBoot # [    0.964987] Trying to unpack rootfs image as initramfs...[0m
+[2mgatedBoot # [    0.961667] clocksource: tsc: mask: 0xffffffffffffffff max_cycles: 0x27178451938, max_idle_ns: 440795251172 ns[0m
+[2mplainBoot # [    0.965617] sgx: There are zero EPC sections.[0m
+[2mgatedBoot # [    0.961680] Trying to unpack rootfs image as initramfs...[0m
+[2mgatedBoot # [    0.962274] sgx: There are zero EPC sections.[0m
+[2mplainBoot # [    0.971875] Initialise system trusted keyrings[0m
+[2mgatedBoot # [    0.968763] Initialise system trusted keyrings[0m
+[2mplainBoot # [    0.973519] workingset: timestamp_bits=40 (anon: 35) max_order=19 bucket_order=0 (anon: 0)[0m
+[2mplainBoot # [    0.976708] Key type asymmetric registered[0m
+[2mgatedBoot # [    0.970985] workingset: timestamp_bits=40 (anon: 35) max_order=19 bucket_order=0 (anon: 0)[0m
+[2mplainBoot # [    0.978161] Asymmetric key parser 'x509' registered[0m
+[2mgatedBoot # [    0.974072] Key type asymmetric registered[0m
+[2mgatedBoot # [    0.975357] Asymmetric key parser 'x509' registered[0m
+[2mplainBoot # [    0.979701] Block layer SCSI generic (bsg) driver version 0.4 loaded (major 248)[0m
+[2mplainBoot # [    0.982535] io scheduler mq-deadline registered[0m
+[2mgatedBoot # [    0.976933] Block layer SCSI generic (bsg) driver version 0.4 loaded (major 248)[0m
+[2mplainBoot # [    0.983914] io scheduler kyber registered[0m
+[2mgatedBoot # [    0.979325] io scheduler mq-deadline registered[0m
+[2mgatedBoot # [    0.980789] io scheduler kyber registered[0m
+[2mplainBoot # [    0.987818] Serial: 8250/16550 driver, 4 ports, IRQ sharing enabled[0m
+[2mgatedBoot # [    0.983813] Serial: 8250/16550 driver, 4 ports, IRQ sharing enabled[0m
+[2mplainBoot # [    0.990031] 00:03: ttyS0 at I/O 0x3f8 (irq = 4, base_baud = 115200) is a 16550A[0m
+[2mgatedBoot # [    0.985933] 00:03: ttyS0 at I/O 0x3f8 (irq = 4, base_baud = 115200) is a 16550A[0m
+[2mplainBoot # [    0.993601] ACPI: bus type drm_connector registered[0m
+[2mgatedBoot # [    0.989505] ACPI: bus type drm_connector registered[0m
+[2mplainBoot # [    0.995977] usbcore: registered new interface driver usbserial_generic[0m
+[2mgatedBoot # [    0.992441] usbcore: registered new interface driver usbserial_generic[0m
+[2mplainBoot # [    0.997883] usbserial: USB Serial support registered for generic[0m
+[2mplainBoot # [    0.999639] intel_pstate: CPU model not supported[0m
+[2mgatedBoot # [    0.994387] usbserial: USB Serial support registered for generic[0m
+[2mgatedBoot # [    0.996181] intel_pstate: CPU model not supported[0m
+[2mplainBoot # [    1.001130] drop_monitor: Initializing network drop monitor service[0m
+[2mgatedBoot # [    0.997751] drop_monitor: Initializing network drop monitor service[0m
+[2mplainBoot # [    1.003203] NET: Registered PF_INET6 protocol family[0m
+[2mgatedBoot # [    0.999804] NET: Registered PF_INET6 protocol family[0m
+[2mplainBoot # [    1.005620] Segment Routing with IPv6[0m
+[2mplainBoot # [    1.006806] In-situ OAM (IOAM) with IPv6[0m
+[2mgatedBoot # [    1.003351] Segment Routing with IPv6[0m
+[2mplainBoot # [    1.008797] IPI shorthand broadcast: enabled[0m
+[2mgatedBoot # [    1.004649] In-situ OAM (IOAM) with IPv6[0m
+[2mgatedBoot # [    1.006775] IPI shorthand broadcast: enabled[0m
+[2mplainBoot # [    1.013071] sched_clock: Marking stable (753037419, 259420893)->(1051765375, -39307063)[0m
+[2mplainBoot # [    1.015795] registered taskstats version 1[0m
+[2mgatedBoot # [    1.011004] sched_clock: Marking stable (753029244, 257371524)->(1053030507, -42629739)[0m
+[2mplainBoot # [    1.017487] Loading compiled-in X.509 certificates[0m
+[2mgatedBoot # [    1.013806] registered taskstats version 1[0m
+[2mgatedBoot # [    1.015581] Loading compiled-in X.509 certificates[0m
+[2mplainBoot # [    1.026121] Demotion targets for Node 0: null[0m
+[2mplainBoot # [    1.027986] Key type .fscrypt registered[0m
+[2mgatedBoot # [    1.023668] Demotion targets for Node 0: null[0m
+[2mplainBoot # [    1.029261] Key type fscrypt-provisioning registered[0m
+[2mgatedBoot # [    1.025491] Key type .fscrypt registered[0m
+[2mplainBoot # [    1.031234] ima: No TPM chip found, activating TPM-bypass![0m
+[2mgatedBoot # [    1.026902] Key type fscrypt-provisioning registered[0m
+[2mplainBoot # [    1.032997] ima: Allocated hash algorithm: sha1[0m
+[2mgatedBoot # [    1.028641] ima: No TPM chip found, activating TPM-bypass![0m
+[2mplainBoot # [    1.034513] ima: No architecture policies found[0m
+[2mgatedBoot # [    1.030363] ima: Allocated hash algorithm: sha1[0m
+[2mplainBoot # [    1.036157] PM:   Magic number: 14:876:48[0m
+[2mgatedBoot # [    1.031885] ima: No architecture policies found[0m
+[2mplainBoot # [    1.037678] RAS: Correctable Errors collector initialized.[0m
+[2mgatedBoot # [    1.033457] PM:   Magic number: 14:876:48[0m
+[2mplainBoot # [    1.039739] clk: Disabling unused clocks[0m
+[2mgatedBoot # [    1.034924] RAS: Correctable Errors collector initialized.[0m
+[2mplainBoot # [    1.040940] PM: genpd: Disabling unused power domains[0m
+[2mgatedBoot # [    1.037038] clk: Disabling unused clocks[0m
+[2mgatedBoot # [    1.038271] PM: genpd: Disabling unused power domains[0m
+[2mplainBoot # [    1.204833] Freeing initrd memory: 29972K[0m
+[2mgatedBoot # [    1.201338] Freeing initrd memory: 29976K[0m
+[2mplainBoot # [    1.208468] Freeing unused decrypted memory: 2028K[0m
+[2mgatedBoot # [    1.205086] Freeing unused decrypted memory: 2028K[0m
+[2mplainBoot # [    1.211750] Freeing unused kernel image (initmem) memory: 3764K[0m
+[2mgatedBoot # [    1.208183] Freeing unused kernel image (initmem) memory: 3764K[0m
+[2mplainBoot # [    1.213476] Write protecting the kernel read-only data: 34816k[0m
+[2mgatedBoot # [    1.210094] Write protecting the kernel read-only data: 34816k[0m
+[2mplainBoot # [    1.215786] Freeing unused kernel image (text/rodata gap) memory: 596K[0m
+[2mgatedBoot # [    1.212455] Freeing unused kernel image (text/rodata gap) memory: 596K[0m
+[2mplainBoot # [    1.218708] Freeing unused kernel image (rodata/data gap) memory: 1860K[0m
+[2mgatedBoot # [    1.215450] Freeing unused kernel image (rodata/data gap) memory: 1860K[0m
+[2mplainBoot # [    1.258497] x86/mm: Checked W+X mappings: passed, no W+X pages found.[0m
+[2mplainBoot # [    1.260162] x86/mm: Checking user space page tables[0m
+[2mgatedBoot # [    1.255410] x86/mm: Checked W+X mappings: passed, no W+X pages found.[0m
+[2mgatedBoot # [    1.257280] x86/mm: Checking user space page tables[0m
+[2mplainBoot # [    1.298623] x86/mm: Checked W+X mappings: passed, no W+X pages found.[0m
+[2mplainBoot # [    1.300302] Run /init as init process[0m
+[2mgatedBoot # [    1.295847] x86/mm: Checked W+X mappings: passed, no W+X pages found.[0m
+[2mgatedBoot # [    1.297593] Run /init as init process[0m
+[2mplainBoot # [    1.311715] systemd[1]: Inserted module 'autofs4'[0m
+[2mgatedBoot # [    1.309506] systemd[1]: Inserted module 'autofs4'[0m
+[2mplainBoot # [    1.341182] fuse: init (API version 7.45)[0m
+[2mgatedBoot # [    1.338339] fuse: init (API version 7.45)[0m
+[2mplainBoot # [    1.350727] ACPI: \_SB_.GSIG: Enabled at IRQ 22[0m
+[2mgatedBoot # [    1.348218] ACPI: \_SB_.GSIG: Enabled at IRQ 22[0m
+[2mplainBoot # [    1.354191] ACPI: \_SB_.GSIH: Enabled at IRQ 23[0m
+[2mgatedBoot # [    1.351945] ACPI: \_SB_.GSIH: Enabled at IRQ 23[0m
+[2mplainBoot # [    1.359095] ACPI: \_SB_.GSIE: Enabled at IRQ 20[0m
+[2mgatedBoot # [    1.356549] ACPI: \_SB_.GSIE: Enabled at IRQ 20[0m
+[2mplainBoot # [    1.362364] ACPI: \_SB_.GSIF: Enabled at IRQ 21[0m
+[2mgatedBoot # [    1.360434] ACPI: \_SB_.GSIF: Enabled at IRQ 21[0m
+[2mplainBoot # [    1.372158] virtiofs virtio6: discovered new tag: nix-store[0m
+[2mgatedBoot # [    1.369955] virtiofs virtio6: discovered new tag: nix-store[0m
+[2mplainBoot # [    1.375111] virtiofs virtio6: virtio_fs_setup_dax: No cache capability[0m
+[2mgatedBoot # [    1.373176] virtiofs virtio6: virtio_fs_setup_dax: No cache capability[0m
+[2mgatedBoot # [    1.378829] virtiofs virtio7: discovered new tag: shared[0m
+[2mplainBoot # [    1.384116] virtiofs virtio7: discovered new tag: shared[0m
+[2mgatedBoot # [    1.381765] virtiofs virtio7: virtio_fs_setup_dax: No cache capability[0m
+[2mplainBoot # [    1.387317] virtiofs virtio7: virtio_fs_setup_dax: No cache capability[0m
+[2mgatedBoot # [    1.389033] virtiofs virtio8: discovered new tag: xchg[0m
+[2mplainBoot # [    1.394218] virtiofs virtio8: discovered new tag: xchg[0m
+[2mgatedBoot # [    1.396960] virtiofs virtio8: virtio_fs_setup_dax: No cache capability[0m
+[2mplainBoot # [    1.402136] virtiofs virtio8: virtio_fs_setup_dax: No cache capability[0m
+[2mplainBoot # [    1.429456] systemd[1]: Successfully made /usr/ read-only.[0m
+[2mgatedBoot # [    1.429745] systemd[1]: Successfully made /usr/ read-only.[0m
+[2mplainBoot # [    1.766099] systemd[1]: systemd 261.2 running in system mode (+PAM +AUDIT -SELINUX +APPARMOR +IMA +IPE +SMACK +SECCOMP +GCRYPT -GNUTLS +OPENSSL +ACL +BLKID +CURL +ELFUTILS +FIDO2 +IDN2 +KMOD +LIBCRYPTSETUP +LIBCRYPTSETUP_PLUGINS +LIBFDISK +PCRE2 +PWQUALITY +P11KIT +QRENCODE +TPM2 +BZIP2 +LZ4 +XZ +ZLIB +ZSTD +BPF_FRAMEWORK -BTF -XKBCOMMON +UTMP +LIBARCHIVE)[0m
+[2mplainBoot # [    1.774018] systemd[1]: Detected virtualization kvm.[0m
+[2mplainBoot # [    1.775478] systemd[1]: Detected architecture x86-64.[0m
+[2mplainBoot # [    1.776957] systemd[1]: Running in initrd.[0m
+[2mgatedBoot # [    1.766560] systemd[1]: systemd 261.2 running in system mode (+PAM +AUDIT -SELINUX +APPARMOR +IMA +IPE +SMACK +SECCOMP +GCRYPT -GNUTLS +OPENSSL +ACL +BLKID +CURL +ELFUTILS +FIDO2 +IDN2 +KMOD +LIBCRYPTSETUP +LIBCRYPTSETUP_PLUGINS +LIBFDISK +PCRE2 +PWQUALITY +P11KIT +QRENCODE +TPM2 +BZIP2 +LZ4 +XZ +ZLIB +ZSTD +BPF_FRAMEWORK -BTF -XKBCOMMON +UTMP +LIBARCHIVE)[0m
+[2mplainBoot # [    1.778608] systemd[1]: Initializing machine ID from random generator.[0m
+[2mgatedBoot # [    1.774825] systemd[1]: Detected virtualization kvm.[0m
+[2mplainBoot # [    1.780764] systemd[1]: Hostname set to <antagony>.[0m
+[2mgatedBoot # [    1.776454] systemd[1]: Detected architecture x86-64.[0m
+[2mgatedBoot # [    1.778434] systemd[1]: Running in initrd.[0m
+[2mgatedBoot # [    1.780656] systemd[1]: Initializing machine ID from random generator.[0m
+[2mgatedBoot # [    1.783162] systemd[1]: Hostname set to <antagony>.[0m
+[2mplainBoot # [    1.874682] systemd[1]: bpf-restrict-fs: LSM BPF program attached[0m
+[2mgatedBoot # [    1.876502] systemd[1]: bpf-restrict-fs: LSM BPF program attached[0m
+[2mplainBoot # [    1.913144] systemd[1]: Queued start job for default target Initrd Default Target.[0m
+[2mgatedBoot # [    1.914316] systemd[1]: Queued start job for default target Initrd Default Target.[0m
+[2mplainBoot # [    1.925159] systemd[1]: Created slice Slice /system/modprobe.[0m
+[2mplainBoot # [    1.927100] systemd[1]: Started Dispatch Password Requests to Console Directory Watch.[0m
+[2mgatedBoot # [    1.923227] systemd[1]: Created slice Slice /system/modprobe.[0m
+[2mplainBoot # [    1.929472] systemd[1]: Expecting device /dev/disk/by-label/nixos...[0m
+[2mgatedBoot # [    1.925195] systemd[1]: Started Dispatch Password Requests to Console Directory Watch.[0m
+[2mplainBoot # [    1.931319] systemd[1]: Reached target Initrd Preservation Mounts.[0m
+[2mgatedBoot # [    1.927590] systemd[1]: Expecting device /dev/disk/by-label/nixos...[0m
+[2mplainBoot # [    1.933366] systemd[1]: Reached target Path Units.[0m
+[2mgatedBoot # [    1.929722] systemd[1]: Reached target Initrd Preservation Mounts.[0m
+[2mplainBoot # [    1.935225] systemd[1]: Reached target Slice Units.[0m
+[2mgatedBoot # [    1.931917] systemd[1]: Reached target Path Units.[0m
+[2mplainBoot # [    1.937173] systemd[1]: Reached target Swaps.[0m
+[2mgatedBoot # [    1.933495] systemd[1]: Reached target Slice Units.[0m
+[2mplainBoot # [    1.938613] systemd[1]: Reached target Timer Units.[0m
+[2mgatedBoot # [    1.934992] systemd[1]: Reached target Swaps.[0m
+[2mplainBoot # [    1.940306] systemd[1]: Listening on D-Bus System Message Bus Socket.[0m
+[2mgatedBoot # [    1.936531] systemd[1]: Reached target Timer Units.[0m
+[2mplainBoot # [    1.942549] systemd[1]: Listening on Journal Socket (/dev/log).[0m
+[2mgatedBoot # [    1.938344] systemd[1]: Listening on D-Bus System Message Bus Socket.[0m
+[2mplainBoot # [    1.944655] systemd[1]: Listening on Journal Sockets.[0m
+[2mgatedBoot # [    1.940470] systemd[1]: Listening on Journal Socket (/dev/log).[0m
+[2mplainBoot # [    1.946484] systemd[1]: Listening on udev Control Socket.[0m
+[2mgatedBoot # [    1.942491] systemd[1]: Listening on Journal Sockets.[0m
+[2mplainBoot # [    1.948265] systemd[1]: Listening on udev Kernel Socket.[0m
+[2mgatedBoot # [    1.944131] systemd[1]: Listening on udev Control Socket.[0m
+[2mplainBoot # [    1.949986] systemd[1]: Reached target Socket Units.[0m
+[2mgatedBoot # [    1.945939] systemd[1]: Listening on udev Kernel Socket.[0m
+[2mgatedBoot # [    1.947554] systemd[1]: Reached target Socket Units.[0m
+[2mplainBoot # [    1.952572] systemd[1]: Starting Create List of Static Device Nodes...[0m
+[2mgatedBoot # [    1.950123] systemd[1]: Starting Create List of Static Device Nodes...[0m
+[2mplainBoot # [    1.956067] systemd[1]: Starting Load Kernel Module configfs...[0m
+[2mgatedBoot # [    1.952999] systemd[1]: Starting Load Kernel Module configfs...[0m
+[2mplainBoot # [    1.963455] systemd[1]: Starting Journal Service...[0m
+[2mplainBoot # [    1.968630] systemd[1]: Starting Load Kernel Modules...[0m
+[2mplainBoot # [    1.971709] systemd[1]: Early TPM SRK Setup skipped, unmet condition check ConditionSecurity=measured-os[0m
+[2mgatedBoot # [    1.968059] systemd[1]: Starting Journal Service...[0m
+[2mgatedBoot # [    1.971649] systemd[1]: Starting Load Kernel Modules...[0m
+[2mplainBoot # [    1.980348] systemd[1]: Starting Coldplug All udev Devices...[0m
+[2mgatedBoot # [    1.975541] systemd[1]: Early TPM SRK Setup skipped, unmet condition check ConditionSecurity=measured-os[0m
+[2mgatedBoot # [    1.984862] systemd-journald[72]: Collecting audit messages is disabled.[0m
+[2mgatedBoot # [    1.986948] systemd[1]: Starting Coldplug All udev Devices...[0m
+[2mplainBoot # [    1.993626] systemd[1]: Finished Create List of Static Device Nodes.[0m
+[2mplainBoot # [    2.001368] systemd[1]: modprobe@configfs.service: Deactivated successfully.[0m
+[2mgatedBoot # [    1.999964] systemd[1]: Finished Create List of Static Device Nodes.[0m
+[2mplainBoot # [    2.008135] systemd[1]: Finished Load Kernel Module configfs.[0m
+[2mgatedBoot # [    2.004232] systemd[1]: modprobe@configfs.service: Deactivated successfully.[0m
+[2mplainBoot # [    2.010253] systemd-journald[72]: Collecting audit messages is disabled.[0m
+[2mplainBoot # [    2.013388] systemd[1]: Kernel Configuration File System skipped, unmet condition check ConditionPathExists=/sys/kernel/config[0m
+[2mgatedBoot # [    2.010076] systemd[1]: Finished Load Kernel Module configfs.[0m
+[2mplainBoot # [    2.019576] device-mapper: core: CONFIG_IMA_DISABLE_HTABLE is disabled. Duplicate IMA measurements will not be recorded in the IMA log.[0m
+[2mgatedBoot # [    2.016150] systemd[1]: Kernel Configuration File System skipped, unmet condition check ConditionPathExists=/sys/kernel/config[0m
+[2mplainBoot # [    2.025167] systemd[1]: Starting Create Static Device Nodes in /dev gracefully...[0m
+[2mplainBoot # [    2.027617] device-mapper: ioctl: 4.50.0-ioctl (2025-04-28) initialised: dm-devel@lists.linux.dev[0m
+[2mgatedBoot # [    2.025677] systemd[1]: Starting Create Static Device Nodes in /dev gracefully...[0m
+[2mplainBoot # [    2.037946] systemd[1]: Finished Load Kernel Modules.[0m
+[2mgatedBoot # [    2.039643] device-mapper: core: CONFIG_IMA_DISABLE_HTABLE is disabled. Duplicate IMA measurements will not be recorded in the IMA log.[0m
+[2mplainBoot # [    2.048933] systemd[1]: Starting Apply Kernel Variables...[0m
+[2mgatedBoot # [    2.048702] device-mapper: ioctl: 4.50.0-ioctl (2025-04-28) initialised: dm-devel@lists.linux.dev[0m
+[2mgatedBoot # [    2.055527] systemd[1]: Finished Create Static Device Nodes in /dev gracefully.[0m
+[2mgatedBoot # [    2.062513] systemd[1]: Finished Load Kernel Modules.[0m
+[2mplainBoot # [    2.067675] systemd[1]: Finished Create Static Device Nodes in /dev gracefully.[0m
+[2mgatedBoot # [    2.070555] systemd[1]: Starting Apply Kernel Variables...[0m
+[2mplainBoot # [    2.076192] systemd[1]: Finished Apply Kernel Variables.[0m
+[2mplainBoot # [    2.083625] systemd[1]: Starting Create Static Device Nodes in /dev...[0m
+[2mgatedBoot # [    2.081113] systemd[1]: Starting Create Static Device Nodes in /dev...[0m
+[2mgatedBoot # [    1.829607] systemd-modules-load[73]: Using 2 probe threads[0m
+[2mgatedBoot # [    1.832580] systemd-modules-load[73]: Inserted module 'virtio_balloon'[0m
+[2mgatedBoot # [    1.834517] systemd-modules-load[73]: Inserted module 'virtio_gpu'[0m
+[2mgatedBoot # [    2.093035] systemd[1]: Started Journal Service.[0m
+[2mgatedBoot # [    1.836540] systemd-modules-load[73]: Inserted module 'dm_mod'[0m
+[2mgatedBoot # [    1.844130] systemd[1]: Finished Apply Kernel Variables.[0m
+[2mplainBoot # [    2.107515] systemd[1]: Finished Create Static Device Nodes in /dev.[0m
+[2mplainBoot # [    1.849631] s[    2.109896] systemd[1]: Started Journal Service.[0m
+[2mgatedBoot # [    1.848433] systemd[1]: Finished Create Static Device Nodes in /dev.[0m
+[2mplainBoot # ystemd-modules-load[73]: Using 2 probe threads[0m
+[2mgatedBoot # [    1.852358] systemd[1]: Reached target Preparation for Local File Systems.[0m
+[2mplainBoot # [    1.855157] systemd-modules-load[73]: Inserted module 'virtio_balloon'[0m
+[2mgatedBoot # [    1.854319] systemd[1]: Reached target Local File Systems.[0m
+[2mplainBoot # [    1.858973] systemd-modules-load[73]: Inserted module 'virtio_gpu'[0m
+[2mgatedBoot # [    1.857173] systemd[1]: Starting Create System Files and Directories...[0m
+[2mplainBoot # [    1.861217] systemd-modules-load[73]: Inserted module 'dm_mod'[0m
+[2mplainBoot # [    1.863401] systemd[1]: Reached target Preparation for Local File Systems.[0m
+[2mgatedBoot # [    1.863618] systemd[1]: Starting Rule-based Manager for Device Events and Files...[0m
+[2mplainBoot # [    1.868047] systemd[1]: Reached target Local File Systems.[0m
+[2mplainBoot # [    1.872083] systemd[1]: Starting Create System Files and Directories...[0m
+[2mplainBoot # [    1.874076] systemd[1]: Starting Rule-based Manager for Device Events and Files...[0m
+[2mplainBoot # [    1.881777] systemd[1]: Finished Create System Files and Directories.[0m
+[2mgatedBoot # [    1.887149] systemd[1]: Finished Create System Files and Directories.[0m
+[2mgatedBoot # [    1.897579] systemd-udevd[89]: Using default interface naming scheme 'v261'.[0m
+[2mplainBoot # [    1.900515] systemd-udevd[82]: Using default interface naming scheme 'v261'.[0m
+[2mplainBoot # [    1.912865] systemd[1]: Finished Coldplug All udev Devices.[0m
+[2mgatedBoot # [    1.914380] systemd[1]: Finished Coldplug All udev Devices.[0m
+[2mgatedBoot # [    1.921139] systemd[1]: Started Rule-based Manager for Device Events and Files.[0m
+[2mgatedBoot # [    1.923298] systemd[1]: Reached target System Initialization.[0m
+[2mplainBoot # [    1.925873] systemd[1]: Started Rule-based Manager for Device Events and Files.[0m
+[2mgatedBoot # [    1.924883] systemd[1]: Reached target Basic System.[0m
+[2mplainBoot # [    1.928254] systemd[1]: Reached target System Initialization.[0m
+[2mplainBoot # [    1.930120] systemd[1]: Reached target Basic System.[0m
+[2mgatedBoot # [    2.355279] virtio_blk virtio2: 2/0/0 default/read/poll queues[0m
+[2mgatedBoot # [    2.358756] virtio_blk virtio2: [vda] 2097152 512-byte logical blocks (1.07 GB/1.00 GiB)[0m
+[2mgatedBoot # [    2.363765] virtio_blk virtio3: 2/0/0 default/read/poll queues[0m
+[2mplainBoot # [    2.372105] virtio_blk virtio2: 2/0/0 default/read/poll queues[0m
+[2mgatedBoot # [    2.371232] virtio_blk virtio3: [vdb] 65536 512-byte logical blocks (33.6 MB/32.0 MiB)[0m
+[2mplainBoot # [    2.380784] virtio_blk virtio2: [vda] 2097152 512-byte logical blocks (1.07 GB/1.00 GiB)[0m
+[2mplainBoot # [    2.395901] virtio_blk virtio3: 2/0/0 default/read/poll queues[0m
+[2mplainBoot # [    2.397922] i8042: PNP: PS/2 Controller [PNP0303:KBD,PNP0f13:MOU] at 0x60,0x64 irq 1,12[0m
+[2mplainBoot # [    2.405609] ehci-pci 0000:00:1d.7: EHCI Host Controller[0m
+[2mplainBoot # [    2.406870] ehci-pci 0000:00:1d.7: new USB bus registered, assigned bus number 1[0m
+[2mplainBoot # [    2.408939] ehci-pci 0000:00:1d.7: irq 19, io mem 0xfebdc000[0m
+[2mplainBoot # [    2.411146] serio: i8042 KBD port at 0x60,0x64 irq 1[0m
+[2mplainBoot # [    2.415896] virtio_blk virtio3: [vdb] 65536 512-byte logical blocks (33.6 MB/32.0 MiB)[0m
+[2mplainBoot # [    2.417780] ehci-pci 0000:00:1d.7: USB 2.0 started, EHCI 1.00[0m
+[2mgatedBoot # [    2.414839] ehci-pci 0000:00:1d.7: EHCI Host Controller[0m
+[2mplainBoot # [    2.419549] serio: i8042 AUX port at 0x60,0x64 irq 12[0m
+[2mplainBoot # [    2.420021] usb usb1: New USB device found, idVendor=1d6b, idProduct=0002, bcdDevice= 7.02[0m
+[2mgatedBoot # [    2.416191] ehci-pci 0000:00:1d.7: new USB bus registered, assigned bus number 1[0m
+[2mgatedBoot # [    2.418934] i8042: PNP: PS/2 Controller [PNP0303:KBD,PNP0f13:MOU] at 0x60,0x64 irq 1,12[0m
+[2mplainBoot # [    2.425018] usb usb1: New USB device strings: Mfr=3, Product=2, SerialNumber=1[0m
+[2mgatedBoot # [    2.420837] ehci-pci 0000:00:1d.7: irq 19, io mem 0xfebdc000[0m
+[2mplainBoot # [    2.426710] usb usb1: Product: EHCI Host Controller[0m
+[2mgatedBoot # [    2.422022] serio: i8042 KBD port at 0x60,0x64 irq 1[0m
+[2mplainBoot # [    2.428312] usb usb1: Manufacturer: Linux 7.2.7 ehci_hcd[0m
+[2mgatedBoot # [    2.423875] serio: i8042 AUX port at 0x60,0x64 irq 12[0m
+[2mplainBoot # [    2.429669] usb usb1: SerialNumber: 0000:00:1d.7[0m
+[2mgatedBoot # [    2.429449] ehci-pci 0000:00:1d.7: USB 2.0 started, EHCI 1.00[0m
+[2mgatedBoot # [    2.431082] usb usb1: New USB device found, idVendor=1d6b, idProduct=0002, bcdDevice= 7.02[0m
+[2mplainBoot # [    2.438923] SCSI subsystem initialized[0m
+[2mgatedBoot # [    2.433873] usb usb1: New USB device strings: Mfr=3, Product=2, SerialNumber=1[0m
+[2mgatedBoot # [    2.436437] usb usb1: Product: EHCI Host Controller[0m
+[2mplainBoot # [    2.442739] hub 1-0:1.0: USB hub found[0m
+[2mgatedBoot # [    2.438745] usb usb1: Manufacturer: Linux 7.2.7 ehci_hcd[0m
+[2mplainBoot # [    2.444024] hub 1-0:1.0: 6 ports detected[0m
+[2mgatedBoot # [    2.440098] usb usb1: SerialNumber: 0000:00:1d.7[0m
+[2mgatedBoot # [    2.441695] hub 1-0:1.0: USB hub found[0m
+[2mgatedBoot # [    2.443164] hub 1-0:1.0: 6 ports detected[0m
+[2mplainBoot # [    2.449151] uhci_hcd 0000:00:1d.0: UHCI Host Controller[0m
+[2mplainBoot # [    2.450349] uhci_hcd 0000:00:1d.0: new USB bus registered, assigned bus number 2[0m
+[2mgatedBoot # [    2.446033] uhci_hcd 0000:00:1d.0: UHCI Host Controller[0m
+[2mplainBoot # [    2.452729] uhci_hcd 0000:00:1d.0: detected 2 ports[0m
+[2mgatedBoot # [    2.447343] uhci_hcd 0000:00:1d.0: new USB bus registered, assigned bus number 2[0m
+[2mgatedBoot # [    2.450028] uhci_hcd 0000:00:1d.0: detected 2 ports[0m
+[2mgatedBoot # [    2.452130] uhci_hcd 0000:00:1d.0: irq 16, io port 0x0000c200[0m
+[2mgatedBoot # [    2.454877] usb usb2: New USB device found, idVendor=1d6b, idProduct=0001, bcdDevice= 7.02[0m
+[2mplainBoot # [    2.460625] uhci_hcd 0000:00:1d.0: irq 16, io port 0x0000c200[0m
+[2mgatedBoot # [    2.457894] usb usb2: New USB device strings: Mfr=3, Product=2, SerialNumber=1[0m
+[2mgatedBoot # [    2.460433] usb usb2: Product: UHCI Host Controller[0m
+[2mgatedBoot # [    2.462224] usb usb2: Manufacturer: Linux 7.2.7 uhci_hcd[0m
+[2mgatedBoot # [    2.464485] usb usb2: SerialNumber: 0000:00:1d.0[0m
+[2mplainBoot # [    2.469729] usb usb2: New USB device found, idVendor=1d6b, idProduct=0001, bcdDevice= 7.02[0m
+[2mgatedBoot # [    2.467524] hub 2-0:1.0: USB hub found[0m
+[2mgatedBoot # [    2.469258] hub 2-0:1.0: 2 ports detected[0m
+[2mplainBoot # [    2.475695] usb usb2: New USB device strings: Mfr=3, Product=2, SerialNumber=1[0m
+[2mplainBoot # [    2.487745] usb usb2: Product: UHCI Host Controller[0m
+[2mgatedBoot # [    2.486066] SCSI subsystem initialized[0m
+[2mplainBoot # [    2.498311] usb usb2: Manufacturer: Linux 7.2.7 uhci_hcd[0m
+[2mplainBoot # [    2.239386] (udev-worker)[108]: Network interface NamePolicy= disabled on kernel command line.[0m
+[2mplainBoot # [    2.244429] (udev-worker)[107]: [0;1;33m[0;1;38:5:185meth1: Config file /etc/systemd/network/40-eth1.link is applied to device based on potentially unpredictable interface name.[0m[0m
+[2mplainBoot # [    2.248602] (udev-worker)[107]: Network interface NamePolicy= disabled on kernel command line.[    2.509518] usb usb2: SerialNumber: 0000:00:1d.0[0m
+[2mgatedBoot # [    2.506211] uhci_hcd 0000:00:1d.1: UHCI Host Controller[0m
+[2mgatedBoot # [    2.250358] systemd[1]: Starting Virtual Console Setup...[0m
+[2mplainBoot # [    2.515816] hub 2-0:1.0: USB hub found[0m
+[2mplainBoot # [0m
+[2mgatedBoot # [    2.511698] uhci_hcd 0000:00:1d.1: new USB bus registered, assigned bus number 3[0m
+[2mplainBoot # [    2.257785] systemd[1]: Starting Virtual Console Setup...[0m
+[2mplainBoot # [    2.519138] hub 2-0:1.0: 2 ports detected[0m
+[2mgatedBoot # [    2.516246] uhci_hcd 0000:00:1d.1: detected 2 ports[0m
+[2mgatedBoot # [    2.519685] uhci_hcd 0000:00:1d.1: irq 17, io port 0x0000c220[0m
+[2mplainBoot # [    2.525141] input: AT Translated Set 2 keyboard as /devices/platform/i8042/serio0/input/input0[0m
+[2mgatedBoot # [    2.523816] usb usb3: New USB device found, idVendor=1d6b, idProduct=0001, bcdDevice= 7.02[0m
+[2mgatedBoot # [    2.529586] usb usb3: New USB device strings: Mfr=3, Product=2, SerialNumber=1[0m
+[2mgatedBoot # [    2.533405] usb usb3: Product: UHCI Host Controller[0m
+[2mgatedBoot # [    2.538528] usb usb3: Manufacturer: Linux 7.2.7 uhci_hcd[0m
+[2mgatedBoot # [    2.283296] (udev-worker)[101]: Network interface NamePolicy= disabled on kernel command line.[0m
+[2mplainBoot # [    2.287205] systemd[1]: Found device /dev/disk/by-label/nixos.[0m
+[2mgatedBoot # [    2.287979] (udev-worker)[93]: [0;1;33m[0;1;38:5:185meth1: Config file /etc/systemd/network/40-eth1.link is applied to device based on potentially unpredictable interface name.[0m[    2.550011] input: AT Translated Set 2 keyboard as /devices/platform/i8042/serio0/input/input0[0m
+[2mgatedBoot # [0m
+[2mplainBoot # [    2.297067] systemd[1]: Reached target Initrd Root Device.[0m
+[2mplainBoot # [    2.299568] systemd-vconsole-setup[113]: [0;1;39mConfiguration of first virtual console was skipped, ignoring remaining ones.[0m[0m
+[2mgatedBoot # [    2.295404] (udev-worker)[93]: Network interface NamePolicy= disabled on kernel command line.[0m
+[2mplainBoot # [    2.560775] uhci_hcd 0000:00:1d.1: UHCI Host Controller[0m
+[2mplainBoot # [    2.304424] systemd[1]: Starting File System Check on /dev/disk/by-label/nixos...[0m
+[2mplainBoot # [    2.307710] systemd[1]: Finished Virtual Console Setup.[0m
+[2mgatedBoot # [    2.304593] systemd-vconsole-setup[110]: [0;1;39mConfiguration of first virt[    2.562642] ahci 0000:00:1f.2: AHCI vers 0001.0000, 32 command slots, 1.5 Gbps, SATA mode[0m
+[2mgatedBoot # ual console was skipped, ignoring remaining ones[    2.564870] ahci 0000:00:1f.2: 6/6 ports implemented (port mask 0x3f)[0m
+[2mgatedBoot # .[0m[    2.566587] ahci 0000:00:1f.2: flags: 64bit ncq only[0m
+[2mplainBoot # [    2.571755] ahci 0000:00:1f.2: AHCI vers 0001.0000, 32 command slots, 1.5 Gbps, SATA mode[0m
+[2mgatedBoot # [    2.568520] usb usb3: SerialNumber: 0000:00:1d.1[0m
+[2mplainBoot # [    2.572957] uhci_hcd 0000:00:1d.1: new USB bus registered, assigned bus number 3[0m
+[2mplainBoot # [    2.573743] ahci 0000:00:1f.2: 6/6 ports implemented (port mask 0x3f)[0m
+[2mplainBoot # [    2.575617] uhci_hcd 0000:00:1d.1: detected 2 ports[0m
+[2mplainBoot # [    2.575751] ahci 0000:00:1f.2: flags: 64bit ncq only[0m
+[2mgatedBoot # [    2.574279] hub 3-0:1.0: USB hub found[0m
+[2mgatedBoot # [0m
+[2mplainBoot # [    2.577255] uhci_hcd 0000:00:1d.1: irq 17, io port 0x0000c220[0m
+[2mplainBoot # [    2.582851] scsi host0: ahci[0m
+[2mgatedBoot # [    2.319518] systemd[1]: Finished Virtual Console Setup.[    2.577895] hub 3-0:1.0: 2 ports detected[0m
+[2mgatedBoot # [0m
+[2mplainBoot # [    2.584507] usb usb3: New USB device found, idVendor=1d6b, idProduct=0001, bcdDevice= 7.02[0m
+[2mgatedBoot # [    2.580129] uhci_hcd 0000:00:1d.2: UHCI Host Controller[0m
+[2mplainBoot # [    2.586641] scsi host1: ahci[0m
+[2mgatedBoot # [    2.581531] uhci_hcd 0000:00:1d.2: new USB bus registered, assigned bus number 4[0m
+[2mplainBoot # [    2.588256] scsi host2: ahci[0m
+[2mgatedBoot # [    2.324856] systemd[1]: Found device /dev/disk/by-label/nixos.[0m
+[2mplainBoot # [    2.590116] usb usb3: New USB device strings: Mfr=3, Product=2, SerialNumber=1[0m
+[2mgatedBoot # [    2.327869] systemd[1]: Reached target Initrd Root Device.[    2.586455] uhci_hcd 0000:00:1d.2: detected 2 ports[0m
+[2mplainBoot # [    2.592497] scsi host3: ahci[0m
+[2mgatedBoot # [    2.587774] uhci_hcd 0000:00:1d.2: irq 18, io port 0x0000c240[0m
+[2mgatedBoot # [0m
+[2mplainBoot # [    2.594728] usb usb3: Product: UHCI Host Controller[0m
+[2mgatedBoot # [    2.332794] systemd[1]: Starting File System Check on /dev/disk/by-label/nixos...[0m
+[2mplainBoot # [    2.596097] scsi host4: ahci[0m
+[2mplainBoot # [    2.598232] usb usb3: Manufacturer: Linux 7.2.7 uhci_hcd[0m
+[2mgatedBoot # [    2.594281] scsi host0: ahci[0m
+[2mplainBoot # [    2.599985] scsi host5: ahci[0m
+[2mplainBoot # [    2.600612] usb usb3: SerialNumber: 0000:00:1d.1[0m
+[2mgatedBoot # [    2.595301] usb usb4: New USB device found, idVendor=1d6b, idProduct=0001, bcdDevice= 7.02[0m
+[2mplainBoot # [    2.601410] ata1: SATA max UDMA/133 abar m4096@0xfebdd000 port 0xfebdd100 irq 51 lpm-pol 1[0m
+[2mgatedBoot # [    2.598085] usb usb4: New USB device strings: Mfr=3, Product=2, SerialNumber=1[0m
+[2mplainBoot # [    2.343890] systemd-fsck[130]: nixos: clean, 12/65536 files, 13019/262144 blocks[0m
+[2mgatedBoot # [    2.599978] usb usb4: Product: UHCI Host Controller[0m
+[2mgatedBoot # [    2.600104] scsi host1: ahci[0m
+[2mplainBoot # [    2.604190] ata2: SATA max UDMA/133 abar m4096@0xfebdd000 port 0xfebdd180 irq 51 lpm-pol 1[0m
+[2mgatedBoot # [    2.600765] usb usb4: Manufacturer: Linux 7.2.7 uhci_hcd[0m
+[2mplainBoot # [    2.605071] hub 3-0:1.0: USB hub found[0m
+[2mplainBoot # [    2.605291] hub 3-0:1.0: 2 ports detected[0m
+[2mgatedBoot # [    2.604274] usb usb4: SerialNumber: 0000:00:1d.2[0m
+[2mplainBoot # [    2.609952] uhci_hcd 0000:00:1d.2: UHCI Host Controller[0m
+[2mgatedBoot # [    2.605936] hub 4-0:1.0: USB hub found[0m
+[2mgatedBoot # [    2.607456] scsi host2: ahci[0m
+[2mplainBoot # [    2.611251] ata3: SATA max UDMA/133 abar m4096@0xfebdd000 port 0xfebdd200 irq 51 lpm-pol 1[0m
+[2mgatedBoot # [    2.608890] hub 4-0:1.0: 2 ports detected[0m
+[2mplainBoot # [    2.612138] uhci_hcd 0000:00:1d.2: new USB bus registered, assigned bus number 4[0m
+[2mgatedBoot # [    2.610473] scsi host3: ahci[0m
+[2mplainBoot # [    2.613454] ata4: SATA max UDMA/133 abar m4096@0xfebdd000 port 0xfebdd280 irq 51 lpm-pol 1[0m
+[2mgatedBoot # [    2.354885] systemd-fsck[124]: nixos: clean, 12/65536 files, 13019/262144 blocks[0m
+[2mplainBoot # [    2.613465] ata5: SATA max UDMA/133 abar m4096@0xfebdd000 port 0xfebdd300 irq 51 lpm-pol 1[0m
+[2mgatedBoot # [    2.614405] scsi host4: ahci[0m
+[2mplainBoot # [    2.613475] ata6: SATA max UDMA/133 abar m4096@0xfebdd000 port 0xfebdd380 irq 51 lpm-pol 1[0m
+[2mplainBoot # [    2.615046] uhci_hcd 0000:00:1d.2: detected 2 ports[0m
+[2mgatedBoot # [    2.616494] scsi host5: ahci[0m
+[2mgatedBoot # [    2.618218] ata1: SATA max UDMA/133 abar m4096@0xfebdd000 port 0xfebdd100 irq 51 lpm-pol 1[0m
+[2mplainBoot # [    2.624237] uhci_hcd 0000:00:1d.2: irq 18, io port 0x0000c240[0m
+[2mgatedBoot # [    2.620268] ata2: SATA max UDMA/133 abar m4096@0xfebdd000 port 0xfebdd180 irq 51 lpm-pol 1[0m
+[2mplainBoot # [    2.366659] systemd[1]: Finished File System Check on /dev/di[    2.626304] usb usb4: New USB device found, idVendor=1d6b, idProduct=0001, bcdDevice= 7.02[0m
+[2mgatedBoot # [    2.622154] ata3: SATA max UDMA/133 abar m4096@0xfebdd000 port 0xfebdd200 irq 51 lpm-pol 1[0m
+[2mplainBoot # sk/by-label/nixos.[    2.628843] usb usb4: New USB device strings: Mfr=3, Product=2, SerialNumber=1[0m
+[2mplainBoot # [0m
+[2mgatedBoot # [    2.624651] ata4: SATA max UDMA/133 abar m4096@0xfebdd000 port 0xfebdd280 irq 51 lpm-pol 1[0m
+[2mplainBoot # [    2.630889] usb usb4: Product: UHCI Host Controller[0m
+[2mgatedBoot # [    2.626762] ata5: SATA max UDMA/133 abar m4096@0xfebdd000 port 0xfebdd300 irq 51 lpm-pol 1[0m
+[2mplainBoot # [    2.633619] usb usb4: Manufacturer: Linux 7.2.7 uhci_hcd[0m
+[2mgatedBoot # [    2.628532] ata6: SATA max UDMA/133 abar m4096@0xfebdd000 port 0xfebdd380 irq 51 lpm-pol 1[0m
+[2mplainBoot # [    2.635305] usb usb4: SerialNumber: 0000:00:1d.2[0m
+[2mplainBoot # [    2.636789] hub 4-0:1.0: USB hub found[0m
+[2mplainBoot # [    2.637780] hub 4-0:1.0: 2 ports detected[0m
+[2mgatedBoot # [    2.375967] systemd[1]: Finished File System Check on /dev/disk/by-label/nixos.[0m
+[2mplainBoot # [    2.685665] usb 1-1: new high-speed USB device number 2 using ehci-pci[0m
+[2mgatedBoot # [    2.683590] usb 1-1: new high-speed USB device number 2 using ehci-pci[0m
+[2mplainBoot # [    2.813902] usb 1-1: New USB device found, idVendor=0627, idProduct=0001, bcdDevice= 0.00[0m
+[2mgatedBoot # [    2.811582] usb 1-1: New USB device found, idVendor=0627, idProduct=0001, bcdDevice= 0.00[0m
+[2mplainBoot # [    2.817458] usb 1-1: New USB device strings: Mfr=1, Product=3, SerialNumber=10[0m
+[2mplainBoot # [    2.819117] usb 1-1: Product: QEMU USB Tablet[0m
+[2mplainBoot # [    2.820254] usb 1-1: Manufacturer: QEMU[0m
+[2mgatedBoot # [    2.815106] usb 1-1: New USB device strings: Mfr=1, Product=3, SerialNumber=10[0m
+[2mplainBoot # [    2.821489] usb 1-1: SerialNumber: 28754-0000:00:1d.7-1[0m
+[2mgatedBoot # [    2.817061] usb 1-1: Product: QEMU USB Tablet[0m
+[2mgatedBoot # [    2.818232] usb 1-1: Manufacturer: QEMU[0m
+[2mgatedBoot # [    2.819285] usb 1-1: SerialNumber: 28754-0000:00:1d.7-1[0m
+[2mplainBoot # [    2.841155] hid: raw HID events driver (C) Jiri Kosina[0m
+[2mgatedBoot # [    2.838330] hid: raw HID events driver (C) Jiri Kosina[0m
+[2mplainBoot # [    2.941475] ata4: SATA link down (SStatus 0 SControl 300)[0m
+[2mplainBoot # [    2.943245] ata2: SATA link down (SStatus 0 SControl 300)[0m
+[2mplainBoot # [    2.944826] ata5: SATA link down (SStatus 0 SControl 300)[0m
+[2mplainBoot # [    2.946209] ata3: SATA link up 1.5 Gbps (SStatus 113 SControl 300)[0m
+[2mplainBoot # [    2.947639] ata3.00: ATAPI: QEMU DVD-ROM, 2.5+, max UDMA/100[0m
+[2mplainBoot # [    2.948802] ata3.00: applying bridge limits[0m
+[2mplainBoot # [    2.949939] ata1: SATA link down (SStatus 0 SControl 300)[0m
+[2mplainBoot # [    2.951340] ata6: SATA link down (SStatus 0 SControl 300)[0m
+[2mgatedBoot # [    2.947763] ata2: SATA link down (SStatus 0 SControl 300)[0m
+[2mplainBoot # [    2.952837] ata3.00: configured for UDMA/100[0m
+[2mgatedBoot # [    2.949274] ata4: SATA link down (SStatus 0 SControl 300)[0m
+[2mplainBoot # [    2.954277] scsi 2:0:0:0: CD-ROM            QEMU     QEMU DVD-ROM     2.5+ PQ: 0 ANSI: 5[0m
+[2mgatedBoot # [    2.950819] ata6: SATA link down (SStatus 0 SControl 300)[0m
+[2mgatedBoot # [    2.952192] ata1: SATA link down (SStatus 0 SControl 300)[0m
+[2mgatedBoot # [    2.953631] ata3: SATA link up 1.5 Gbps (SStatus 113 SControl 300)[0m
+[2mgatedBoot # [    2.955061] ata3.00: ATAPI: QEMU DVD-ROM, 2.5+, max UDMA/100[0m
+[2mgatedBoot # [    2.956239] ata3.00: applying bridge limits[0m
+[2mgatedBoot # [    2.957814] ata5: SATA link down (SStatus 0 SControl 300)[0m
+[2mgatedBoot # [    2.959202] ata3.00: configured for UDMA/100[0m
+[2mgatedBoot # [    2.960710] scsi 2:0:0:0: CD-ROM            QEMU     QEMU DVD-ROM     2.5+ PQ: 0 ANSI: 5[0m
+[2mplainBoot # [    2.983875] usbcore: registered new interface driver usbhid[0m
+[2mplainBoot # [    2.987240] usbhid: USB HID core driver[0m
+[2mplainBoot # [    2.733180] systemd[1]: Mounting /sysroot...[0m
+[2mplainBoot # [    2.996549] input: QEMU QEMU USB Tablet as /devices/pci0000:00/0000:00:1d.7/usb1/1-1/1-1:1.0/0003:0627:0001.0001/input/input2[0m
+[2mplainBoot # [    3.000484] hid-generic 0003:0627:0001.0001: input,hidraw0: USB HID v0.01 Mouse [QEMU QEMU USB Tablet] on usb-0000:00:1d.7-1/input0[0m
+[2mgatedBoot # [    2.742210] systemd[1]: Mounting /sysroot...[0m
+[2mgatedBoot # [    3.000840] usbcore: registered new interface driver usbhid[0m
+[2mgatedBoot # [    3.004028] usbhid: USB HID core driver[0m
+[2mgatedBoot # [    3.013356] input: QEMU QEMU USB Tablet as /devices/pci0000:00/0000:00:1d.7/usb1/1-1/1-1:1.0/0003:0627:0001.0001/input/input2[0m
+[2mgatedBoot # [    3.016719] hid-generic 0003:0627:0001.0001: input,hidraw0: USB HID v0.01 Mouse [QEMU QEMU USB Tablet] on usb-0000:00:1d.7-1/input0[0m
+[2mgatedBoot # [    3.019473] sr 2:0:0:0: [sr0] scsi3-mmc drive: 4x/4x cd/rw xa/form2 tray[0m
+[2mplainBoot # [    3.033796] sr 2:0:0:0: [sr0] scsi3-mmc drive: 4x/4x cd/rw xa/form2 tray[0m
+[2mgatedBoot # [    3.041489] cdrom: Uniform CD-ROM driver Revision: 3.20[0m
+[2mplainBoot # [    3.047782] cdrom: Uniform CD-ROM driver Revision: 3.20[0m
+[2mplainBoot # [    3.120631] EXT4-fs (vda): mounted filesystem b1634646-7946-407b-80ae-305e3eb716fc r/w with ordered data mode. Quota mode: none.[0m
+[2mplainBoot # [    2.866633] systemd[1]: Mounted /sysroot.[0m
+[2mgatedBoot # [    3.120003] EXT4-fs (vda): mounted filesystem ae171891-0cce-44b7-af8c-b3a57baaf0f8 r/w with ordered data mode. Quota mode: none.[0m
+[2mplainBoot # [    2.868673] systemd[1]: Reached target Initrd Root File System.[0m
+[2mgatedBoot # [    2.867276] systemd[1]: Mounted /sysroot.[0m
+[2mgatedBoot # [    2.869245] systemd[1]: Reached target Initrd Root File System.[0m
+[2mplainBoot # [    2.872467] systemd[1]: Mounting /sysroot/nix/.ro-store...[0m
+[2mgatedBoot # [    2.871862] systemd[1]: Mounting /sysroot/nix/.ro-store...[0m
+[2mplainBoot # [    2.875294] systemd[1]: Mounting /sysroot/nix/.rw-store...[0m
+[2mgatedBoot # [    2.875468] systemd[1]: Mounting /sysroot/nix/.rw-store...[0m
+[2mplainBoot # [    2.880926] systemd[1]: Mounting /sysroot/run...[0m
+[2mgatedBoot # [    2.878659] systemd[1]: Mounting /sysroot/run...[0m
+[2mplainBoot # [    2.887498] systemd[1]: Mounting /sysroot/tmp/shared...[0m
+[2mgatedBoot # [    2.883989] systemd[1]: Mounting /sysroot/tmp/shared...[0m
+[2mgatedBoot # [    2.887665] systemd[1]: Mounting /sysroot/tmp/xchg...[0m
+[2mgatedBoot # [    2.893270] systemd[1]: Starting Mountpoints Configured in the Real Root...[0m
+[2mplainBoot # [    2.898285] systemd[1]: Mounting /sysroot/tmp/xchg...[0m
+[2mplainBoot # [    2.902657] systemd[1]: Starting Mountpoints Configured in the Real Root...[0m
+[2mgatedBoot # [    2.904199] systemd[1]: Mounted /sysroot/nix/.ro-store.[0m
+[2mplainBoot # [    2.910286] systemd[1]: Mounted /sysroot/nix/.ro-store.[0m
+[2mgatedBoot # [    2.907901] systemd[1]: Mounted /sysroot/nix/.rw-store.[0m
+[2mplainBoot # [    2.914342] systemd[1]: Mounted /sysroot/nix/.rw-store.[0m
+[2mplainBoot # [    2.916056] systemd[1]: Mounted /sysroot/tmp/shared.[0m
+[2mplainBoot # [    2.917711] systemd[1]: Mounted /sysroot/tmp/xchg.[0m
+[2mplainBoot # [    2.921057] systemd[1]: Mounted /sysroot/run.[0m
+[2mgatedBoot # [    2.920270] systemd[1]: Mounted /sysroot/run.[0m
+[2mgatedBoot # [    2.922847] systemd[1]: Mounted /sysroot/tmp/shared.[0m
+[2mplainBoot # [    2.925854] systemd[1]: Starting rw-sysroot-nix-store.service...[0m
+[2mgatedBoot # [    2.924291] systemd[1]: Mounted /sysroot/tmp/xchg.[0m
+[2mplainBoot # [    2.928627] systemd-sysroot-fstab-check[165]: /sysroot should be mounted in the initrd, will request daemon-reload.[0m
+[2mplainBoot # [    2.931658] systemd[1]: [0;1;39mReload requested from client PID 165 ('systemd-sysroot') (unit initrd-parse-etc.service)...[0m[0m
+[2mplainBoot # [    2.934388] systemd[1]: Reloading...[0m
+[2mgatedBoot # [    2.929220] systemd-sysroot-fstab-check[160]: /sysroot should be mounted in the initrd, will request daemon-reload.[0m
+[2mgatedBoot # [    2.934103] systemd[1]: Starting rw-sysroot-nix-store.service...[0m
+[2mgatedBoot # [    2.936495] systemd[1]: [0;1;39mReload requested from client PID 160 ('systemd-sysroot') (unit initrd-parse-etc.service)...[0m[0m
+[2mgatedBoot # [    2.939239] systemd[1]: Reloading...[0m
+[2mplainBoot # [    3.015746] systemd[1]: Reloading finished in 82 ms.[0m
+[2mgatedBoot # [    3.017149] systemd[1]: Reloading finished in 78 ms.[0m
+[2mplainBoot # [    3.032645] systemd-sysroot-fstab-check[165]: Requesting initrd-fs.target/start/replace...[0m
+[2mplainBoot # [    3.037364] systemd[1]: rw-sysroot-nix-store.service: Deactivated successfully.[0m
+[2mplainBoot # [    3.039784] systemd[1]: Finished rw-sysroot-nix-store.service.[0m
+[2mgatedBoot # [    3.037243] systemd-sysroot-fstab-check[160]: Requesting initrd-fs.target/start/replace...[0m
+[2mgatedBoot # [    3.039267] systemd[1]: rw-sysroot-nix-store.service: Deactivated successfully.[0m
+[2mgatedBoot # [    3.040955] systemd[1]: Finished rw-sysroot-nix-store.service.[0m
+[2mplainBoot # [    3.044727] systemd-sysroot-fstab-check[165]: Requesting swap.target/start/replace...[0m
+[2mgatedBoot # [    3.043527] systemd-sysroot-fstab-check[160]: Requesting swap.target/start/replace...[0m
+[2mplainBoot # [    3.047988] systemd[1]: initrd-parse-etc.service: Deactivated successfully.[0m
+[2mgatedBoot # [    3.045711] systemd[1]: initrd-parse-etc.service: Deactivated successfully.[0m
+[2mplainBoot # [    3.050102] systemd[1]: Finished Mountpoints Configured in the Real Root.[0m
+[2mgatedBoot # [    3.047440] systemd[1]: Finished Mountpoints Configured in the Real Root.[0m
+[2mplainBoot # [    3.051691] systemd[1]: initrd-parse-etc.service: Triggering OnSuccess= dependencies.[0m
+[2mgatedBoot # [    3.049256] systemd[1]: initrd-parse-etc.service: Triggering OnSuccess= dependencies.[0m
+[2mgatedBoot # [    3.051165] systemd[1]: Starting rw-sysroot-nix-store.service...[0m
+[2mplainBoot # [    3.055225] systemd[1]: Starting rw-sysroot-nix-store.service...[0m
+[2mplainBoot # [    3.063909] systemd[1]: rw-sysroot-nix-store.service: Deactivated successfully.[0m
+[2mgatedBoot # [    3.061606] systemd[1]: rw-sysroot-nix-store.service: Deactivated successfully.[0m
+[2mplainBoot # [    3.065878] systemd[1]: Finished rw-sysroot-nix-store.service.[0m
+[2mgatedBoot # [    3.063549] systemd[1]: Finished rw-sysroot-nix-store.service.[0m
+[2mplainBoot # [    3.731265] systemd[1]: Mounting /sysroot/nix/store...[0m
+[2mgatedBoot # [    3.736857] systemd[1]: Mounting /sysroot/nix/store...[0m
+[2mplainBoot # [    3.757685] systemd[1]: Mounted /sysroot/nix/store.[0m
+[2mplainBoot # [    3.759069] systemd[1]: Reached target Initrd File Systems.[0m
+[2mplainBoot # [    3.761880] systemd[1]: Starting Find NixOS closure...[0m
+[2mplainBoot # [    3.764293] systemd[1]: Starting Create Volatile Files and Directories in the Real Root...[0m
+[2mgatedBoot # [    3.767855] systemd[1]: Mounted /sysroot/nix/store.[0m
+[2mgatedBoot # [    3.769608] systemd[1]: Reached target Initrd File Systems.[0m
+[2mgatedBoot # [    3.772678] systemd[1]: Starting Find NixOS closure...[0m
+[2mplainBoot # [    3.775237] systemd[1]: Finished Create Volatile Files and Directories in the Real Root.[0m
+[2mplainBoot # [    3.777154] systemd[1]: sysroot-run-credentials-systemd\x2dtmpfiles\x2dsetup\x2dsysroot.service.mount: Deactivated successfully.[0m
+[2mgatedBoot # [    3.775127] systemd[1]: Starting Create Volatile Files and Directories in the Real Root...[0m
+[2mplainBoot # [    3.786849] systemd[1]: Finished Find NixOS closure.[0m
+[2mplainBoot # [    3.788571] systemd[1]: Reached target Initrd Default Target.[0m
+[2mplainBoot # [    3.790303] systemd[1]: Starting Cleaning Up and Shutting Down Daemons...[0m
+[2mgatedBoot # [    3.787319] systemd[1]: Finished Create Volatile Files and Directories in the Real Root.[0m
+[2mgatedBoot # [    3.789440] systemd[1]: sysroot-run-credentials-systemd\x2dtmpfiles\x2dsetup\x2dsysroot.service.mount: Deactivated successfully.[0m
+[2mgatedBoot # [    3.798173] systemd[1]: Finished Find NixOS closure.[0m
+[2mgatedBoot # [    3.799748] systemd[1]: Reached target Initrd Default Target.[0m
+[2mgatedBoot # [    3.802213] systemd[1]: Starting Cleaning Up and Shutting Down Daemons...[0m
+[2mplainBoot # [    3.808177] systemd[1]: Stopped target Initrd Default Target.[0m
+[2mplainBoot # [    3.809545] systemd[1]: Stopped target Basic System.[0m
+[2mplainBoot # [    3.810676] systemd[1]: Stopped target Initrd Preservation Mounts.[0m
+[2mplainBoot # [    3.812236] systemd[1]: Stopped target Initrd Root Device.[0m
+[2mplainBoot # [    3.813529] systemd[1]: Stopped target Path Units.[0m
+[2mplainBoot # [    3.814730] systemd[1]: systemd-ask-password-console.path: Deactivated successfully.[0m
+[2mplainBoot # [    3.816471] systemd[1]: Stopped Dispatch Password Requests to Console Directory Watch.[0m
+[2mplainBoot # [    3.818192] systemd[1]: Stopped target Slice Units.[0m
+[2mplainBoot # [    3.819513] systemd[1]: Stopped target Socket Units.[0m
+[2mplainBoot # [    3.820758] systemd[1]: Stopped target System Initialization.[0m
+[2mplainBoot # [    3.822219] systemd[1]: Stopped target Swaps.[0m
+[2mgatedBoot # [    3.820048] systemd[1]: Stopped target Initrd Default Target.[0m
+[2mplainBoot # [    3.823687] systemd[1]: Stopped target Timer Units.[0m
+[2mgatedBoot # [    3.821486] systemd[1]: Stopped target Basic System.[0m
+[2mplainBoot # [    3.825088] systemd[1]: dbus.socket: Deactivated successfully.[0m
+[2mgatedBoot # [    3.822782] systemd[1]: Stopped target Initrd Preservation Mounts.[0m
+[2mplainBoot # [    3.827067] systemd[1]: Closed D-Bus System Message Bus Socket.[0m
+[2mgatedBoot # [    3.824323] systemd[1]: Stopped target Initrd Root Device.[0m
+[2mgatedBoot # [    3.825775] systemd[1]: Stopped target Path Units.[0m
+[2mplainBoot # [    3.828566] systemd[1]: initrd-find-nixos-closure.service: Deactivated successfully.[0m
+[2mgatedBoot # [    3.827003] systemd[1]: systemd-ask-password-console.path: Deactivated successfully.[0m
+[2mplainBoot # [    3.830627] systemd[1]: Stopped Find NixOS closure.[0m
+[2mgatedBoot # [    3.828963] systemd[1]: Stopped Dispatch Password Requests to Console Directory Watch.[0m
+[2mplainBoot # [    3.832430] systemd[1]: Starting rw-sysroot-nix-store.service...[0m
+[2mgatedBoot # [    3.830896] systemd[1]: Stopped target Slice Units.[0m
+[2mgatedBoot # [    3.832190] systemd[1]: Stopped target Socket Units.[0m
+[2mplainBoot # [    3.833874] systemd[1]: systemd-sysctl.service: Deactivated successfully.[0m
+[2mplainBoot # [    3.836417] systemd[1]: Stopped Apply Kernel Variables.[0m
+[2mgatedBoot # [    3.833436] systemd[1]: Stopped target System Initialization.[0m
+[2mplainBoot # [    3.838193] systemd[1]: systemd-modules-load.service: Deactivated successfully.[0m
+[2mgatedBoot # [    3.836527] systemd[1]: Stopped target Swaps.[0m
+[2mplainBoot # [    3.839989] systemd[1]: Stopped Load Kernel Modules.[0m
+[2mgatedBoot # [    3.838286] systemd[1]: Stopped target Timer Units.[0m
+[2mplainBoot # [    3.841529] systemd[1]: systemd-tmpfiles-setup-sysroot.service: Deactivated successfully.[0m
+[2mplainBoot # [    3.843369] systemd[1]: Stopped Create Volatile Files and Directories in the Real Root.[0m
+[2mgatedBoot # [    3.840683] systemd[1]: dbus.socket: Deactivated successfully.[0m
+[2mgatedBoot # [    3.842605] systemd[1]: Closed D-Bus System Message Bus Socket.[0m
+[2mplainBoot # [    3.845342] systemd[1]: systemd-tmpfiles-setup.service: Deactivated successfully.[0m
+[2mplainBoot # [    3.847271] systemd[1]: Stopped Create System Files and Directories.[0m
+[2mplainBoot # [    3.848780] systemd[1]: Stopped target Local File Systems.[0m
+[2mgatedBoot # [    3.844961] systemd[1]: initrd-find-nixos-closure.service: Deactivated successfully.[0m
+[2mplainBoot # [    3.850133] systemd[1]: Stopped target Preparation for Local File Systems.[0m
+[2mgatedBoot # [    3.847486] systemd[1]: Stopped Find NixOS closure.[0m
+[2mplainBoot # [    3.851763] systemd[1]: systemd-udev-trigger.service: Deactivated successfully.[0m
+[2mgatedBoot # [    3.849843] systemd[1]: Starting rw-sysroot-nix-store.service...[0m
+[2mplainBoot # [    3.853340] systemd[1]: Stopped Coldplug All udev Devices.[0m
+[2mplainBoot # [    3.854585] systemd[1]: Stopping Rule-based Manager for Device Events and Files...[0m
+[2mgatedBoot # [    3.852124] systemd[1]: systemd-sysctl.service: Deactivated successfully.[0m
+[2mgatedBoot # [    3.853819] systemd[1]: Stopped Apply Kernel Variables.[0m
+[2mplainBoot # [    3.857971] systemd[1]: systemd-vconsole-setup.service: Deactivated successfully.[0m
+[2mgatedBoot # [    3.855182] systemd[1]: systemd-modules-load.service: Deactivated successfully.[0m
+[2mgatedBoot # [    3.856939] systemd[1]: Stopped Load Kernel Modules.[0m
+[2mplainBoot # [    3.859818] systemd[1]: Stopped Virtual Console Setup.[0m
+[2mgatedBoot # [    3.858549] systemd[1]: systemd-tmpfiles-setup-sysroot.service: Deactivated successfully.[0m
+[2mplainBoot # [    3.861877] systemd[1]: initrd-cleanup.service: Deactivated successfully.[0m
+[2mplainBoot # [    3.863970] systemd[1]: Finished Cleaning Up and Shutting Down Daemons.[0m
+[2mgatedBoot # [    3.861089] systemd[1]: Stopped Create Volatile Files and Directories in the Real Root.[0m
+[2mplainBoot # [    3.865851] systemd[1]: rw-sysroot-nix-store.service: Deactivated successfully.[0m
+[2mgatedBoot # [    3.863522] systemd[1]: systemd-tmpfiles-setup.service: Deactivated successfully.[0m
+[2mplainBoot # [    3.867965] systemd[1]: Finished rw-sysroot-nix-store.service.[0m
+[2mplainBoot # [    3.869569] systemd[1]: systemd-udevd.service: Deactivated successfully.[0m
+[2mgatedBoot # [    3.866909] systemd[1]: Stopped Create System Files and Directories.[0m
+[2mgatedBoot # [    3.868608] systemd[1]: Stopped target Local File Systems.[0m
+[2mplainBoot # [    3.871435] systemd[1]: Stopped Rule-based Manager for Device Events and Files.[0m
+[2mgatedBoot # [    3.870162] systemd[1]: Stopped target Preparation for Local File Systems.[0m
+[2mplainBoot # [    3.873164] systemd[1]: systemd-udevd-control.socket: Deactivated successfully.[0m
+[2mplainBoot # [    3.874947] systemd[1]: Closed udev Control Socket.[0m
+[2mgatedBoot # [    3.871964] systemd[1]: systemd-udev-trigger.service: Deactivated successfully.[0m
+[2mplainBoot # [    3.876254] systemd[1]: Starting Cleanup udev Database...[0m
+[2mgatedBoot # [    3.873733] systemd[1]: Stopped Coldplug All udev Devices.[0m
+[2mplainBoot # [    3.877682] systemd[1]: systemd-tmpfiles-setup-dev.service: Deactivated successfully.[0m
+[2mgatedBoot # [    3.875248] systemd[1]: Stopping Rule-based Manager for Device Events and Files...[0m
+[2mplainBoot # [    3.879423] systemd[1]: Stopped Create Static Device Nodes in /dev.[0m
+[2mgatedBoot # [    3.876927] systemd[1]: systemd-vconsole-setup.service: Deactivated successfully.[0m
+[2mgatedBoot # [    3.878662] systemd[1]: Stopped Virtual Console Setup.[0m
+[2mplainBoot # [    3.881088] systemd[1]: systemd-tmpfiles-setup-dev-early.service: Deactivated successfully.[0m
+[2mgatedBoot # [    3.879944] systemd[1]: initrd-cleanup.service: Deactivated successfully.[0m
+[2mplainBoot # [    3.882837] systemd[1]: Stopped Create Static Device Nodes in /dev gracefully.[0m
+[2mgatedBoot # [    3.881632] systemd[1]: Finished Cleaning Up and Shutting Down Daemons.[0m
+[2mplainBoot # [    3.884560] systemd[1]: kmod-static-nodes.service: Deactivated successfully.[0m
+[2mplainBoot # [    3.886108] systemd[1]: Stopped Create List of Static Device Nodes.[0m
+[2mgatedBoot # [    3.883255] systemd[1]: rw-sysroot-nix-store.service: Deactivated successfully.[0m
+[2mgatedBoot # [    3.884927] systemd[1]: Finished rw-sysroot-nix-store.service.[0m
+[2mplainBoot # [    3.887608] systemd[1]: initrd-udevadm-cleanup-db.service: Deactivated successfully.[0m
+[2mplainBoot # [    3.889211] systemd[1]: Finished Cleanup udev Database.[0m
+[2mgatedBoot # [    3.886170] systemd[1]: systemd-udevd.service: Deactivated successfully.[0m
+[2mplainBoot # [    3.890419] systemd[1]: Reached target Switch Root.[0m
+[2mgatedBoot # [    3.887540] systemd[1]: Stopped Rule-based Manager for Device Events and Files.[0m
+[2mplainBoot # [    3.891570] systemd[1]: Starting NixOS Activation...[0m
+[2mgatedBoot # [    3.889161] systemd[1]: systemd-udevd-control.socket: Deactivated successfully.[0m
+[2mgatedBoot # [    3.890981] systemd[1]: Closed udev Control Socket.[0m
+[2mgatedBoot # [    3.892580] systemd[1]: Starting Cleanup udev Database...[0m
+[2mgatedBoot # [    3.893910] systemd[1]: systemd-tmpfiles-setup-dev.service: Deactivated successfully.[0m
+[2mgatedBoot # [    3.895746] systemd[1]: Stopped Create Static Device Nodes in /dev.[0m
+[2mgatedBoot # [    3.897415] systemd[1]: systemd-tmpfiles-setup-dev-early.service: Deactivated successfully.[0m
+[2mgatedBoot # [    3.899488] systemd[1]: Stopped Create Static Device Nodes in /dev gracefully.[0m
+[2mgatedBoot # [    3.901296] systemd[1]: kmod-static-nodes.service: Deactivated successfully.[0m
+[2mgatedBoot # [    3.902982] systemd[1]: Stopped Create List of Static Device Nodes.[0m
+[2mgatedBoot # [    3.904572] systemd[1]: initrd-udevadm-cleanup-db.service: Deactivated successfully.[0m
+[2mgatedBoot # [    3.906274] systemd[1]: Finished Cleanup udev Database.[0m
+[2mgatedBoot # [    3.907764] systemd[1]: Reached target Switch Root.[0m
+[2mgatedBoot # [    3.909098] systemd[1]: Starting NixOS Activation...[0m
+[2mplainBoot # [    3.957817] initrd-nixos-activation-start[211]: booting system configuration /nix/store/xp2ssinzx2i2avyizy79pws07hsn7lwa-nixos-system-antagony-test[0m
+[2mgatedBoot # [    3.960212] initrd-nixos-activation-start[208]: booting system configuration /nix/store/prkcsljjj9g2vj7k19dj96k2dj0m4264-nixos-system-antagony-test[0m
+[2mplainBoot # [    3.989378] initrd-nixos-activation-start[211]: running activation script...[0m
+[2mgatedBoot # [    3.991987] initrd-nixos-activation-start[208]: running activation script...[0m
+[2mplainBoot # [    4.006808] initrd-nixos-activation-start[234]: bootstrap password hash validation failed: missing /var/lib/nixos-bootstrap/mei-password.hash[0m
+[2mgatedBoot # [    4.009790] initrd-nixos-activation-start[231]: bootstrap password hash validation failed: missing /var/lib/nixos-bootstrap/mei-password.hash[0m
+[2mplainBoot # [    4.017362] systemd[1]: initrd-nixos-activation.service: Deactivated successfully.[0m
+[2mplainBoot # [    4.019396] systemd[1]: Finished NixOS Activation.[0m
+[2mplainBoot # [    4.021868] systemd[1]: Starting Switch Root...[0m
+[2mgatedBoot # [    4.022704] systemd[1]: initrd-nixos-activation.service: Deactivated successfully.[0m
+[2mgatedBoot # [    4.024577] systemd[1]: Finished NixOS Activation.[0m
+[2mgatedBoot # [    4.025830] systemd[1]: Starting Switch Root...[0m
+[2mplainBoot # [    4.039332] @ystemctl[242]: [0;1;31mFailed to switch root: Specified switch root path '/sysroot' does not seem to be an OS tree. os-release file is missing.[0m[0m
+[2mplainBoot # [    4.042752] systemd[1]: [0;1;39minitrd-switch-root.service: Main process exited, code=exited, status=1/FAILURE[0m[0m
+[2mgatedBoot # [    4.039736] @ystemctl[239]: [0;1;31mFailed to switch root: Specified switch root path '/sysroot' does not seem to be an OS tree. os-release file is missing.[0m[0m
+[2mplainBoot # [    4.045235] systemd[1]: [0;1;33m[0;1;38:5:185minitrd-switch-root.service: Failed with result 'exit-code'.[0m[0m
+[2mgatedBoot # [    4.042948] systemd[1]: [0;1;39minitrd-switch-root.service: Main process exited, code=exited, status=1/FAILURE[0m[0m
+[2mplainBoot # [    4.047372] systemd[1]: [0;1;31mFailed to start Switch Root.[0m[0m
+[2mgatedBoot # [    4.045227] systemd[1]: [0;1;33m[0;1;38:5:185minitrd-switch-root.service: Failed with result 'exit-code'.[0m[0m
+[2mplainBoot # [    4.048810] systemd[1]: Startup finished in 1.044s (kernel) + 0 (initrd) + 3.002s (userspace) = 4.047s.[0m
+[2mgatedBoot # [    4.047309] systemd[1]: [0;1;31mFailed to start Switch Root.[0m[0m
+[2mplainBoot # [    4.051394] systemd[1]: initrd-switch-root.service: Triggering OnFailure= dependencies.[0m
+[2mgatedBoot # [    4.048577] systemd[1]: Startup finished in 1.043s (kernel) + 0 (initrd) + 3.001s (userspace) = 4.044s.[0m
+[2mplainBoot # [    4.053453] systemd[1]: Started Emergency Shell.[0m
+[2mgatedBoot # [    4.051147] systemd[1]: initrd-switch-root.service: Triggering OnFailure= dependencies.[0m
+[2mplainBoot # [    4.054791] systemd[1]: Reached target Emergency Mode.[0m
+[2mplainBoot # [    4.056342] systemd[1]: Starting panic-on-fail.service...[0m
+[2mgatedBoot # [    4.054804] systemd[1]: Started Emergency Shell.[0m
+[2mgatedBoot # [    4.056081] systemd[1]: Reached target Emergency Mode.[0m
+[2mgatedBoot # [    4.057697] systemd[1]: Starting panic-on-fail.service...[0m
+[2mplainBoot # [    4.328882] sysrq: Trigger a crash[0m
+[2mplainBoot # [    4.329691] Kernel panic - not syncing: sysrq triggered crash[0m
+[2mplainBoot # [    4.335847] CPU: 1 UID: 0 PID: 245 Comm: /nix/store/xjl7 Not tainted 7.2.7 #1-NixOS PREEMPT(lazy)[0m
+[2mplainBoot # [    4.337600] Hardware name: QEMU Standard PC (Q35 + ICH9, 2009), BIOS rel-1.17.0-0-gb52ca86e094d-prebuilt.qemu.org 04/01/2014[0m
+[2mplainBoot # [    4.339808] Call Trace:[0m
+[2mplainBoot # [    4.340479]  <TASK>[0m
+[2mplainBoot # [    4.341114]  dump_stack_lvl+0x5d/0x80[0m
+[2mplainBoot # [    4.342016]  vpanic+0x20f/0x410[0m
+[2mgatedBoot # [    4.337291] sysrq: Trigger a crash[0m
+[2mplainBoot # [    4.342797]  panic+0x6b/0x70[0m
+[2mgatedBoot # [    4.338268] Kernel panic - not syncing: sysrq triggered crash[0m
+[2mplainBoot # [    4.343696]  sysrq_handle_crash+0x1a/0x20[0m
+[2mplainBoot # [    4.344765]  __handle_sysrq.cold+0x9b/0xde[0m
+[2mplainBoot # [    4.345759]  write_sysrq_trigger+0x59/0x90[0m
+[2mplainBoot # [    4.346705]  proc_reg_write+0x5a/0xb0[0m
+[2mplainBoot # [    4.347562]  vfs_write+0xce/0x470[0m
+[2mplainBoot # [    4.348298]  ? _copy_to_user+0x31/0x40[0m
+[2mplainBoot # [    4.349234]  ? cp_new_stat+0x130/0x170[0m
+[2mplainBoot # [    4.350123]  ksys_write+0x73/0xf0[0m
+[2mplainBoot # [    4.350966]  do_syscall_64+0x134/0x6b0[0m
+[2mgatedBoot # [    4.339756] CPU: 1 UID: 0 PID: 242 Comm: /nix/store/xjl7 Not tainted 7.2.7 #1-NixOS PREEMPT(lazy)[0m
+[2mplainBoot # [    4.351909]  ? __do_sys_newfstat+0x44/0x70[0m
+[2mplainBoot # [    4.352836]  ? do_syscall_64+0x173/0x6b0[0m
+[2mgatedBoot # [    4.347341] Hardware name: QEMU Standard PC (Q35 + ICH9, 2009), BIOS rel-1.17.0-0-gb52ca86e094d-prebuilt.qemu.org 04/01/2014[0m
+[2mplainBoot # [    4.353797]  ? count_memcg_events+0xc5/0x180[0m
+[2mgatedBoot # [    4.349790] Call Trace:[0m
+[2mplainBoot # [    4.354858]  ? handle_mm_fault+0x1e8/0x2f0[0m
+[2mgatedBoot # [    4.350467]  <TASK>[0m
+[2mplainBoot # [    4.355831]  ? do_user_addr_fault+0x21a/0x690[0m
+[2mgatedBoot # [    4.351067]  dump_stack_lvl+0x5d/0x80[0m
+[2mgatedBoot # [    4.351919]  vpanic+0x20f/0x410[0m
+[2mplainBoot # [    4.356811]  ? irqentry_exit+0x44/0x760[0m
+[2mgatedBoot # [    4.352761]  panic+0x6b/0x70[0m
+[2mplainBoot # [    4.357743]  ? do_syscall_64+0xeb/0x6b0[0m
+[2mgatedBoot # [    4.353471]  sysrq_handle_crash+0x1a/0x20[0m
+[2mplainBoot # [    4.358620]  ? clear_bhb_loop+0x60/0xb0[0m
+[2mgatedBoot # [    4.354449]  __handle_sysrq.cold+0x9b/0xde[0m
+[2mplainBoot # [    4.359588]  entry_SYSCALL_64_after_hwframe+0x77/0x7f[0m
+[2mgatedBoot # [    4.355470]  write_sysrq_trigger+0x59/0x90[0m
+[2mplainBoot # [    4.360698] RIP: 0033:0x7f0a99cca15e[0m
+[2mgatedBoot # [    4.356407]  proc_reg_write+0x5a/0xb0[0m
+[2mgatedBoot # [    4.357316]  vfs_write+0xce/0x470[0m
+[2mgatedBoot # [    4.358159]  ? set_pte_range+0xc7/0x220[0m
+[2mgatedBoot # [    4.359071]  ? next_uptodate_folio+0x89/0x250[0m
+[2mplainBoot # [    4.361572] Code: 03 00 00 59 5e 48 83 f8 fc 74 39 c9 31 d2 31 c9 31 f6 31 ff 45 31 c0 45 31 c9 45 31 d2 45 31 db c3 0f 1f 00 48 8b 45 10 0f 05 <c9> 31 d2 31 c9 31 f6 31 ff 45 31 c0 45 31 c9 45 31 d2 45 31 db c3[0m
+[2mgatedBoot # [    4.360100]  ? set_ptes.isra.0+0x36/0x80[0m
+[2mgatedBoot # [    4.361036]  ksys_write+0x73/0xf0[0m
+[2mplainBoot # [    4.365193] RSP: 002b:00007fffc40d2b00 EFLAGS: 00000202 ORIG_RAX: 0000000000000001[0m
+[2mgatedBoot # [    4.361883]  do_syscall_64+0x134/0x6b0[0m
+[2mplainBoot # [    4.366869] RAX: ffffffffffffffda RBX: 0000000000000002 RCX: 00007f0a99cca15e[0m
+[2mgatedBoot # [    4.362782]  ? do_fault+0x371/0x560[0m
+[2mgatedBoot # [    4.363640]  ? __handle_mm_fault+0x95b/0xf60[0m
+[2mplainBoot # [    4.368353] RDX: 0000000000000002 RSI: 000055fa6cd628d0 RDI: 0000000000000001[0m
+[2mgatedBoot # [    4.364605]  ? do_syscall_64+0x173/0x6b0[0m
+[2mplainBoot # [    4.369812] RBP: 00007fffc40d2b10 R08: 0000000000000000 R09: 0000000000000000[0m
+[2mgatedBoot # [    4.365570]  ? count_memcg_events+0xc5/0x180[0m
+[2mgatedBoot # [    4.366547]  ? handle_mm_fault+0x1e8/0x2f0[0m
+[2mplainBoot # [    4.371220] R10: 0000000000000000 R11: 0000000000000202 R12: 00007f0a99e2c5c0[0m
+[2mgatedBoot # [    4.367548]  ? do_user_addr_fault+0x21a/0x690[0m
+[2mplainBoot # [    4.372717] R13: 000055fa6cd628d0 R14: 0000000000000002 R15: 00007f0a99e2cfe0[0m
+[2mgatedBoot # [    4.368523]  ? irqentry_exit+0x44/0x760[0m
+[2mplainBoot # [    4.374129]  </TASK>[0m
+[2mgatedBoot # [    4.369425]  ? do_syscall_64+0xeb/0x6b0[0m
+[2mgatedBoot # [    4.370368]  ? clear_bhb_loop+0x60/0xb0[0m
+[2mplainBoot # [    4.374851] Kernel Offset: 0x1c800000 from 0xffffffff81000000 (relocation range: 0xffffffff80000000-0xffffffffbfffffff)[0m
+[2mgatedBoot # [    4.371345]  entry_SYSCALL_64_after_hwframe+0x77/0x7f[0m
+[2mplainBoot # [    4.377022] Rebooting in 1 seconds..[0m
+[2mgatedBoot # [    4.372556] RIP: 0033:0x7ff8dbe9815e[0m
+[2mgatedBoot # [    4.373459] Code: 03 00 00 59 5e 48 83 f8 fc 74 39 c9 31 d2 31 c9 31 f6 31 ff 45 31 c0 45 31 c9 45 31 d2 45 31 db c3 0f 1f 00 48 8b 45 10 0f 05 <c9> 31 d2 31 c9 31 f6 31 ff 45 31 c0 45 31 c9 45 31 d2 45 31 db c3[0m
+[2mgatedBoot # [    4.376930] RSP: 002b:00007ffc070535e0 EFLAGS: 00000202 ORIG_RAX: 0000000000000001[0m
+[2mgatedBoot # [    4.378571] RAX: ffffffffffffffda RBX: 0000000000000002 RCX: 00007ff8dbe9815e[0m
+[2mgatedBoot # [    4.380044] RDX: 0000000000000002 RSI: 000055a4c2d068d0 RDI: 0000000000000001[0m
+[2mgatedBoot # [    4.381519] RBP: 00007ffc070535f0 R08: 0000000000000000 R09: 0000000000000000[0m
+[2mgatedBoot # [    4.383008] R10: 0000000000000000 R11: 0000000000000202 R12: 00007ff8dbffa5c0[0m
+[2mgatedBoot # [    4.384344] R13: 000055a4c2d068d0 R14: 0000000000000002 R15: 00007ff8dbffafe0[0m
+[2mgatedBoot # [    4.385675]  </TASK>[0m
+[2mgatedBoot # [    4.386311] Kernel Offset: 0x25600000 from 0xffffffff81000000 (relocation range: 0xffffffff80000000-0xffffffffbfffffff)[0m
+[2mgatedBoot # [    4.388340] Rebooting in 1 seconds..[0m
+[2mplainBoot # [2026-10-06T23:02:10Z INFO  virtiofsd] Client disconnected, shutting down[0m
+[2mplainBoot # [2026-10-06T23:02:10Z INFO  virtiofsd] Client disconnected, shutting down[0m
+[2mplainBoot # [2026-10-06T23:02:10Z INFO  virtiofsd] Client disconnected, shutting down[0m
+[1m[32mcleanup[0m
+[2mgatedBoot # [2026-10-06T23:02:10Z INFO  virtiofsd] Client disconnected, shutting down[0m
+[2mgatedBoot # [2026-10-06T23:02:10Z INFO  virtiofsd] Client disconnected, shutting down[0m
+kill QemuMachine (pid 47)
+[2mgatedBoot # [2026-10-06T23:02:10Z INFO  virtiofsd] Client disconnected, shutting down[0m
+kill QemuMachine (pid 48)
+(finished: cleanup, in 0.06 seconds)
+Traceback (most recent call last):
+  File [35m"/nix/store/sriy4r0q27j8r84xmfnwwzc7q3jqgm4m-nixos-test-driver-1.1/bin/.nixos-test-driver-wrapped"[0m, line [35m9[0m, in [35m<module>[0m
+    sys.exit([31mmain[0m[1;31m()[0m)
+             [31m~~~~[0m[1;31m^^[0m
+  File [35m"/nix/store/sriy4r0q27j8r84xmfnwwzc7q3jqgm4m-nixos-test-driver-1.1/lib/python3.14/site-packages/test_driver/__init__.py"[0m, line [35m194[0m, in [35mmain[0m
+    [31mdriver.run_tests[0m[1;31m()[0m
+    [31m~~~~~~~~~~~~~~~~[0m[1;31m^^[0m
+  File [35m"/nix/store/sriy4r0q27j8r84xmfnwwzc7q3jqgm4m-nixos-test-driver-1.1/lib/python3.14/site-packages/test_driver/driver.py"[0m, line [35m437[0m, in [35mrun_tests[0m
+    [31mself.test_script[0m[1;31m()[0m
+    [31m~~~~~~~~~~~~~~~~[0m[1;31m^^[0m
+  File [35m"/nix/store/sriy4r0q27j8r84xmfnwwzc7q3jqgm4m-nixos-test-driver-1.1/lib/python3.14/site-packages/test_driver/driver.py"[0m, line [35m395[0m, in [35mtest_script[0m
+    [31mexec[0m[1;31m(self.tests, symbols, None)[0m
+    [31m~~~~[0m[1;31m^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  File [35m"<string>"[0m, line [35m12[0m, in [35m<module>[0m
+  File [35m"/nix/store/sriy4r0q27j8r84xmfnwwzc7q3jqgm4m-nixos-test-driver-1.1/lib/python3.14/site-packages/test_driver/machine/__init__.py"[0m, line [35m405[0m, in [35mwait_for_unit[0m
+    [31mretry[0m[1;31m(check_active, as_timedelta(timeout))[0m
+    [31m~~~~~[0m[1;31m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  File [35m"/nix/store/sriy4r0q27j8r84xmfnwwzc7q3jqgm4m-nixos-test-driver-1.1/lib/python3.14/site-packages/test_driver/machine/__init__.py"[0m, line [35m141[0m, in [35mretry[0m
+    if [31mfn[0m[1;31m(False)[0m:
+       [31m~~[0m[1;31m^^^^^^^[0m
+  File [35m"/nix/store/sriy4r0q27j8r84xmfnwwzc7q3jqgm4m-nixos-test-driver-1.1/lib/python3.14/site-packages/test_driver/machine/__init__.py"[0m, line [35m386[0m, in [35mcheck_active[0m
+    state = self.get_unit_property(unit, "ActiveState", user)
+  File [35m"/nix/store/sriy4r0q27j8r84xmfnwwzc7q3jqgm4m-nixos-test-driver-1.1/lib/python3.14/site-packages/test_driver/machine/__init__.py"[0m, line [35m441[0m, in [35mget_unit_property[0m
+    status, lines = [31mself.systemctl[0m[1;31m([0m
+                    [31m~~~~~~~~~~~~~~[0m[1;31m^[0m
+        [1;31mf'--no-pager show "{unit}" --property="{property}"',[0m
+        [1;31m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+        [1;31muser,[0m
+        [1;31m^^^^^[0m
+    [1;31m)[0m
+    [1;31m^[0m
+  File [35m"/nix/store/sriy4r0q27j8r84xmfnwwzc7q3jqgm4m-nixos-test-driver-1.1/lib/python3.14/site-packages/test_driver/machine/__init__.py"[0m, line [35m370[0m, in [35msystemctl[0m
+    return [31mself.execute[0m[1;31m(f"systemctl {q}")[0m
+           [31m~~~~~~~~~~~~[0m[1;31m^^^^^^^^^^^^^^^^^^[0m
+  File [35m"/nix/store/sriy4r0q27j8r84xmfnwwzc7q3jqgm4m-nixos-test-driver-1.1/lib/python3.14/site-packages/test_driver/machine/__init__.py"[0m, line [35m722[0m, in [35mexecute[0m
+    return [31mself._execute[0m[1;31m([0m
+           [31m~~~~~~~~~~~~~[0m[1;31m^[0m
+        [1;31mcommand=command,[0m
+        [1;31m^^^^^^^^^^^^^^^^[0m
+    ...<2 lines>...
+        [1;31mtimeout=as_timedelta(timeout) if timeout is not None else None,[0m
+        [1;31m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+    [1;31m)[0m
+    [1;31m^[0m
+  File [35m"/nix/store/sriy4r0q27j8r84xmfnwwzc7q3jqgm4m-nixos-test-driver-1.1/lib/python3.14/site-packages/test_driver/machine/__init__.py"[0m, line [35m983[0m, in [35m_execute[0m
+    [31mself.connect[0m[1;31m()[0m
+    [31m~~~~~~~~~~~~[0m[1;31m^^[0m
+  File [35m"/nix/store/sriy4r0q27j8r84xmfnwwzc7q3jqgm4m-nixos-test-driver-1.1/lib/python3.14/site-packages/test_driver/machine/__init__.py"[0m, line [35m1177[0m, in [35mconnect[0m
+    raise RuntimeError("Shell disconnected")
+[1;35mRuntimeError[0m: [35mShell disconnected[0m

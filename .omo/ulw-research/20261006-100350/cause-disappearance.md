@@ -1,0 +1,7 @@
+# Cause disappearance (one row per causal finding)
+
+| cause id | expected truth | previous observation | last_seen | disconfirming observation | replacement cause | current status | violation still observed |
+|---|---|---|---|---|---|---|---|
+| C-1 | A fresh install yields a loggable `mei` account | `hashedPasswordFile` staged in the historical design; the installer wrote it | f7015a56 (2026-07-13), removed in d4f2559 (2026-08-19) | grep over bin/, apps/, scripts/ finds zero references to `mei-password.hash`/`mkpasswd`; the validator's fresh-state branch fails | The consolidation merge dropped the caller; the later rewrite never restored it | root cause confirmed with file:line + the recovered script | YES until the restore lands |
+| C-2 | The ISO's `hardware-enroll` oneshot produces enrollment artifacts | the oneshot runs `nix-config-hardware-auto-enroll` with a base declaration | current HEAD | `iso-images.nix` writes `/etc/hardware-enrollment/<host>.json` but no code creates the directory; `|| true` hides the failure | Missing `mkdir -p` in the oneshot script | confirmed by repo-wide grep; not boot-tested | YES |
+| C-3 | The flake ISO can mount the old btrfs root | upstream ISOs support btrfs | current HEAD eval | `iso.antagony` declares no btrfs/vfat supportedFilesystems; btrfs-progs absent | Pending host has no storage profile, so nothing declares btrfs | fix identified (`supportedFilesystems` + `kernelModules`); not boot-tested | YES until the ISO change lands |

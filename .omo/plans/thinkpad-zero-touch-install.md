@@ -1,0 +1,316 @@
+# thinkpad-zero-touch-install - Work Plan
+
+## TL;DR (For humans)
+
+**Who this is for and what changes for them:** whoever installs NixOS on the ThinkPad. Today the install ends with an account that has no usable password and the machine's only secret key dies with the wiped disk. After this work, one install run leaves a machine you can log into, with the hardware record and the secret key already saved inside it - no second USB stick needed.
+
+**What you'll get:** a restored password step in the installer, the machine's key material copied into the new system during install, an optional "install by itself" mode for the installer stick that does nothing unless you deliberately switch it on at boot, and the tests and docs that prove it.
+
+**Why this approach:** the password machinery already existed in this repo and was lost in a merge, so the work restores it rather than inventing something new; and reading the old disk needs the installer to carry the right disk tools, which it currently lacks.
+
+**What it will NOT do:** it will not turn on automatic installing by default (a plain boot of the stick stays inert), it will not write the password anywhere on disk in readable form, and it will not add a second installer project.
+
+**Effort:** Medium
+**Risk:** Medium - the identity copy happens before an irreversible disk wipe, and the ISO additions are verified by design, the eval wall, and the gate-inertness VM (todo 14), not by a real wipe in CI.
+**Decisions to sanity-check:** the age key is staged both as a root-only copy and at the user's own config path; `--save` loses its "required" status but stays available; the old-disk rescue is a separate explicit flag (required when automatic installing is on).
+
+Your next move: review the plan below; execution starts separately with `/ulw-execute` in this session or a new one.
+
+---
+
+> TL;DR (machine): Medium/Medium - restore password staging + install-time artifact/identity staging (no second USB) + btrfs-capable ISO + opt-in gated autostart; 15 todos + F1-F4; tests via repo script/eval/VM checks.
+
+## Scope
+### Affected user and ideal state
+
+**Affected user:** the operator installing the ThinkPad (and any future host), the installed machine's first boot (activation, github-key activation, sops identity), the repo's maintainers and CI. Today the operator finishes an install into a machine whose user account cannot be logged into and whose key material was destroyed with the disk; after this work the same one-pass install leaves a loggable machine that carries its own records and keys.
+
+| Row | Statement | Reason |
+| --- | --- | --- |
+| IS-1 | `mei` has a working per-install password, shown once during the install, on BOTH entry points (the app and the operator orchestrator) | without it the fresh machine cannot be logged into at all |
+| IS-2 | Enrollment artifacts and the age identity persist inside the installed system | no second USB, nothing dependent on RAM surviving a reboot |
+| IS-3 | The only held age identity survives the disk wipe by construction | losing it locks `secrets/github-ssh.yaml` forever |
+| IS-4 | A plain boot of the installer ISO touches nothing; installing happens only behind an explicit per-boot opt-in | an accidental boot must never erase a machine |
+| IS-5 | The existing trust gates (`--yes`, live-root check, reviewed enrollment) stay intact; the app path additionally gains a host/disk match | automation must not weaken the safety boundary |
+| IS-6 | Tests and docs cover the new behavior (ISO autostart included) | today ISO autostart has zero coverage |
+| IS-7 | One install medium and one entry point remain | no second install path to maintain |
+| GAP-1 | Nothing writes `/var/lib/nixos-bootstrap/mei-password.hash`; the activation validator fails on a fresh install | closes with todos 3, 4, 6 |
+| GAP-2 | Artifacts leave RAM only via `--save` to external media | closes with todos 7, 9 |
+| GAP-3 | The age identity exists only on the disk being wiped | closes with todos 8, 9 |
+| GAP-4 | No opt-in install path exists | closes with todos 9, 10 |
+| GAP-5 | `iso.antagony` lacks btrfs/vfat support, `btrfs-progs`, and a boot-loaded btrfs module | closes with todo 2 |
+| GAP-6 | The ISO writes its enrollment base record into a directory it never creates | closes with todo 1 |
+| GAP-7 | ISO autostart and the staging path have no test coverage | closes with todos 10, 11, 12 |
+
+### Must have
+
+- A fresh install (app path and operator path) leaves `mei` with a working password that satisfies the existing validator contract exactly (yescrypt, one LF line, 0700 dir, 0600 root file).
+- The staged tree carries: the password hash, the enrollment artifacts (candidate, intake document, host key), a root-only age-key copy, and a user-owned age key at `home/<user>/.config/sops/age/keys.txt` so the first boot's activation can use it.
+- The flake ISO supports reading a btrfs disk (filesystem support + module loaded at boot) and its enrollment base record actually lands.
+- An opt-in autostart unit exists, gated per boot, inert by default, failing to a rescue shell, with a host/disk match before any wipe.
+- Tests: staging invariants, the ISO configuration wall (including the negative "flag not in kernel params" assertion), and the restored password mutation test; docs updated.
+
+### Must NOT have (guardrails, anti-slop, scope boundaries)
+
+- Never place `nixos.autoinstall=1` in `boot.kernelParams`, a systemd unit default, or any other automatic path - the gate is typed at the boot menu per boot.
+- No `|| true` (or equivalent failure masking) in the new autostart unit; failures must land in the rescue target.
+- No plaintext password written to disk, the nix store, or any tracked file; printed once to console/journal only.
+- No `--chown` outside the staged `home/<user>/.config` subtree: never on `home/<user>`, `/`, or the `/var/lib` trees (root extraction already yields 0:0 there).
+- No new installer project, no grub.cfg patching, no second install entry point.
+- No changes to the four-enrollment trust semantics, `--yes` re-checks, or the live-root guard.
+- No editing of `tests/bootstrap-password-lifecycle.sh` into `nix flake check` (bind mounts are sandbox-hostile and the suite is documented destructive-risk); it stays a deliberate manual gate.
+
+## Verification strategy
+> Zero human intervention - all verification is agent-executed.
+
+- Test decision: tests-after (the repo's convention: bash script checks + Nix eval walls wired into `modules/flake/checks.nix`), plus one VM check (todo 14) that boots the ISO config with and without the gate flag.
+- Framework: the repo's own `tests/*.sh` + `nix-instantiate --eval` walls + `pkgs.runCommand` checks; run `nix flake check --all-systems --no-build` (evaluates the new checks) and the manual suite for the deliberate gates.
+- Evidence: `<attemptDir>/task-<N>-thinkpad-zero-touch-install.<ext>` where attemptDir = `result.currentAttemptDir` from `agentToolkit.status()` (`.omo/evidence/ulw/<session>/<goalId>/a<attempt>`); outside ulw-loop use `.omo/evidence/`.
+
+## Execution strategy
+### Parallel execution waves
+
+- **Wave 1** (6 todos): 1 (ISO enrollment-record fix), 2 (ISO btrfs/vfat), 3 (staging helper), 4 (host-install transport + attempt marker), 5 (mkpasswd on the app PATH), 12 (restore the password mutation test).
+- **Wave 2** (5 todos; the dependency matrix makes 6→7, 6→8, and 8→9 sequential inside it): 6 (app password staging + forward), 7 (app artifacts + identity + `--save` downgrade), 8 (app `--rescue-identity` + host/disk match), 9 (ISO bake + gated unit + rescue target + `flake.isoConfig`), 15 (operator-path password staging).
+- **Wave 3** (4 todos): 10 (staging/apps checks wiring), 11 (ISO eval wall), 13 (docs), 14 (gate-inertness VM).
+- **Final wave**: F1-F4.
+
+### Dependency matrix
+| Todo | Depends on | Blocks | Can parallelize with |
+| --- | --- | --- | --- |
+| 1 | - | - | 2,3,4,5,12 |
+| 2 | - | 9 (ISO eval), 11 | 1,3,4,5,12 |
+| 3 | - | 6,7 | 1,2,4,5,12 |
+| 4 | - | 6,9 | 1,2,3,5,12 |
+| 5 | - | 6 | 1,2,3,4,12 |
+| 12 | - | - | 1,2,3,4,5 |
+| 6 | 3,4,5 | 7,8,9 | 15 |
+| 7 | 6 | 10 | 8,9,15 |
+| 8 | 6 | 9,10 | 7,9,15 |
+| 9 | 2,4,6,8 | 11 | 7,10,15 |
+| 10 | 7,8 | - | 11,13,14,15 |
+| 11 | 2,9 | - | 10,13,14,15 |
+| 13 | 6,7,8,9,15 | - | 10,11,14 |
+| 14 | 9 | - | 10,11,13,15 |
+| 15 | 3,4 | 13 | 6,7,8,9 |
+
+## Todos
+> Execution order is defined by the execution waves and the dependency matrix, not by row numbering. Rows 13-15 were appended during plan revision (round 2 added the operator-path staging, round 1 added the VM test), so the numbers below are unique but not sorted.
+
+> Implementation + Test = ONE todo. Never separate.
+
+- [x] 1. ISO: make the enrollment base record actually land
+  What to do / Must NOT do: in `modules/flake/iso-images.nix`, replace the runtime `printf ... > /etc/hardware-enrollment/${host}.json` with a declarative `environment.etc."hardware-enrollment/${host}.json".text = baseDeclaration;` (keeps the same path for the oneshot's `--base`). Keep the `|| true` on the auto-enroll call but append a journal-visible failure marker (e.g. `|| echo "hardware-enroll: masked failure (artifact presence is the gate)" >&2`). Do NOT change the oneshot's unit name, ordering, or the `/root/enroll` trust path.
+  Closes: GAP-6
+  Parallelization: Wave 1 | Blocked by: - | Blocks: -
+  References: `modules/flake/iso-images.nix:33-51` (the enrollment module; line 44 is the write; line 43 only mkdirs `/root/enroll`); `config/hosts/intake/README.md` (artifact paths); `tests/dendritic-architecture.sh:49` (feature file must keep existing).
+  Acceptance criteria (agent-executable): `nix eval --impure --json --expr 'let c = (builtins.getFlake (toString /home/mei/nixos)).iso.antagony.passthru.config; in c.environment.etc."hardware-enrollment/antagony.json".text'` contains `"hostId": "antagony"`; `nix build .#iso.antagony --dry-run` evaluates.
+  QA scenarios (name the exact tool + invocation): happy - `nix eval` the etc text (contains hostId); failure - temporarily remove the etc entry and confirm the eval assertion fails (then restore). Evidence `<attemptDir>/task-1-thinkpad-zero-touch-install.json`
+  Recommended task executor category: quick
+  Commit: Y | `fix(iso): land the enrollment base record declaratively`
+
+- [x] 2. ISO: btrfs support and the module at boot
+  What to do / Must NOT do: add a new ISO-only module (alongside `enrollment`/`installerMarker`) with `boot.supportedFilesystems = [ "btrfs" "vfat" ]` and `boot.kernelModules = [ "btrfs" ]`, and add it to the `extendModules` module list at `iso-images.nix:60`. Do NOT touch `nixosConfigurations.<host>` (extendModules is ISO-only); do NOT add `nixos.autoinstall` anywhere.
+  Closes: GAP-5
+  Parallelization: Wave 1 | Blocked by: - | Blocks: 9, 11
+  References: `modules/flake/iso-images.nix:52-61`; research VA2 (`iso.antagony` today: `supportedFilesystems = {iso9660,overlay,squashfs,tmpfs}`, `btrfsProgs=false`); `modules/nixos/disk-config.nix:68-84` (btrfs subvolumes).
+  Acceptance criteria (agent-executable): `nix eval` shows `boot.supportedFilesystems` contains `btrfs` and `vfat`, `boot.kernelModules` contains `btrfs`, and `system.fsPackages` contains a `btrfs-progs` entry, for BOTH `iso.antagony` and `iso.remembrance`.
+  QA scenarios: happy - the eval above returns true for both hosts; failure - assert the pre-change values are gone (`btrfsProgs=false` no longer holds). Evidence `<attemptDir>/task-2-thinkpad-zero-touch-install.json`
+  Recommended task executor category: deep-low
+  Commit: Y | `feat(iso): btrfs/vfat support and boot-loaded btrfs module`
+
+- [x] 3. Installer: shared staging builder `bin/_install-staging.sh`
+  What to do / Must NOT do: new sourced-by-nobody-yet helper (underscore-private, matching `_host_key_enroll.py`) exposing: `staging_init` (`mktemp -d` under tmpfs, `trap 'rm -rf' EXIT`), `staging_password <stage> <user>` (pipefail-safe generator `pw="$(head -c 512 /dev/urandom | base64 -w0 | tr -dc 'A-Za-z0-9' | cut -c1-24)"`, `printf '%s\n' "$pw" | mkpasswd --method=yescrypt --stdin`, validate against the exact module regex BEFORE writing, `install -d -m 0700` + write 0600 + `stat` self-check 0:0:700/0:0:600, print exactly once, `unset pw`), `staging_artifacts <stage> <files...>` (0600 into a 0700 `var/lib/nixos-enrollment`), `staging_identity <stage> <user> <uid> <gid> <keyfile>` (0600 at `home/<user>/.config/sops/age/keys.txt`, reported chown target `home/<user>/.config`), `staging_plan` (dry-run text). Do NOT write plaintext anywhere; do NOT chown anything; do NOT keep a copy on disk beyond the tmpfs path.
+  Closes: GAP-1 (partial), GAP-2 (partial)
+  Parallelization: Wave 1 | Blocked by: - | Blocks: 6, 7
+  References: recovered original `f7015a56:bin/nixos-anywhere-bootstrap-password.sh` (tmpfs stage, `install -d -m 700`, pinned mkpasswd, regex validation) via `.omo/ulw-research/20261006-100350/wave-1-lane2.md`; validator contract `modules/nixos/bootstrap-password.nix:44-84`; lifecycle expectations `tests/bootstrap-password-lifecycle.sh:182-250`.
+  Acceptance criteria (agent-executable): `bash -n bin/_install-staging.sh`; sourcing it in a scratch shell and calling `staging_password` produces a file whose `stat -c '%a'` is 600 inside a 700 dir and whose content matches `^\$y\$[./A-Za-z0-9]+\$[./A-Za-z0-9]{1,86}\$[./A-Za-z0-9]{43}$`; the printed password is emitted exactly once.
+  QA scenarios: happy - run the function in a tmpdir and assert modes+regex; failure - stub `mkpasswd` to exit 1 and assert the helper dies without writing the file; run the produced hash through the real validator under `unshare -Ur -m` (deliberate manual step; expect rc=0 silent). Evidence `<attemptDir>/task-3-thinkpad-zero-touch-install.log`
+  Recommended task executor category: deep-low
+  Commit: Y | `feat(install): shared staging builder for the password and payload`
+
+- [x] 4. Installer: `--extra-files`/`--chown` transport and the attempt marker
+  What to do / Must NOT do: in `bin/host-install.sh` add `--extra-files <dir>` and repeatable `--chown <path> <owner>` pairs (usage, vars, parser arms before the `esac` at `:85`; forward each `--chown` verbatim and the `--extra-files` value in `stage_install` at `:201`, guarded on non-empty), mirror both in `print_plan` (`:111`), and write the attempt marker `: > /run/autoinstall-done` immediately before the nixos-anywhere call. The caller supplies the ownership paths; do NOT invent or default any `--chown` path here, do NOT touch the `/var/lib` trees, do NOT change the `--yes` re-check.
+  Closes: GAP-1 (transport), GAP-4 (marker)
+  Parallelization: Wave 1 | Blocked by: - | Blocks: 6, 9
+  References: `bin/host-install.sh:36-43` (vars), `:45-86` (parser), `:91-120` (print_plan), `:193-206` (stage_install, the nixos-anywhere call at `:201`); upstream `--extra-files`/`--chown` semantics (tar to /mnt before install, modes preserved, root-owned; `--chown <path> <ownership>` = `chown -R /mnt/<path>` after the copy).
+  Acceptance criteria (agent-executable): `bash -n bin/host-install.sh`; `bash bin/host-install.sh --dry-run --host antagony --extra-files /tmp/x --chown home/mei/.config 1000:100` prints a plan containing both; grep shows the marker write precedes the nixos-anywhere call.
+  QA scenarios: happy - the dry-run above; failure - `--chown` with a missing owner argument or `--extra-files` with no value exits with usage (die_usage). Evidence `<attemptDir>/task-4-thinkpad-zero-touch-install.log`
+  Recommended task executor category: deep-low
+  Commit: Y | `feat(install): forward --extra-files/--chown and record the destructive attempt`
+
+- [x] 5. Installer PATH: mkpasswd
+  What to do / Must NOT do: add `pkgs.mkpasswd` to `installDeps` in `modules/flake/apps.nix` (verified present on the pinned nixpkgs: `p.mkpasswd.pname == "mkpasswd"`). Do NOT change the other deps or the app registration.
+  Closes: GAP-1 (tooling)
+  Parallelization: Wave 1 | Blocked by: - | Blocks: 6
+  References: `modules/flake/apps.nix:516-531` (`mkLinuxApps`, `installDeps`, the `install` binding); lead eval confirming the attr name.
+  Acceptance criteria (agent-executable): `grep -Fq 'pkgs.mkpasswd' modules/flake/apps.nix`; `nix eval --impure --raw --expr '(builtins.getFlake (toString /home/mei/nixos)).apps.x86_64-linux.install.program'` succeeds.
+  QA scenarios: happy - the eval above; failure - remove the line and confirm the task-3 helper fails to find mkpasswd via the wrapper (`nix run .#install -- --dry-run` path). Evidence `<attemptDir>/task-5-thinkpad-zero-touch-install.txt`
+  Recommended task executor category: quick
+  Commit: Y | `feat(install): put mkpasswd on the installer PATH`
+
+- [x] 6. App: stage the password and forward the transport
+  What to do / Must NOT do: in `apps/x86_64-linux/install`, source `bin/_install-staging.sh`; add a staging step between `fold_host_key`/`save_artifacts` and `setup_self_ssh` (after `:358`) that calls `staging_init` + `staging_password` and passes `--extra-files "$stage"` plus the helper-reported ownership pair (`--chown home/<user>/.config <uid>:<gid>`) through `install_phase` (`:328-332`); show the staging step in the `--dry-run` plan (`:158-165`). Keep the existing `--install-only`/`auto_enroll` strings in the plan text (`tests/dendritic-apps.sh:27-29`). Do NOT print the password when `--dry-run`; do NOT write it to disk; do NOT pass any `--chown` path other than the reported `.config` subtree.
+  Closes: GAP-1
+  Parallelization: Wave 2 | Blocked by: 3,4,5 | Blocks: 7,8,9
+  References: `apps/x86_64-linux/install:80-132` (parser), `:229-286` (`enroll`), `:313-324` (`save_artifacts`), `:325-333` (`install_phase`), `:354-371` (final flow); validator contract `modules/nixos/bootstrap-password.nix:44-84`.
+  Acceptance criteria (agent-executable): `./apps/x86_64-linux/install --dry-run` prints the staging step, the `--extra-files` transport, and the exact `--chown home/<user>/.config <uid>:<gid>` pair, and no `password for` line; the code contains exactly one `password for` print; `bash tests/dendritic-apps.sh` passes.
+  QA scenarios: happy - the dry-run above; failure - run with a stubbed failing `mkpasswd` and assert the app exits non-zero before invoking host-install.sh. Evidence `<attemptDir>/task-6-thinkpad-zero-touch-install.log`
+  Recommended task executor category: deep-low
+  Commit: Y | `feat(install): generate and stage the per-install password`
+
+- [x] 7. App: stage the artifacts and the identity; retire the `--save` requirement
+  What to do / Must NOT do: extend the staging step to include `staging_artifacts` (the candidate, intake document, host key from the enrollment staging dir) and `staging_identity` (source `$SOPS_AGE_KEY_FILE` else `~/.config/sops/age/keys.txt`, warn-and-continue if absent); replace the `want_save && -z "$save_dir"` hard die (`:360-364`) with a warning that the artifacts now persist in the installed system; keep `--save` as an optional escape hatch. Do NOT feed the rescued identity into the fold (`bin/_host_key_enroll.py` requires a store it cannot decrypt); do NOT chown anywhere except the reported `home/<user>/.config` argument.
+  Closes: GAP-2, GAP-3 (partial)
+  Parallelization: Wave 2 | Blocked by: 6 | Blocks: 10
+  References: `apps/x86_64-linux/install:288-311` (`fold_host_key`), `:313-324` (`save_artifacts`), `:360-364` (the die); `scripts/hardware/auto_enroll_core.py` (artifact paths); research §2 (identity is the irreversible item).
+  Acceptance criteria (agent-executable): `--dry-run` lists the enrollment-artifact and identity staging; the app no longer exits when `--save` is omitted and no store exists (assert with a fake staging run); grep shows the identity source fallback order.
+  QA scenarios: happy - dry-run + a staging-only run in a scratch workdir with a fake key file (assert the tree layout and modes); failure - no key file anywhere => warn but continue (no die). Evidence `<attemptDir>/task-7-thinkpad-zero-touch-install.log`
+  Recommended task executor category: deep-low
+  Commit: Y | `feat(install): persist artifacts and the age identity into the target`
+
+- [x] 8. App: `--rescue-identity` and the host/disk match
+  What to do / Must NOT do: add `--rescue-identity` (mount the live layout read-only - `mount -o ro,nologreplay,subvol=/@home /dev/disk/by-id/<disk>-part2 <mnt>`; fall back to enumerating `subvolid=5`; copy `~/.config/sops/age/keys.txt` into the stage; unmount; die if not found when the flag is set; refuse outside a live root). Add `verify_host_match()` between `enroll()` and the fold/build: Phase P (pending record) - the DMI product must map to `--host`, else die with no override; Phase E (enrolled record) - compare the candidate against the baked record on `storage.diskById`, `storage.expected.{sizeBytes,logicalSectorBytes,modelSha256,serialSha256}`, `cpuVendor`. Do NOT make the rescue automatic; do NOT re-implement probe serialization.
+  Closes: GAP-3, GAP-4 (host match)
+  Parallelization: Wave 2 | Blocked by: 6 | Blocks: 9, 10
+  References: `apps/x86_64-linux/install:146-151` (DMI map), `:229-286` (enroll; the candidate), `:236-243` (base record materialization); live subvolumes `@`/`@home`/`@root` (`/proc/mounts`); research VA8 (mount works; btrfs module present).
+  Acceptance criteria (agent-executable): `--dry-run --rescue-identity` prints the rescue step; a run with `--host` mismatching the DMI dies before any staging; with an enrolled record the candidate-vs-baked comparison is enforced (unit-testable via a scratch record pair).
+  QA scenarios: happy - dry-run + a scratch pair equality test; failure - mismatched host/model dies with a clear message. Evidence `<attemptDir>/task-8-thinkpad-zero-touch-install.log`
+  Recommended task executor category: deep-low
+  Commit: Y | `feat(install): rescue the live age identity and verify host/disk bindings`
+
+- [x] 9. ISO: bake the flake, add the gated unit and the rescue target
+  What to do / Must NOT do: add `inputs` to `modules/flake/iso-images.nix` args; add a `nixos-autoinstall` service (unit name `nixos-autoinstall.service`, referenced consistently everywhere) inside the ISO extension: `wantedBy = [ "multi-user.target" ]`, `wants = [ "network-online.target" ]`, `after = [ "network-online.target" "sshd.service" "hardware-enroll.service" ]`, `unitConfig = { ConditionKernelCommandLine = "nixos.autoinstall=1"; ConditionPathExists = "!/run/autoinstall-done"; SuccessAction = "reboot"; OnFailure = [ "iso-install-rescue.target" ]; }`, `serviceConfig = { Type = "oneshot"; RemainAfterExit = true; StandardOutput = "journal+console"; StandardError = "journal+console"; }`, script running `${config.flake.apps.x86_64-linux.install.program} --host <host> --yes --rescue-identity`; add the `iso-install-rescue.target` plus a tty1 debug service (`bash -i`, `StandardInput = "tty-force"`, `TTYPath = "/dev/tty1"`); expose `flake.isoConfig = lib.genAttrs isoHosts (host: <the extendModules config>)` and build `flake.iso` from it. Do NOT add `nixos.autoinstall=1` to `boot.kernelParams`; do NOT add `|| true` to this unit; do NOT patch grub.
+  Closes: GAP-4
+  Parallelization: Wave 2 | Blocked by: 2,4,6,8 | Blocks: 11
+  References: `modules/flake/iso-images.nix:22-61` (args, extendModules); `modules/flake/apps.nix:9-21` (the wrapper: PATH deps + `exec ${self}/apps/...`); ultrabrain unit contract (research session journal); systemd `ConditionKernelCommandLine`/`SuccessAction`/`OnFailure` semantics.
+  Acceptance criteria (agent-executable): the eval wall (todo 11) passes, including the negative assertion that `nixos.autoinstall=1` is absent from `boot.kernelParams`; `nix build .#iso.antagony --dry-run` evaluates.
+  QA scenarios: happy - eval the unit fields; failure - delete the condition and confirm the wall fails. Evidence `<attemptDir>/task-9-thinkpad-zero-touch-install.json`
+  Recommended task executor category: unspecified-high
+  Commit: Y | `feat(iso): opt-in gated auto-install with a rescue target`
+
+- [x] 10. Tests: staging invariants and the app/dry-run greps
+  What to do / Must NOT do: create `tests/install-staging.sh` asserting the invariants (mkpasswd `--method=yescrypt`/`--stdin`; `--extra-files` present in BOTH the app and `bin/host-install.sh`; `--chown` forwarding; `nixos-bootstrap` + `nixos-enrollment` paths; `keys.txt` staging; the `$y$` regex; `0700`/`0600`; `unset pw`; exactly one `password for` print; `--dry-run` prints no secret) and wire it into `modules/flake/checks.nix` following the `dendritic-boundaries` shape; extend `tests/dendritic-apps.sh` dry-run greps with the `--extra-files` step. Do NOT wire `tests/bootstrap-password-lifecycle.sh` (bind mounts + sandbox) - probe `unshare` viability first and record the verdict in the test header if skipped.
+  Closes: GAP-7
+  Parallelization: Wave 3 | Blocked by: 7,8 | Blocks: -
+  References: `modules/flake/checks.nix:5-15` (the `runCommand` check shape; boundaries itself is `:17-27`), `tests/dendritic-apps.sh:27-29` (dry-run greps), `tests/bootstrap-password-lifecycle.sh:16-39` (the bind-mount harness that stays manual).
+  Acceptance criteria (agent-executable): `bash tests/install-staging.sh` exits 0; each assertion textually fails when its token is removed (spot-check two); `bash tests/dendritic-apps.sh` passes.
+  QA scenarios: happy - run both scripts; failure - mutate one token in a scratch copy and confirm the check fails. Evidence `<attemptDir>/task-10-thinkpad-zero-touch-install.log`
+  Recommended task executor category: unspecified-low
+  Commit: Y | `test(install): pin the staging and transport invariants`
+
+- [x] 11. Tests: the ISO eval wall
+  What to do / Must NOT do: extend `tests/dendritic-config-eval.nix` with the `flake.isoConfig.antagony.config` assertions: `btrfs`+`vfat` in `boot.supportedFilesystems`, `btrfs` in `boot.kernelModules`, `hasInfix` the enrollment JSON text, `variant_id == "installer"`, the unit's `wantedBy`/`wants`/`after`/`ConditionKernelCommandLine`/`ConditionPathExists`/`SuccessAction`/`OnFailure`/`Type`/`RemainAfterExit`/`StandardOutput`, the script containing `install` and `--rescue-identity`, and the NEGATIVE `!(builtins.elem "nixos.autoinstall=1" iso.boot.kernelParams)`. Do NOT weaken existing assertions or renumber the todo list.
+  Closes: GAP-7
+  Parallelization: Wave 3 | Blocked by: 2,9 | Blocks: -
+  References: `tests/dendritic-config-eval.nix:13-15,146,232` (existing patterns), the `flake.machineAuthority` exposure pattern in `modules/entities/defaults.nix`/`flake` outputs, the ultrabrain assertion list (research session journal).
+  Acceptance criteria (agent-executable): `nix-instantiate --eval --strict --expr 'import ./tests/dendritic-config-eval.nix {}'` prints PASS; removing the condition makes it fail.
+  QA scenarios: happy - the eval above; failure - flip the negative assertion input in a scratch copy and confirm failure. Evidence `<attemptDir>/task-11-thinkpad-zero-touch-install.log`
+  Recommended task executor category: unspecified-low
+  Commit: Y | `test(iso): pin the autostart unit and the inert-by-default assertion`
+
+- [x] 12. Tests: restore the password mutation test
+  What to do / Must NOT do: re-create `tests/bootstrap-password-mutations.sh` from the recovered original (`.omo/ulw-research/20261006-100350/wave-1-lane2.md` holds the importer shape: `nix eval --json --impure --expr "import $root/tests/bootstrap-password-config-eval.nix { config = ... }" | jq -e <filter>`), aimed at `nixosConfigurations.remembrance.config` (the config-eval file's own convention), and wire it into `modules/flake/checks.nix` (nix-eval based, sandbox-safe). Do NOT alter `tests/bootstrap-password-config-eval.nix`; do NOT wire the lifecycle suite.
+  Closes: GAP-7 (un-orphans the config-eval)
+  Parallelization: Wave 1 | Blocked by: - | Blocks: -
+  References: recovered `tests/bootstrap-password-mutations.sh` (f7015a56) and the orphan `tests/bootstrap-password-config-eval.nix:3-23`; `modules/flake/checks.nix:38-51` (the eval check shape).
+  Acceptance criteria (agent-executable): `bash tests/bootstrap-password-mutations.sh` exits 0; the check appears in `nix flake check --all-systems --no-build` output evaluation.
+  QA scenarios: happy - run the script; failure - temporarily set `users.mutableUsers = false` in a scratch copy and confirm the mutation assertions fail. Evidence `<attemptDir>/task-12-thinkpad-zero-touch-install.log`
+  Recommended task executor category: unspecified-low
+  Commit: Y | `test(install): restore the bootstrap-password mutation coverage`
+
+- [x] 14. Tests: the gate-inertness VM
+  What to do / Must NOT do: add a `pkgs.testers.runNixOSTest` (nixpkgs VM framework, the repo's first) that boots the ISO's extended config as a test machine (the same config `flake.isoConfig.<host>` exposes) in two variants: (a) default kernel params - assert `systemctl is-active nixos-autoinstall.service` is `inactive` and `/run/autoinstall-done` does not exist (a plain boot touches nothing); (b) `boot.kernelParams = [ "nixos.autoinstall=1" ]` (test-only override) - assert the unit `nixos-autoinstall.service` starts, the app dies at the host-match check (a VM is not the ThinkPad), the rescue target activates, and no disk was written. Wire it as `checks.<system>.iso-autostart-vm` in `modules/flake/checks.nix`. Do NOT wire a full `=1` install run into flake checks (that is a deliberate manual step); do NOT use a real machine.
+  Closes: GAP-4, GAP-7
+  Parallelization: Wave 3 | Blocked by: 9 | Blocks: -
+  References: `modules/flake/iso-images.nix` (the extended config to boot), `modules/flake/checks.nix:5-15` (check wiring), nixpkgs `pkgs.testers.runNixOSTest` docs; the gate semantics (`ConditionKernelCommandLine` prevents activation entirely). The unit name is `nixos-autoinstall.service` throughout.
+  Acceptance criteria (agent-executable): `nix build .#checks.x86_64-linux.iso-autostart-vm` exits 0; removing the `ConditionKernelCommandLine` line makes variant (a) fail.
+  QA scenarios: happy - the build above (both variants inside one test); failure - flip the condition in a scratch copy and confirm variant (a) fails. Evidence `<attemptDir>/task-14-thinkpad-zero-touch-install.log`
+  Recommended task executor category: unspecified-high
+  Commit: Y | `test(iso): prove the gate is inert on a plain boot`
+
+- [x] 15. Operator path: mint and stage the password
+  What to do / Must NOT do: in `bin/host-install.sh`, when it is the entry point (i.e. NOT `--install-only`), source `bin/_install-staging.sh`, create a stage under `$tmpdir`, mint the password hash (`staging_init` + `staging_password`), print it once, and hand `--extra-files "$stage"` (with the same `--chown` pair the helper reports) to its own nixos-anywhere call at `:201`; skip the whole step under `--install-only` (the app supplies its own stage through the same flags). Add an explicit, off-by-default `--stage-identity SRC` that copies SRC in as the user-owned key; MUST NOT stage the operator machine's own identity by default. Do NOT duplicate the staging logic (source the helper); do NOT write the password to disk outside the tmpfs stage.
+  Closes: GAP-1 (operator path)
+  Parallelization: Wave 2 | Blocked by: 3,4 | Blocks: 13
+  References: `bin/host-install.sh:88-89` (`tmpdir`), `:193-206` (`stage_install`), the recovered historical script (`.omo/ulw-research/20261006-100350/wave-1-lane2.md`); `docs/service-notes/nixos-anywhere-iso-install.md:10` (the operator entry point).
+  Acceptance criteria (agent-executable): `bash bin/host-install.sh --dry-run --target-host 1.2.3.4` prints the password-staging step and no secret; a run under `--install-only` prints no staging step; the code sources `bin/_install-staging.sh`.
+  QA scenarios (name the exact tool + invocation): happy - the two dry-run invocations above; failure - run the full-path dry-run with a stubbed failing `mkpasswd` and assert the script dies before invoking nixos-anywhere. Evidence `<attemptDir>/task-15-thinkpad-zero-touch-install.log`
+  Recommended task executor category: deep-low
+  Commit: Y | `feat(install): mint and stage the password on the operator path`
+
+- [x] 13. Docs
+  What to do / Must NOT do: update `README.md` (the install section: the new staging, the optional autostart gate and how to switch it on at the boot menu, the rescue route, what the official ISO cannot do), `docs/service-notes/new-machine-ssh-install.md` and `docs/service-notes/nixos-anywhere-iso-install.md` (same), and `bin/AGENTS.md` (the new flags). Do NOT document anything the tests do not assert; do NOT claim the ISO boots are exercised beyond the VM gate test.
+  Closes: IS-6
+  Parallelization: Wave 3 | Blocked by: 6,7,8,9 | Blocks: -
+  References: `README.md` install section; the two service notes; `bin/AGENTS.md`; the shipped flag names.
+  Acceptance criteria (agent-executable): `grep -Fq -- '--extra-files' README.md docs/service-notes/*.md`; `grep -Fq 'nixos.autoinstall=1' docs/service-notes/nixos-anywhere-iso-install.md`; the prose matches the actual flags (spot-check by reading).
+  QA scenarios: happy - the greps above; failure - grep for a removed flag and confirm absence. Evidence `<attemptDir>/task-13-thinkpad-zero-touch-install.md`
+  Recommended task executor category: writing
+  Commit: Y | `docs(install): document staging, the opt-in gate, and the rescue route`
+
+- [x] 16. ISO: make the installer medium boot (fix F-A)
+  What to do / Must NOT do: in `modules/flake/iso-images.nix`, add an ISO-only module to the `extendModules` list that neutralizes BOTH bootstrap-password activation scripts on the installer variant - `system.activationScripts.bootstrapPasswordHash = lib.mkForce { deps = []; text = ""; }` and `system.activationScripts.consumeBootstrapPassword = lib.mkForce { deps = []; text = ""; }` (both must go: `consumeBootstrapPassword` hard-fails when the hash file is absent). If the users activation also hard-fails on the missing `hashedPasswordFile`, neutralize that on the ISO as well and document it. Do NOT touch `modules/nixos/bootstrap-password.nix` (the installed system's validation must stay intact - prove with an eval that `nixosConfigurations.remembrance.config.system.activationScripts.bootstrapPasswordHash.text` is unchanged). Then REMOVE the test-only bootstrap-hash seed fixture from `tests/iso-autostart-vm.nix` (keep the memory/cores overrides) so the VM test boots the config as shipped, and re-run it green.
+  Closes: F-A / OF-1
+  Parallelization: Wave 4 | Blocked by: - | Blocks: -
+  References: `.omo/evidence/thinkpad-zero-touch-install/F-A-iso-boot-diagnosis.md` (mechanism + serial log); `modules/nixos/bootstrap-password.nix`; `modules/flake/iso-images.nix`; `tests/iso-autostart-vm.nix`.
+  Acceptance criteria (agent-executable): (a) `nix build .#checks.x86_64-linux.iso-autostart-vm --no-link` rc=0 with the seed fixture removed (both variants assert as before); (b) `nix build .#iso.antagony --no-link` rc=0, then boot the ISO in QEMU with a serial console and observe multi-user (login prompt) with no `bootstrap password hash validation failed` and no emergency mode; (c) `nix-instantiate --eval --strict --expr 'import ./tests/dendritic-config-eval.nix {}'` PASS; (d) the non-ISO config's activation script text unchanged (eval before/after diff).
+  QA scenarios: happy - the QEMU boot of the rebuilt ISO reaching multi-user; failure - with the neutralization removed in a scratch copy, the VM test's plainBoot fails the way the real ISO did. Evidence `<attemptDir>/task-16-thinkpad-zero-touch-install.log`
+  Recommended task executor category: deep-low
+  Commit: Y | `fix(iso): let the installer medium boot without the password validator`
+
+
+- [x] 17. Cleanup: drop the unused `staging_plan` helper
+  What to do / Must NOT do: remove `staging_plan` from `bin/_install-staging.sh` (F2 finding: zero call sites in bin/ apps/ tests/ modules/ - the callers print their own plans). Do NOT change the other helpers' behavior; keep every existing test green.
+  Closes: F2 major 1
+  Parallelization: Wave 5 | Blocked by: - | Blocks: 18
+  Acceptance criteria (agent-executable): `grep -rn 'staging_plan' bin/ apps/ tests/ modules/` = 0 hits; `bash -n bin/_install-staging.sh` rc=0; `bash tests/install-staging.sh` PASS.
+  QA scenarios: happy - the greps + test run; failure - n/a (pure removal).
+  Evidence `<attemptDir>/task-17-thinkpad-zero-touch-install.log`
+  Recommended task executor category: quick
+  Commit: Y | `refactor(install): drop the unused staging_plan helper`
+
+- [x] 18. Tests: execute the staging generator in the pinned check
+  What to do / Must NOT do: extend `tests/install-staging.sh` with a BEHAVIORAL block (F2 major 3: the generator was covered only by token greps): source `bin/_install-staging.sh`, run `staging_init` + `staging_password <stage> <user>` with the real `mkpasswd` (add `pkgs.mkpasswd` to the check's nativeBuildInputs in `modules/flake/checks.nix` if it is not already on the check's PATH), and assert: the hash file exists at `var/lib/nixos-bootstrap/<user>-password.hash`; its directory is mode 0700 and the file 0600; the content matches the validator regex `^\$y\$[./A-Za-z0-9]+\$[./A-Za-z0-9]{1,86}\$[./A-Za-z0-9]{43}$`; the password is printed exactly once; no plaintext remains in the stage. Keep the existing token greps. Do NOT weaken anything.
+  Closes: F2 major 3
+  Parallelization: Wave 5 | Blocked by: 17 | Blocks: -
+  Acceptance criteria (agent-executable): `bash tests/install-staging.sh` PASS twice; `nix build .#checks.x86_64-linux.install-staging` rc=0; a scratch copy with a `mkpasswd` stub emitting garbage FAILS the new block.
+  QA scenarios: happy - the runs above; failure - the stub mutation.
+  Evidence `<attemptDir>/task-18-thinkpad-zero-touch-install.log`
+  Recommended task executor category: unspecified-low
+  Commit: Y | `test(install): execute the staging generator and assert its artifact`
+
+- [x] 19. Tests: make the unit-script assertion non-tautological
+  What to do / Must NOT do: in `tests/dendritic-config-eval.nix`, the `hasInfix "install" ... .script` assertion is near-tautological (the embedded store path contains `/install`). Tighten it so it proves the script actually invokes the app wrapper with the plan's flags (e.g. contains the wrapper store path AND `--rescue-identity` AND `--host`). Do NOT weaken any other assertion or renumber.
+  Closes: F2 minor (near-tautological assertion)
+  Parallelization: Wave 5 | Blocked by: - | Blocks: -
+  Acceptance criteria (agent-executable): `nix-instantiate --eval --strict --expr 'import ./tests/dendritic-config-eval.nix {}'` prints PASS; flipping the script input in a scratch copy fails.
+  QA scenarios: happy - the eval; failure - the scratch flip.
+  Evidence `<attemptDir>/task-19-thinkpad-zero-touch-install.log`
+  Recommended task executor category: quick
+  Commit: Y | `test(iso): make the unit-script assertion non-tautological`
+
+
+## Final verification wave
+> Runs in parallel after ALL todos. ALL must APPROVE. Surface results and wait for the user's explicit okay before declaring complete.
+- [x] F1. Plan compliance audit - every todo's acceptance was run; every Must-NOT holds (grep for `nixos.autoinstall=1` outside docs/tests; no plaintext password; no `|| true` in the unit).
+- [x] F2. Code quality review - the new shell passes `bash -n`; no dead code; the helper is sourced by exactly the intended caller; commits are atomic and match the strategy.
+- [x] F3. Real manual QA - run `nix flake check --all-systems --no-build`, the full script suite, and the deliberate validator proof (`unshare -Ur -m` against the produced hash); record transcripts.
+- [x] F4. Ideal-state fidelity - check IS-1..IS-7 row by row against the shipped behavior and the QA evidence; a shortfall becomes new `- [ ] N.` todos, never a note.
+
+## Commit strategy
+
+One commit per todo, conventional types as listed, in wave order. Commit 3 (the helper) intentionally has no callers; it is wired in todo 6. Commits 1 and 2 are independent leaves. No commit may contain a staged secret, a generated stage dir, or an updated `.direnv` path. The plan's Must-NOT rows are checked in F1 before any commit is considered final; the docs commit comes last.
+
+## Success criteria
+> One row per IS row. The plan is complete only when every IS row has a delivering todo and a proving QA scenario; F4 checks the delivered behavior against these rows 1:1, and a shortfall becomes new `- [ ] N.` rows, never a note.
+
+| IS | Delivering todo(s) | Proving QA scenario | Evidence |
+| --- | --- | --- | --- |
+| IS-1 | 3,4,5,6,15 | todo 3's modes/regex run + todo 6's dry-run and stub-failure scenarios + todo 15's operator-path dry-run and staging run; the deliberate validator proof | `<attemptDir>/task-3-*.log`, `<attemptDir>/task-6-*.log`, `<attemptDir>/task-15-*.log` |
+| IS-2 | 7,9 | todo 7's staging-tree scenario | `<attemptDir>/task-7-*.log` |
+| IS-3 | 8,9 | todo 8's rescue dry-run + scratch equality test | `<attemptDir>/task-8-*.log` |
+| IS-4 | 9,11,14 | todo 11's negative kernelParams assertion + todo 14's twin-boot VM (inactive by default; rescue after the gated attempt) | `<attemptDir>/task-11-*.log`, `<attemptDir>/task-14-*.log` |
+| IS-5 | 4,8,9,15 | todo 4's marker-order grep + todo 8's mismatch-dies scenario + todo 15's skip-under-`--install-only` assertion + F1 | `<attemptDir>/task-4-*.log`, `<attemptDir>/task-8-*.log`, `<attemptDir>/task-15-*.log` |
+| IS-6 | 10,11,12,13 | the three check scripts + the doc greps | `<attemptDir>/task-10-*.log`, `<attemptDir>/task-11-*.log`, `<attemptDir>/task-12-*.log`, `<attemptDir>/task-13-*.md` |
+| IS-7 | (constraint; enforced by Must-NOT + F1) | F1's audit finds no second install path | F1 transcript |

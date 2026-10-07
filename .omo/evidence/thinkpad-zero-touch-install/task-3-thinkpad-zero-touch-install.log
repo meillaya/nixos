@@ -1,0 +1,118 @@
+== C1 syntax ==
+PASS  C1 bash -n exits 0
+== C2/C7 happy path ==
+PASS  C2 stage on tmpfs (tmpfs)
+PASS  C2 bootstrap dir mode (700)
+PASS  C2 hash file mode (600)
+PASS  C2 hash matches validator regex
+PASS  C2 hash is one line (0)
+PASS  C2 password printed exactly once (1)
+PASS  C2 password length (24)
+PASS  C7 no plaintext under stage (no)
+PASS  C5 stage removed on EXIT
+== C3 mkpasswd failure ==
+PASS  C3 helper returns non-zero
+PASS  C3 no hash written (no)
+PASS  C3 error message (1)
+== C4 mkpasswd bad output ==
+PASS  C4 helper returns non-zero
+PASS  C4 no hash written (no)
+PASS  C4 rejects bad hash (1)
+== C5 stale state ==
+PASS  C5 two inits yield distinct paths
+PASS  C5 first stage existed (yes)
+PASS  C5 second stage existed (yes)
+PASS  C5 both stages cleaned on EXIT
+== C6 artifacts and identity ==
+PASS  C6 enrollment dir mode (700)
+PASS  C6 artifact mode (600)
+PASS  C6 identity mode (600)
+PASS  C6 home dir traversable (755)
+PASS  C6 chown target reported
+PASS  C7 staging_plan names the transport (1)
+PASS  C7 staging_plan carries no secret
+== C8 real validator under unshare ==
+PASS  C8 validator text evaluated (71 lines)
+PASS  C8 validator accepts the hash (rc=0 silent)
+
+== RESULT pass=29 fail=0 ==
+
+===== rerun at commit a489ff81747792823dd7745d4834e54d2bf66c81 (blob 6883ef91ba3fbd8d2a18c7e314a86e4960e17782) 2026-10-06T15:37:38.786Z =====
+== C1 syntax ==
+PASS  C1 bash -n exits 0
+== C2/C7 happy path ==
+PASS  C2 stage on tmpfs (tmpfs)
+PASS  C2 bootstrap dir mode (700)
+PASS  C2 hash file mode (600)
+PASS  C2 hash matches validator regex
+PASS  C2 hash is one line (0)
+PASS  C2 password printed exactly once (1)
+PASS  C2 password length (24)
+PASS  C7 no plaintext under stage (no)
+PASS  C5 stage removed on EXIT
+== C3 mkpasswd failure ==
+PASS  C3 helper returns non-zero
+PASS  C3 no hash written (no)
+PASS  C3 error message (1)
+== C4 mkpasswd bad output ==
+PASS  C4 helper returns non-zero
+PASS  C4 no hash written (no)
+PASS  C4 rejects bad hash (1)
+== C5 stale state ==
+PASS  C5 two inits yield distinct paths
+PASS  C5 first stage existed (yes)
+PASS  C5 second stage existed (yes)
+PASS  C5 both stages cleaned on EXIT
+== C6 artifacts and identity ==
+PASS  C6 enrollment dir mode (700)
+PASS  C6 artifact mode (600)
+PASS  C6 identity mode (600)
+PASS  C6 home dir traversable (755)
+PASS  C6 chown target reported
+PASS  C7 staging_plan names the transport (1)
+PASS  C7 staging_plan carries no secret
+== C8 real validator under unshare ==
+PASS  C8 validator text evaluated (71 lines)
+PASS  C8 validator accepts the hash (rc=0 silent)
+
+== RESULT pass=29 fail=0 ==
+
+===== rerun at commit ceca3a7ac4f0ff0d6434e22416e055b901292bda (blob 0aec6c1ecd778bcdefc9a0278d2cf76d877bc32e) 2026-10-06T15:40:26.598Z =====
+== C1 syntax ==
+PASS  C1 bash -n exits 0
+== C2/C7 happy path ==
+PASS  C2 stage on tmpfs (tmpfs)
+PASS  C2 bootstrap dir mode (700)
+PASS  C2 hash file mode (600)
+PASS  C2 hash matches validator regex
+PASS  C2 hash is one line (0)
+PASS  C2 password printed exactly once (1)
+PASS  C2 password length (24)
+PASS  C7 no plaintext under stage (no)
+PASS  C5 stage removed on EXIT
+== C3 mkpasswd failure ==
+PASS  C3 helper returns non-zero
+PASS  C3 no hash written (no)
+PASS  C3 error message (1)
+== C4 mkpasswd bad output ==
+PASS  C4 helper returns non-zero
+PASS  C4 no hash written (no)
+PASS  C4 rejects bad hash (1)
+== C5 stale state ==
+PASS  C5 two inits yield distinct paths
+PASS  C5 first stage existed (yes)
+PASS  C5 second stage existed (yes)
+PASS  C5 both stages cleaned on EXIT
+== C6 artifacts and identity ==
+PASS  C6 enrollment dir mode (700)
+PASS  C6 artifact mode (600)
+PASS  C6 identity mode (600)
+PASS  C6 home dir traversable (755)
+PASS  C6 chown target reported
+PASS  C7 staging_plan names the transport (1)
+PASS  C7 staging_plan carries no secret
+== C8 real validator under unshare ==
+PASS  C8 validator text evaluated (71 lines)
+PASS  C8 validator accepts the hash (rc=0 silent)
+
+== RESULT pass=29 fail=0 ==

@@ -1,0 +1,103 @@
+== date: 2026-10-06T11:29:09-04:00
+== grep -Fq 'pkgs.mkpasswd' modules/flake/apps.nix
+GREP: PASS
+== diff
+diff --git a/modules/flake/apps.nix b/modules/flake/apps.nix
+index e403323..d34683a 100644
+--- a/modules/flake/apps.nix
++++ b/modules/flake/apps.nix
+@@ -525,6 +525,7 @@ EOF
+         pkgs.sops
+         pkgs.pciutils
+         pkgs.mesa-demos
++        pkgs.mkpasswd
+       ] ++ lib.optionals (nhPkg != null) [ nhPkg ];
+     in {
+       "build" = mkApp "build" system { };
+== eval run 1
+/nix/store/xy9vpr67fm50kl2azk5if7z0i0fd1a2d-install/bin/install== eval rc: 0
+== eval run 2 (stale_state)
+/nix/store/xy9vpr67fm50kl2azk5if7z0i0fd1a2d-install/bin/install== eval2 rc: 0
+== eval mkpasswd attr on pinned nixpkgs
+mkpasswd-5.6.6
+== realize install wrapper and show its PATH line
+program=/nix/store/q9cnn31kjfj7rd5jd7x80qgwky54xhkc-install/bin/install
+don't know how to build these paths:
+  /nix/store/q9cnn31kjfj7rd5jd7x80qgwky54xhkc-install
+❌ /nix/store/q9cnn31kjfj7rd5jd7x80qgwky54xhkc-install
+error: path '/nix/store/q9cnn31kjfj7rd5jd7x80qgwky54xhkc-install' is required, but there is no substituter that can build it
+REALIZE: FAIL
+grep: /nix/store/q9cnn31kjfj7rd5jd7x80qgwky54xhkc-install/bin/install: No such file or directory
+WRAPPER-PATH: mkpasswd not found (nix build may be needed)
+== realize wrapper via 'nix run .#install -- --help' and confirm mkpasswd on its PATH
+attempt=1 run_rc=0 p1=/nix/store/xj6hpxj2phrxqvw8pvbjlpr4jpz2mnl5-install/bin/install p2=/nix/store/xj6hpxj2phrxqvw8pvbjlpr4jpz2mnl5-install/bin/install
+STABLE-SOURCE: YES
+--- nix run .#install -- --help (head) ---
+warning: Git tree '/home/mei/nixos-wt/thinkpad-zero-touch-install-wave1' has uncommitted changes
+this derivation will be built:
+  /nix/store/zxzdgjaq86zidhiw1i8vf3ld1831mn76-install.drv
+building '/nix/store/zxzdgjaq86zidhiw1i8vf3ld1831mn76-install.drv'...
+Running install for x86_64-linux
+--- realized wrapper ---
+ls: cannot access '/nix/store/xj6hpxj2phrxqvw8pvbjlpr4jpz2mnl5-install/bin/install': No such file or directory
+--- wrapper PATH ---
+grep: /nix/store/xj6hpxj2phrxqvw8pvbjlpr4jpz2mnl5-install/bin/install: No such file or directory
+grep: /nix/store/xj6hpxj2phrxqvw8pvbjlpr4jpz2mnl5-install/bin/install: No such file or directory
+WRAPPER-PATH-CONTAINS-MKPASSWD: FAIL
+== realized wrapper: /nix/store/zshhynz7r0abrpryxvmwwf3d26sar8ps-install/bin/install
+#!/usr/bin/env bash
+PATH=/nix/store/msr1v91ybfw6j12rs5mfl8ghb2rqsnsr-git-2.55.0/bin:/nix/store/d64q19q1xjdwfhqx6czvrjgrhq0n3lcc-python3-3.14.7/bin:/nix/store/5j1k7bxsljgrgql1cmr98wng8lpk2idn-openssh-10.5p1/bin:/nix/store/zw19f75hl91878iyxbqi7zawsmm0rx6b-sops-3.13.3/bin:/nix/store/xr3xacpw1l5ddkqywvva8nr6ja9qd74f-pciutils-3.15.0/bin:/nix/store/rl4p366b7s1fi7kc3053dpzdig9053mh-mesa-demos-9.0.0/bin:/nix/store/vn4jxcayjiid198w0dwpnbkxr6blwrpf-mkpasswd-5.6.6/bin:/nix/store/ygqaizj2djhpkr3vv9f6z2vfmgv3rwkb-nh-4.4.2-4fb068b/bin:$PATH
+echo "Running install for x86_64-linux"
+exec /nix/store/bnq0fic15k4b08bjvwba452xfjv19wih-source/apps/x86_64-linux/install "$@"
+== PATH entries containing mkpasswd:
+7:/nix/store/vn4jxcayjiid198w0dwpnbkxr6blwrpf-mkpasswd-5.6.6/bin
+WRAPPER-PATH-CONTAINS-MKPASSWD: PASS
+== failure scenario: base checkout (no pkgs.mkpasswd) => wrapper PATH must NOT contain mkpasswd
+main apps.nix mkpasswd count: 0
+warning: Git tree '/home/mei/nixos' has uncommitted changes
+this derivation will be built:
+  /nix/store/d6wczsg0j3mifzq7pgjny04xdwaar4l7-install.drv
+building '/nix/store/d6wczsg0j3mifzq7pgjny04xdwaar4l7-install.drv'...
+Running install for x86_64-linux
+Usage: nix run .#install -- [options]
+drv=/nix/store/d6wczsg0j3mifzq7pgjny04xdwaar4l7-install.drv
+out=/nix/store/76b7r8aj0bzx6m9rrzam8qn4kk2zdbvb-install
+BASE-WRAPPER-CONTAINS-MKPASSWD: NO (expected) -> line is causally required
+== commit: feat(install): put mkpasswd on the installer PATH
+[thinkpad-zero-touch-install/wave1 bb696d1] feat(install): put mkpasswd on the installer PATH
+ 1 file changed, 1 insertion(+)
+COMMIT: OK
+== dirty_worktree probe: git show --stat HEAD
+commit bb696d14568a69ea30f6524e87179ba9e5a2d06f
+Author: Meillaya <nathanagbomed@proton.me>
+Date:   Tue Oct 6 11:36:39 2026 -0400
+
+    feat(install): put mkpasswd on the installer PATH
+
+ modules/flake/apps.nix | 1 +
+ 1 file changed, 1 insertion(+)
+
+================ SUMMARY (task 5: mkpasswd on the installer PATH) ================
+date: 2026-10-06
+change: modules/flake/apps.nix -> installDeps += pkgs.mkpasswd (1 insertion)
+commit: bb696d1 feat(install): put mkpasswd on the installer PATH
+
+Acceptance criteria (plan todo 5):
+  [PASS] grep -Fq 'pkgs.mkpasswd' modules/flake/apps.nix
+  [PASS] nix eval --impure --raw --expr '(builtins.getFlake (toString <worktree>)).apps.x86_64-linux.install.program' -> rc=0 (run twice, identical path)
+
+Stronger positive proof: realized wrapper (nix run .#install -- --help) PATH contains
+  /nix/store/vn4jxcayjiid198w0dwpnbkxr6blwrpf-mkpasswd-5.6.6/bin
+Negative/causal proof: base checkout (no pkgs.mkpasswd) wrapper PATH does NOT contain mkpasswd;
+  mkpasswd attr on pinned nixpkgs = mkpasswd-5.6.6
+
+Adversarial probes:
+  stale_state: eval run 1 and run 2 both succeeded (pasted above).
+  dirty_worktree: git show --stat HEAD lists only modules/flake/apps.nix.
+  malformed_input / misleading_success_output: n/a - one-line dependency addition; grep asserts the
+    line and the eval proves the app resolves; negative wrapper proves causal necessity.
+  long_external_commands: every nix invocation wrapped in timeout 900.
+
+cleanup: none (no servers/sessions/browsers/temp files retained).
+==================================================================================
+

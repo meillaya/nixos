@@ -1,0 +1,15 @@
+ULW-research session 20261006-100350 executed-verification transcript (lead-run, real outputs)
+
+== VA4: generated yescrypt hash staged per the contract, repo validator under unshare -Ur -m
+$ unshare -Ur -m bash runner.sh <valid-tree> <fake-shadow> /tmp/validator.sh
+VALIDATOR(with LF, generated yescrypt): rc=0 output=[]
+VALIDATOR(mode 644): rc=1 output=[bootstrap password hash validation failed: expected numeric owner 0:0 mode 0600]
+VALIDATOR(sha512-hash): rc=1 output=[bootstrap password hash validation failed: expected yescrypt hash]
+
+== Static delivery gate
+$ node report-tools.mjs check report.html --design-spec design-spec.md
+static check exit=0 (status: pass, 0 defects)
+
+== Outcome manifest
+$ node report-tools.mjs outcome verify --session-dir .
+verify: OK, problems: []

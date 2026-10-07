@@ -1,0 +1,115 @@
+# task-16 — ISO: make the installer medium boot (fix F-A / OF-1)
+
+Plan: /home/mei/nixos/.omo/plans/thinkpad-zero-touch-install.md (todo 16)
+Brief: /home/mei/nixos/.omo/ulw-execute/briefs/wave4-t16.md
+Worktree: /home/mei/nixos-wt/thinkpad-zero-touch-install-wave4 (branch thinkpad-zero-touch-install/wave4)
+Base: main 5d4052f  ->  Commit: 7689b0c  fix(iso): let the installer medium boot without the password validator
+Tier: LIGHT (single-spot ISO-only module following the existing extendModules pattern; no open design decisions)
+
+## Defect (F-A)
+`initrd-nixos-activation` runs ALL `system.activationScripts` before switch-root. The live ISO's
+`/` is a tmpfs, so `modules/nixos/bootstrap-password.nix`'s `bootstrapPasswordHash` validator
+hard-fails (`missing /var/lib/nixos-bootstrap/mei-password.hash`), activation aborts before
+writing `/etc`, and switch-root refuses (`os-release file is missing`) -> emergency mode.
+`consumeBootstrapPassword` fails the same way.
+
+## Change (2 files, ISO-only)
+- modules/flake/iso-images.nix — added installer-only module `bootstrapPasswordInert` to the
+  `extendModules` list:
+  `system.activationScripts.bootstrapPasswordHash = lib.mkForce { deps = []; text = ""; };`
+  `system.activationScripts.consumeBootstrapPassword = lib.mkForce { deps = []; text = ""; };`
+  `modules/nixos/bootstrap-password.nix` was NOT touched. No third neutralization was needed:
+  nixpkgs `update-users-groups.pl:241-247` only *warns* when `hashedPasswordFile` is absent under
+  `mutableUsers=true` (observed at boot: `warning: password file '…mei-password.hash' does not exist`).
+- tests/iso-autostart-vm.nix — removed the test-only `seed-bootstrap-password` initrd fixture
+  (and its throwaway hash) so the VM boots the config AS SHIPPED; kept the memory/cores overrides
+  and every assertion.
+
+## Evidence
+
+### Static
+- `nix-instantiate --parse modules/flake/iso-images.nix` OK ; `--parse tests/iso-autostart-vm.nix` OK.
+- `bash tests/dendritic-architecture.sh` = PASS ; `dendritic-boundaries.sh` = PASS ; `dendritic-apps.sh` = PASS.
+
+### (c) eval wall — PASS
+`nix-instantiate --eval --strict --expr 'import ./tests/dendritic-config-eval.nix {}'` -> `dendritic-config-eval=PASS` (rc=0).
+
+### Non-ISO unchanged — PASS
+`nix eval --raw '.#nixosConfigurations.remembrance.config.system.activationScripts.bootstrapPasswordHash.text'`
+-> len=3375, sha256(head)=28e93224f86aa800, byte-identical between the worktree and main 5d4052f (non-empty validator).
+ISO variant: `.#isoConfig.antagony.config.system.activationScripts.bootstrapPasswordHash.text` = "" and
+`...consumeBootstrapPassword.text` = "" (both EMPTY); `consumeBootstrapPassword.deps` = `[]`.
+
+### (a) VM check with the seed fixture removed — PASS
+`timeout 3000 nix build .#checks.x86_64-linux.iso-autostart-vm --no-link` -> `BUILD_RC=0`.
+Logs: t16-vmcheck.log, t16-vmcheck-testlog.txt. Decisive (test's own log):
+```
+plainBoot # [   51.779288] systemd[1]: Reached target Multi-User System.
+gatedBoot # [   50.158339] systemd[1]: Reached target Multi-User System.
+```
+Both variants: 0 occurrences of `bootstrap password hash validation failed`; only the harmless
+nixpkgs mutableUsers warning. Re-run after the machine reboot: `BUILD_RC=0` (cached).
+
+### (d) Failure probe (scratch copy, neutralization removed) — PASS
+Detached worktree /tmp/t16-probe at 5d4052f + the fixture-removed test, NO neutralization:
+`timeout 3000 nix build .#checks.x86_64-linux.iso-autostart-vm --no-link` -> `PROBE_BUILD_RC=1`.
+Logs: t16-probe-vmcheck.log, t16-probe-testlog.txt. Both plainBoot and gatedBoot reproduce the
+real-ISO symptom:
+```
+initrd-nixos-activation-start[231]: bootstrap password hash validation failed: missing /var/lib/nixos-bootstrap/mei-password.hash
+@ystemctl[239]: Failed to switch root: Specified switch root path '/sysroot' does not seem to be an OS tree. os-release file is missing.
+systemd[1]: Reached target Emergency Mode.
+```
+=> the fix is load-bearing (removing it restores emergency mode).
+
+### (b) ISO rebuild + QEMU serial boot of the freshly built artifact — PASS
+`timeout 3600 nix build .#iso.antagony --no-link --print-out-paths` -> `BUILD_RC=0`.
+NEW artifact: `/nix/store/9bqrwpqybmvv400q806w7rvbq9z2j6y7-nixos-26.11.20260923.4975466-x86_64-linux.iso`
+(distinct from the pre-fix F-A ISO `wpjgp9cn…`; ISO file 11 798 683 648 bytes).
+Boot (F-A repro template, kernel/initrd/system/APPEND taken verbatim from the new ISO's own
+`isolinux/isolinux.cfg`; `-cdrom <new iso>`, `console=ttyS0`, `-enable-kvm -cpu host`):
+```
+KERNEL=/nix/store/3znssfyqj0a29cyngp5n0309cparnmpc-linux-7.2.7/bzImage
+INITRD=/nix/store/blzcihisk86k7wr2337gj8wqng0lpym4-initrd-linux-7.2.7/initrd
+SYSTEM=/nix/store/0gwn2sk14ql1294b2v1z9x6d6fzd1adh-nixos-system-antagony-26.11.20260923.4975466
+APPEND=init=$SYSTEM/init root=fstab loglevel=4 lsm=landlock,yama,bpf console=ttyS0,115200n8
+```
+The new system closure's `activate` contains 0 occurrences of the bootstrap validator
+(stale_state check: this is the NEW store path from the NEW ISO, not the cached F-A one).
+Decisive serial lines (t16-iso-serial-clean.log):
+```
+[  OK  ] Reached target Switch Root.
+         Starting NixOS Activation...
+[  OK  ] Finished NixOS Activation.
+         Starting Switch Root...
+Welcome to NixOS 26.11 (Zokor)!
+[  OK  ] Reached target Login Prompts.
+[  OK  ] Reached target Multi-User System.
+antagony login:
+```
+Counts in the boot log: `Reached target Multi-User System` = 1, `antagony login:` = 1,
+`bootstrap password hash validation failed` = 0, `Emergency Mode` = 0.
+
+## Adversarial probes
+- misleading_success_output: the boot REACHED MULTI-USER — `Reached target Multi-User System` +
+  `antagony login:` prompt quoted, not merely "no failure lines".
+- stale_state: booted the NEW store path from the NEW ISO (`9bqrwpqy…` / system `0gwn2sk…`);
+  its activate has no validator.
+- dirty_worktree: `git show --stat HEAD` = only modules/flake/iso-images.nix (+23/-1) and
+  tests/iso-autostart-vm.nix (+8/-36).
+- hung_or_long_commands: all builds/boots under `timeout` (3000/3600/400 s).
+- flaky_tests: (a) is deterministic; re-run post-reboot -> `BUILD_RC=0` again.
+
+## Environment note (reboot)
+The machine rebooted ~18:20 during the first ISO build's xorriso stage; /tmp scratch was lost.
+Worktree edits survived (git diff verified); (a)/(c)/eval-wall were re-run post-reboot (all PASS),
+the ISO was rebuilt (`BUILD_RC=0`), and the serial boot was re-captured. No evidence above relies
+on a pre-reboot /tmp artifact.
+
+## Cleanup receipts
+- qemu: no `qemu-system-x86_64` process remains (`ps -eo pid,cmd | grep '[q]emu-system'` = NONE).
+- monitors: serial-line watchers killed (bash_4/bash_6); build-error watcher rearmed/ended.
+- background build sessions bash_1/bash_3/bash_5/bash_7 all exited.
+- scratch harness `/tmp/t16-boot.sh` removed; stale probe worktree registration pruned
+  (`git worktree prune`); no /tmp/t16-probe dir remains.
+- wave-4 worktree left with exactly the committed change; main worktree untouched.

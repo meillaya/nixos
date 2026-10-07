@@ -1,0 +1,93 @@
+{
+  "verified_tip": "7689b0c242a7e4afecd0a8985ebcdb524cd1a0d4",
+  "branch": "thinkpad-zero-touch-install/wave4",
+  "baseline": "5d4052f (main, /home/mei/nixos)",
+  "verdict": "confirmed",
+  "independent": true,
+  "confidence": 0.97,
+  "criteria": [
+    {
+      "criterion": "(a) fix is ISO-only; installed validator byte-identical to main; ISO scripts empty",
+      "pass": true,
+      "commands": [
+        "diff -u /home/mei/nixos/modules/flake/iso-images.nix /home/mei/nixos-wt/thinkpad-zero-touch-install-wave4/modules/flake/iso-images.nix",
+        "diff -q /home/mei/nixos/modules/nixos/bootstrap-password.nix /home/mei/nixos-wt/thinkpad-zero-touch-install-wave4/modules/nixos/bootstrap-password.nix",
+        "nix eval --raw '.#nixosConfigurations.remembrance.config.system.activationScripts.bootstrapPasswordHash.text' | sha256sum (worktree vs main)",
+        "nix eval --raw '.#nixosConfigurations.remembrance.config.system.activationScripts.consumeBootstrapPassword.text' | sha256sum (worktree vs main)",
+        "nix eval --raw '.#isoConfig.<host>.config.system.activationScripts.{bootstrapPasswordHash,consumeBootstrapPassword}.text' + .deps"
+      ],
+      "result": "iso-images.nix diff = ONLY the added `bootstrapPasswordInert` let-block + its entry in the extendModules list. bootstrap-password.nix byte-IDENTICAL main vs worktree. Installed remembrance validator: bootstrapPasswordHash.text len=3375 sha256(head)=28e93224f86aa800 (cmp IDENTICAL both tips); consumeBootstrapPassword.text len=1534 sha256(head)=fe83ab7a9a29adf3 (cmp IDENTICAL both tips). ISO variant for BOTH hosts (antagony, remembrance): both scripts text len=0, deps=[].",
+      "evidence": "captured in this session; worktree file /home/mei/nixos-wt/thinkpad-zero-touch-install-wave4/modules/flake/iso-images.nix"
+    },
+    {
+      "criterion": "(b) VM test green with the bootstrap-hash seed fixture removed",
+      "pass": true,
+      "commands": [
+        "cd <worktree> && timeout 3000 nix build .#checks.x86_64-linux.iso-autostart-vm --no-link",
+        "cd <worktree> && timeout 3000 nix build .#checks.x86_64-linux.iso-autostart-vm --no-link --rebuild",
+        "nix log <check drv> | grep -E 'plainBoot #|gatedBoot #'"
+      ],
+      "result": "rc=0 (cached) AND rc=0 under forced --rebuild (genuine re-execution). tests/iso-autostart-vm.nix contains zero 'seed-bootstrap-password' occurrences (only the memory/cores resource fixture remains); both variants' assertions (plainBoot inert, gatedBoot gate opens + fails cleanly + rescue + no marker + no disk write) intact. Log: 'Reached target Multi-User System' x2 (plainBoot + gatedBoot), 'bootstrap password hash validation failed' x0, 'emergency mode' x0.",
+      "evidence": "/home/mei/nixos/.omo/evidence/thinkpad-zero-touch-install/wave4-vmcheck-testlog.txt"
+    },
+    {
+      "criterion": "(c) decisive medium proof: the REBUILT ISO boots to multi-user in QEMU (serial console)",
+      "pass": true,
+      "commands": [
+        "cd <worktree> && timeout 3600 nix build .#iso.antagony --no-link --print-out-paths  => /nix/store/9bqrwpqybmvv400q806w7rvbq9z2j6y7-nixos-26.11.20260923.4975466-x86_64-linux.iso",
+        "bsdtar -xOf <new iso>/iso/nixos-*.iso isolinux/isolinux.cfg   (boot paths taken verbatim from the NEW ISO itself)",
+        "/nix/store/y5lw20ymidqg7x3q6f23vkf734id7fmr-qemu-11.1.1/bin/qemu-system-x86_64 -m 2048 -smp 2 -no-reboot -display none -serial file:/tmp/v16-serial.log -kernel /nix/store/3znssfyqj0a29cyngp5n0309cparnmpc-linux-7.2.7/bzImage -initrd /nix/store/blzcihisk86k7wr2337gj8wqng0lpym4-initrd-linux-7.2.7/initrd -append 'init=/nix/store/0gwn2sk14ql1294b2v1z9x6d6fzd1adh-nixos-system-antagony-26.11.20260923.4975466/init root=fstab loglevel=4 lsm=landlock,yama,bpf console=ttyS0,115200n8' -cdrom <new iso>/iso/nixos-26.11.20260923.4975466-x86_64-linux.iso -enable-kvm -cpu host"
+      ],
+      "result": "Boot of the NEW artifact 9bqrwpqy (its own system closure 0gwn2sk14ql1294b2v1z9x6d6fzd1adh, which contains 0 occurrences of 'bootstrap password hash validation failed') reached stage 2: '[  OK  ] Reached target Login Prompts.' (line 307), '[  OK  ] Reached target Multi-User System.' (line 308), 'Started Serial Getty on ttyS0', '<<< Welcome to NixOS 26.11.20260923.4975466 (x86_64) - ttyS0 >>>' and the 'antagony login:' prompt (line 317). Counts in the ANSI-stripped log: Multi-User=1, Login Prompts=1, login prompt=1, validator-failure=0, emergency mode=0, 'Failed to switch root'=0.",
+      "evidence": "/home/mei/nixos/.omo/evidence/thinkpad-zero-touch-install/wave4-serial-boot.log"
+    },
+    {
+      "criterion": "(d) failure falsifiability: neutralization removed reproduces the old abort",
+      "pass": true,
+      "commands": [
+        "git -C <worktree> worktree add --detach /tmp/v16-probe 7689b0c",
+        "git -C /tmp/v16-probe checkout 5d4052f -- modules/flake/iso-images.nix   (neutralization removed; test seed still gone)",
+        "cd /tmp/v16-probe && timeout 3000 nix build .#checks.x86_64-linux.iso-autostart-vm --no-link   => PROBE_BUILD_RC=1",
+        "nix log <probe drv> | grep -E 'validation failed|Failed to switch root|Emergency Mode'"
+      ],
+      "result": "Scratch copy confirmed to have 0 'bootstrapPasswordInert' occurrences and 0 test seed fixtures. Build rc=1; BOTH variants reproduce the exact F-A symptom: 'bootstrap password hash validation failed: missing /var/lib/nixos-bootstrap/mei-password.hash' (plainBoot+gatedBoot) -> 'Failed to switch root: Specified switch root path /sysroot does not seem to be an OS tree. os-release file is missing.' -> 'Reached target Emergency Mode.' multi_user=0. => the fix is load-bearing; the test is sensitive to its removal.",
+      "evidence": "/home/mei/nixos/.omo/evidence/thinkpad-zero-touch-install/wave4-probe-testlog.txt"
+    },
+    {
+      "criterion": "(e) config-eval PASS + flake check green",
+      "pass": true,
+      "commands": [
+        "cd <worktree> && timeout 1800 nix-instantiate --eval --strict --expr 'import ./tests/dendritic-config-eval.nix {}'",
+        "cd <worktree> && timeout 1800 nix flake check --all-systems --no-build"
+      ],
+      "result": "config-eval: 'dendritic-config-eval=PASS' rc=0. flake check: FLACHECK_RC=0, checks.x86_64-linux.iso-autostart-vm enumerated among the checked outputs.",
+      "evidence": "this session (background sessions bash_9, bash_11)"
+    },
+    {
+      "criterion": "(f) commit touches only the two files; tree clean",
+      "pass": true,
+      "commands": ["git show --stat HEAD", "git status --porcelain"],
+      "result": "HEAD 7689b0c 'fix(iso): let the installer medium boot without the password validator' = modules/flake/iso-images.nix (+23/-1) and tests/iso-autostart-vm.nix (+8/-36) ONLY. git status --porcelain = 0 lines.",
+      "evidence": "this session"
+    }
+  ],
+  "repro": "cd /home/mei/nixos-wt/thinkpad-zero-touch-install-wave4 && nix build .#checks.x86_64-linux.iso-autostart-vm --no-link --rebuild && nix build .#iso.antagony --no-link --print-out-paths; then boot the printed ISO's inner image with qemu (store path /nix/store/y5lw20ymidqg7x3q6f23vkf734id7fmr-qemu-11.1.1/bin/qemu-system-x86_64) using kernel/initrd/system from its own isolinux.cfg and `-display none -serial file:<log> ... console=ttyS0`, and grep for 'Reached target Multi-User System' / 'antagony login:' (0 validator-failures, 0 emergency mode).",
+  "adversarial": {
+    "misleading_success_output": "Proved the boot REACHED MULTI-USER (literal 'Reached target Multi-User System.' + 'antagony login:' prompt quoted from the serial log), not merely the absence of failure lines.",
+    "stale_state": "Booted the artifact my OWN build of the fixed worktree produced: `nix build .#iso.antagony --print-out-paths` = /nix/store/9bqrwpqy...iso, drv j4vwa5vq -> that exact output; its system closure 0gwn2sk.../activate contains 0 validator occurrences. NOT the pre-fix F-A ISO (wpjgp9cn...). An early `nix eval .#iso.antagony.drvPath` returned a different drv (mlllvf3 -> 6rgc9y2) due to an eval-cache race ('SQLite database ... busy' under concurrent builds); re-eval consistent, and 6rgc9y2 does not exist on disk.",
+    "dirty_worktree": "git status --porcelain empty; git show --stat HEAD = exactly the two intended files.",
+    "flaky_tests": "VM check re-run under forced --rebuild (not a cache hit) => rc=0; the falsifiability probe proves the same derivation FAILS (rc=1) when the fix is removed, so a pass cannot come from an insensitive test.",
+    "color_code_subtlety": "systemd's console output interleaves ANSI SGR codes inside phrases (e.g. 'Reached target \\e[0;1;39mMulti-User System\\e[0m.'), so a naive `grep 'Reached target Multi-User System'` undercounts; counts above were taken on an ANSI-stripped copy.",
+    "environment_gotcha_confirmed": "qemu is not on PATH (used the store path); `-display none -serial file:<log>` is what yields serial output (the worker reported `-nographic` gives silence) - confirmed by using -display none successfully.",
+    "installed_system_untouched": "Proved by byte-identity (cmp) of both activation-script texts between the worktree tip and main 5d4052f, plus bootstrap-password.nix being byte-identical; the neutralization exists only in the installer-variant extendModules.",
+    "options_eval_no_error": "Both `nix flake check --all-systems --no-build` and full config/ISO evals emitted only benign warnings ('builtins.derivation ... options.json ... without proper context' and 'unchecked flake outputs'), no errors."
+  },
+  "cleanup": [
+    "qemu: none left (pgrep -x qemu-system-x86_64 = NO_QEMU; the boot script terminated qemu via SIGTERM, 'pids_left=' empty).",
+    "probe worktree removed: git -C <worktree> worktree remove --force /tmp/v16-probe (REMOVED) && git worktree prune (PRUNED); `git worktree list` shows only main + wave4.",
+    "scratch under /tmp removed: /tmp/v16-probe, /tmp/v16-*.sh, /tmp/v16-*.log, /tmp/v16-*.txt, /tmp/v16-notepad.md.",
+    "worktree under verification left untouched (read-only): git status --porcelain empty at 7689b0c.",
+    "no nix store gc; no network store paths deleted."
+  ],
+  "notes": "The fix neutralizes system.activationScripts.bootstrapPasswordHash and consumeBootstrapPassword via lib.mkForce {deps=[]; text=\"\";} inside the installer-only extendModules list in modules/flake/iso-images.nix. Mechanism (per F-A diagnosis): with systemd initrd, initrd-nixos-activation runs every activation script before switch-root; the live ISO's '/' is a fresh tmpfs, so the validator's missing-hash hard-fail aborts activation and switch-root then rejects /sysroot -> emergency mode. No third neutralization needed: nixpkgs update-users-groups.pl only warns when hashedPasswordFile is absent under mutableUsers=true."
+}

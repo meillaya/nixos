@@ -1,0 +1,94 @@
+=== task 7 harness run 2026-10-06T12:31:36-04:00 HEAD=b210a75cc930bd130ed1fba965ab2f932f4a32b8 ===
+PASS  extracted 5 real functions (5)
+== C1 happy staging-only run ==
+PASS  stage_install_payload rc (0)
+PASS  password printed exactly once (1)
+PASS  stage set (yes)
+PASS  bootstrap dir mode (700)
+PASS  hash file mode (600)
+PASS  enrollment dir mode (700)
+PASS  candidate staged 0600 (600)
+PASS  intake staged 0600 (600)
+PASS  host key staged 0600 (600)
+PASS  identity at home/<user>/.config/sops/age/keys.txt (yes)
+PASS  identity file mode (600)
+PASS  identity .config mode (700)
+PASS  home/<user> traversable (755)
+PASS  identity content (AGE-SECRET-KEY-1FAKE)
+PASS  no plaintext password blob under stage (0)
+== C2 stale_state: a second run is fresh, same layout ==
+PASS  second run rc (0)
+PASS  distinct stage dir (yes)
+PASS  second bootstrap dir mode (700)
+PASS  second hash file mode (600)
+PASS  second enrollment dir mode (700)
+PASS  second identity file mode (600)
+== C3 failure: no key file anywhere => warn, continue (no die) ==
+PASS  stage_age_identity rc (0)
+PASS  identity warn emitted (1)
+PASS  no identity staged (no)
+== C4 failure: helper failure (dirty stage) => warn, not crash ==
+PASS  stage_age_identity rc on helper failure (0)
+PASS  dirty-stage warn emitted (1)
+== C5 the --save downgrade is a warn, not a die ==
+PASS  announce_unfolded_key rc (0)
+PASS  warn mentions persistence in the installed system (1)
+PASS  no stale die in the app (0)
+PASS  top-level uses the announce function (1)
+== C6 --save escape hatch still copies artifacts ==
+PASS  save rc (0)
+PASS  candidate copied (yes)
+PASS  intake copied (yes)
+PASS  host key copied 0600 (600)
+== C7 identity source fallback order in the app source ==
+PASS  fallback order present (2)
+== C8 dry-run advertises artifacts + identity staging ==
+PASS  plan names nixos-enrollment (1)
+PASS  plan names the identity path (1)
+PASS  plan names the identity source order (1)
+PASS  plan prints no password (0)
+PASS  plan keeps --install-only (1)
+PASS  plan keeps auto_enroll (1)
+
+== RESULT pass=42 fail=0 ==
+HARNESS_EXIT=0
+=== acceptance append 2026-10-06T12:32:08-04:00 HEAD=eca7ddc6c26f883924fc5722c55c16c699ffc6b4 ===
+--- bash -n apps/x86_64-linux/install ---
+bash -n OK (rc=0)
+--- ./apps/x86_64-linux/install --dry-run ---
+install: detected host antagony from DMI product "ThinkPad P52"
+install plan (host: antagony, target: root@127.0.0.1)
+  1. work tree   cp -a /home/mei/nixos-wt/thinkpad-zero-touch-install-wave2/. -> /root/nixos-install (reused if it already holds a flake)
+  2. enrollment  python3 -m scripts.hardware.auto_enroll --host antagony --base <machine record> --trust <generated> --out <workdir>/.install-staging
+  3. commit      config/hosts/intake/antagony.json + .intake.json
+  4. host key    bin/nix-config-host-key-enroll <host-key> antagony   (optional: --skip-fold keeps it local)
+  5. staging     tmpfs stage per run (removed on exit): var/lib/nixos-bootstrap/<user>-password.hash (0700 dir, 0600, yescrypt)
+                 var/lib/nixos-enrollment/<candidate,intake,host-key> (0700 dir, 0600), copied into the installed system
+                 home/<user>/.config/sops/age/keys.txt (0600) from $SOPS_AGE_KEY_FILE else ~/.config/sops/age/keys.txt
+                 transport: --extra-files <stage> --chown home/mei/.config 1000:100
+                 the plaintext password is printed once and never written to disk
+  6. install     <workdir>/bin/host-install.sh --host antagony --target-host 127.0.0.1 --install-only --yes --skip-verify --extra-files <stage> --chown home/mei/.config 1000:100
+                 (refused unless / is a live tmpfs/overlay root, or --allow-mounted-root)
+--- greps ---
+identity fallback order (expect 2): 2
+stale die (expect 0): 0
+staging_artifacts call (expect 1): 1
+staging_identity call (expect 1): 1
+announce top-level call (expect 1): 1
+--- bash tests/dendritic-apps.sh ---
+dendritic-apps=PASS
+dendritic-apps rc=0
+--- git status --porcelain ---
+ M apps/x86_64-linux/install
+commit rc=0
+commit c1bc2ea0e6a71bda9ca33523613ae357bc6d1c7b
+Author: Meillaya <nathanagbomed@proton.me>
+Date:   Tue Oct 6 12:32:25 2026 -0400
+
+    feat(install): persist artifacts and the age identity into the target
+
+ apps/x86_64-linux/install | 69 +++++++++++++++++++++++++++++++++++++++--------
+ 1 file changed, 58 insertions(+), 11 deletions(-)
+cleanup: rm -rf /tmp/ulw-t7-qa (harness + scratch runs)
+leftover under /tmp: 0 (expect 0)
+no servers/tmux/browsers/ports spawned by this lane

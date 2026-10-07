@@ -1,0 +1,44 @@
+{
+  "command": "check",
+  "status": "pass",
+  "exitCode": 0,
+  "layout": "pass",
+  "defects": [
+    {
+      "code": "layout_scroll_container",
+      "severity": "minor",
+      "selector": "body &gt; main &gt; div:nth-of-type(1) &gt; table",
+      "line": null,
+      "message": "table is 69.8px wider than body &gt; main &gt; div:nth-of-type(1), which scrolls (overflow: auto)",
+      "hint": "Scrolling content prints clipped; make the content fit or wrap the table in a scroll wrapper only for HTML deliverables."
+    }
+  ],
+  "counts": {
+    "blocker": 0,
+    "major": 0,
+    "minor": 1,
+    "total": 1
+  },
+  "gatesRun": [
+    "korean_no_keep_all",
+    "emoji_in_prose",
+    "em_dash_in_prose",
+    "en_dash_in_prose",
+    "heading_too_long",
+    "heading_generic",
+    "unsourced_number",
+    "chart_without_figure",
+    "chart_svg_no_text",
+    "chart_svg_missing_labels",
+    "korean_serif_font",
+    "section_without_citation",
+    "missing_closing_section",
+    "missing_citation_section",
+    "broken_asset_reference",
+    "layout"
+  ],
+  "gatesSkipped": [
+    "palette_off_token",
+    "missing_required_section"
+  ]
+}

@@ -1,0 +1,100 @@
+{
+  "verified_tip": "bf90e20641f6a12bd768e0e3acf391862ee33a4a",
+  "verified_at": "2026-10-06T17:29:04Z",
+  "worktree": "/home/mei/nixos-wt/thinkpad-zero-touch-install-wave2",
+  "branch": "thinkpad-zero-touch-install/wave2",
+  "verifier": "independent adversarial (wave 2, round 2)",
+  "round": 2,
+  "drift": "Tip advanced c85a8ffac1cb504aa0594eb226c1152e2c5e3008 -> bf90e20641f6a12bd768e0e3acf391862ee33a4a by exactly ONE commit, bf90e20 'fix(install): forward --chown only when the identity subtree is staged' (parent = c85a8ff; one file apps/x86_64-linux/install, +26/-13; nothing else). Verified at the NEW tip bf90e20641f6a12bd768e0e3acf391862ee33a4a. Worktree clean at start and end ('' == empty). All r2 evidence below was captured at bf90e20.",
+  "delta_audit": {
+    "commit": "bf90e20641f6a12bd768e0e3acf391862ee33a4a",
+    "parent": "c85a8ffac1cb504aa0594eb226c1152e2c5e3008",
+    "subject": "fix(install): forward --chown only when the identity subtree is staged",
+    "diff_c85a8ff..bf90e20": "apps/x86_64-linux/install | 39 +++--- (1 file changed, 26 insertions(+), 13 deletions(-))",
+    "other_files": "NONE (git diff --name-only c85a8ff..bf90e20 prints only apps/x86_64-linux/install)",
+    "what_changed": "adds global identity_staged=false; stage_age_identity() sets identity_staged=true only when staging_identity (or rescue_age_identity) actually staged the .config subtree; install_phase() forwards --chown only when install_user is set AND identity_staged==true; dry-run transport_plan includes --chown only when --rescue-identity is set OR the identity source file exists.",
+    "verdict": "EXACT DELTA, nothing else"
+  },
+  "todos": {
+    "6": {
+      "title": "App: stage the password and forward the transport",
+      "commit": "f9d3265 (fix bf90e20)",
+      "verdict": "confirmed",
+      "confidence": 0.9,
+      "evidence": [
+        "PASS acceptance: `./apps/x86_64-linux/install --dry-run --host antagony` rc=0 prints the staging step, the `--extra-files` transport and the exact `--chown home/mei/.config 1000:100` pair, with NO 'password for' line (key-present host).",
+        "PASS `bash tests/dendritic-apps.sh` -> dendritic-apps=PASS rc=0.",
+        "PASS real-run harness (shipped app under `unshare -Ur -m`, hardware transport stubbed) KEY-PRESENT: exit 0; 'password for mei: <24-char>' printed exactly once; stage tree modes 0700 dirs / 0600 files incl. home/mei/.config/sops/age/keys.txt; 0 plaintext under stage; host-install.sh called with `--extra-files <stage> --chown home/mei/.config 1000:100`.",
+        "PASS failure QA: stubbed-failing mkpasswd -> app exit=1 'install-staging: mkpasswd failed to hash the password' and sentinel ABSENT (host-install.sh NOT invoked).",
+        "PASS `grep -c 'password for' apps/x86_64-linux/install` = 0 (single print lives in the shared helper = 1).",
+        "PASS dirty_worktree: bf90e20 touches ONLY apps/x86_64-linux/install.",
+        "FIX CONFIRMED: the previously unconditional --chown is now gated on identity_staged; see todo 7."
+      ],
+      "repro": "cd {WT} && ./apps/x86_64-linux/install --dry-run --host antagony ; bash tests/dendritic-apps.sh"
+    },
+    "7": {
+      "title": "App: stage the artifacts and the identity; retire the --save requirement",
+      "commit": "c1bc2ea (fix bf90e20)",
+      "verdict": "confirmed",
+      "confidence": 0.9,
+      "evidence": [
+        "PASS acceptance: dry-run lists the enrollment-artifact staging (var/lib/nixos-enrollment/...) and the identity staging (home/<user>/.config/sops/age/keys.txt from $SOPS_AGE_KEY_FILE else ~/.config/sops/age/keys.txt).",
+        "PASS the --save hard die is gone: with --skip-fold and no --save the app prints announce_unfolded_key and continues (exit 0). staging_artifacts=1 call; staging_identity=1 call; identity source fallback present.",
+        "PASS FIX (the r1 defect is gone) NO-KEY run (HOME points at an empty dir, SOPS_AGE_KEY_FILE unset): app exit=0, prints 'warning: no age identity at ...' and CONTINUES, stages ONLY var/lib/* (stage tree has NO home/ path), and the host-install.sh call carries NO `--chown` (only `--extra-files <stage>`).",
+        "PASS NO-KEY dry-run: transport line reads exactly `transport: --extra-files <stage>` and the install plan omits --chown.",
+        "PASS the chown pipeline that used to abort is no longer reachable in the no-key path: nixos-anywhere's `printf ... | pr -2t | runSsh 'while read file ownership; do chown -R \"$ownership\" \"/mnt/$file\"; done'` still fails rc=1 on a missing path (re-simulated: 'chown: cannot access ... No such file or directory', pipeline-rc=1) \u2014 but the app no longer emits that --chown when nothing was staged.",
+        "PASS dirty_worktree: c1bc2ea (and the bf90e20 fix) touch only apps/x86_64-linux/install."
+      ],
+      "repro": "env -u SOPS_AGE_KEY_FILE HOME=<empty-dir> GIT_CONFIG_GLOBAL=/dev/null unshare -Ur -m bash -c 'mount -t tmpfs tmpfs /root; /tmp/ulw-v2/harness-app.sh happy antagony'  # witness: warning + NO --chown + exit 0"
+    },
+    "8": {
+      "title": "App: --rescue-identity and the host/disk match",
+      "commit": "a55e272",
+      "verdict": "confirmed",
+      "confidence": 0.9,
+      "evidence": [
+        "PASS fresh acceptance: `--dry-run --rescue-identity` rc=0 prints the rescue step AND `transport: --extra-files <stage> --chown home/mei/.config 1000:100` (the fix keeps --chown for the rescue path, where the subtree IS staged).",
+        "PASS fresh real-run harness Phase P: host=antagony pending accepted; host=foo pending DIES \"DMI product 'ThinkPad P52' maps to 'antagony', not '--host foo'\" with sentinel ABSENT.",
+        "PASS fresh real-run harness Phase E: candidate==baked -> 'host match OK (enrolled record)'; sizeBytes+1 -> DIES 'storage.expected.sizeBytes differs: baked=500107862016 candidate=500107862017' with sentinel ABSENT.",
+        "PASS unaffected by the fix: a55e272 did not change and the bf90e20 delta is confined to install_phase/stage_age_identity/dry-run transport; verify_host_match / rescue_age_identity bodies are untouched (`git diff c85a8ff..bf90e20` shows no change in those functions)."
+      ],
+      "repro": "unshare -Ur -m bash -c 'mount -t tmpfs tmpfs /root; /tmp/ulw-v2/harness-app.sh match remembrance' (and mismatch / pendmismatch); ./apps/x86_64-linux/install --dry-run --host antagony --rescue-identity"
+    },
+    "9": {
+      "title": "ISO: bake the flake, add the gated unit and the rescue target",
+      "commit": "c85a8ff",
+      "verdict": "confirmed",
+      "confidence": 0.85,
+      "evidence": [
+        "CARRIED FORWARD from r1: bf90e20 touches ONLY apps/x86_64-linux/install and modules/flake/iso-images.nix is unchanged (git diff c85a8ff..bf90e20 lists one file); the r1 assertions (unit fields both hosts, script->app wrapper, flake.isoConfig exposed + flake.iso built from it, negative kernelParams falsifiable, `nix build .#iso.antagony --dry-run` rc=0) remain valid at this tip.",
+        "Formal eval wall (t11) and twin-boot VM (t14) remain wave-3; cross-wave note unchanged."
+      ],
+      "repro": "nix eval --impure --json --file /tmp/ulw-v2/t9-fields.nix (see r1 evidence); git diff --name-only c85a8ff..bf90e20"
+    },
+    "15": {
+      "title": "Operator path: mint and stage the password",
+      "commit": "eca7ddc",
+      "verdict": "confirmed",
+      "confidence": 0.9,
+      "evidence": [
+        "CARRIED FORWARD from r1: bin/host-install.sh is unchanged by bf90e20 (single-file delta); its dry-run staging/transport, --install-only skip, helper sourcing, and malformed-input dies were confirmed in r1 and are not in the fix's blast radius.",
+        "The operator path forwards --chown only with --stage-identity, so it never had the r1 defect."
+      ],
+      "repro": "bash bin/host-install.sh --dry-run --target-host 1.2.3.4 ; git diff --name-only c85a8ff..bf90e20"
+    }
+  },
+  "adversarial": {
+    "stale_state": "PASS \u2014 separate harness invocations use distinct mktemp stages each run with 0 leftovers; the app regenerates the password hash per run; the fix's dry-run transport decision is recomputed from the live filesystem state (key present vs absent) rather than a cached value.",
+    "dirty_worktree": "PASS \u2014 tree clean at tip bf90e20 before and after; bf90e20 is a single-file commit (+26/-13) and `git diff --name-only c85a8ff..bf90e20` prints only apps/x86_64-linux/install.",
+    "misleading_success_output": "PASS (the r1 MIXED finding is resolved) \u2014 with the fix, the no-identity path no longer forwards a --chown at a never-staged path, so the reassuring 'no age identity ... continuing' warning now matches reality (the install no longer aborts post-disko). Dry-runs still print no secret; 'password for' prints exactly once per real run and never in dry-run.",
+    "malformed_input": "PASS \u2014 failing mkpasswd still dies before transport in both entry points; pending-DMI and enrolled candidate-vs-baked mismatches both die before staging/wipe."
+  },
+  "cross_wave": "Unchanged from r1: todo 9's formal eval wall (t11) and twin-boot VM (t14) are wave-3 and not landed; the equivalent assertions were verified directly at c85a8ff and remain valid because bf90e20 does not touch modules/flake/iso-images.nix.",
+  "cleanup": [
+    "rm -rf /tmp/ulw-v2 (harness, fake-bin, nohome, /mnt sim)",
+    "verify 0 leftover nixos-install-staging.* under /dev/shm and /run/user/1000",
+    "verify /run/autoinstall-done absent on the host",
+    "verify worktree clean and tip unchanged",
+    "no servers/tmux/browsers/ports started"
+  ]
+}

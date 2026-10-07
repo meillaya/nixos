@@ -1,0 +1,71 @@
+{
+  "task": "1: ISO: make the enrollment base record actually land",
+  "closes": "GAP-6",
+  "worktree": "/home/mei/nixos-wt/thinkpad-zero-touch-install-wave1",
+  "changed_files": ["modules/flake/iso-images.nix"],
+  "what_changed": [
+    "Replaced the runtime `printf ... > /etc/hardware-enrollment/${host}.json` inside the hardware-enroll oneshot with a declarative `environment.etc.\"hardware-enrollment/${host}.json\".text = baseDeclaration;`.",
+    "Kept the auto-enroll call masked but made the masking journal-visible: `|| true` -> `|| echo \"hardware-enroll: masked failure (artifact presence is the gate)\" >&2`.",
+    "Unit name, ordering, and the /root/enroll trust path unchanged."
+  ],
+  "commands": [
+    {
+      "id": "T1.1-pre",
+      "scenario": "FAILURE baseline (pre-change): etc entry absent",
+      "command": "nix eval --impure --json --expr 'let c = (builtins.getFlake \"/home/mei/nixos-wt/thinkpad-zero-touch-install-wave1\").iso.antagony.passthru.config; in c.environment.etc.\"hardware-enrollment/antagony.json\".text'",
+      "result": "error: attribute '\"hardware-enrollment/antagony.json\"' missing",
+      "pass": true
+    },
+    {
+      "id": "T1.2",
+      "scenario": "HAPPY: declarative etc text now evaluates, contains the hostId (run 1)",
+      "command": "nix eval --impure --raw --expr '...iso.antagony.passthru.config.environment.etc.\"hardware-enrollment/antagony.json\".text'",
+      "result": "{\"boot\":{...},\"hostId\":\"antagony\",...,\"target\":\"nixosConfigurations.antagony\"}",
+      "pass": true
+    },
+    {
+      "id": "T1.3",
+      "scenario": "STALE_STATE probe: same eval run a second time, identical output (eval reflects the edited file)",
+      "command": "same as T1.2 (run 2)",
+      "result": "identical JSON string, hostId=antagony",
+      "pass": true
+    },
+    {
+      "id": "T1.4",
+      "scenario": "Parsed assertion hostId==host for both ISO hosts",
+      "command": "nix eval --impure --json --expr 'let f = builtins.getFlake \"...\"; g = h: (builtins.fromJSON f.iso.${h}.passthru.config.environment.etc.\"hardware-enrollment/${h}.json\".text).hostId; in { antagony = g \"antagony\"; remembrance = g \"remembrance\"; }'",
+      "result": "{\"antagony\":\"antagony\",\"remembrance\":\"remembrance\"}",
+      "pass": true
+    },
+    {
+      "id": "T1.5",
+      "scenario": "nix build .#iso.antagony --dry-run evaluates",
+      "command": "nix build .#iso.antagony --dry-run",
+      "result": "DRYRUN_RC=0 (dry-run only, no ISO built)",
+      "pass": true
+    },
+    {
+      "id": "T1.6",
+      "scenario": "misleading_success_output probe: journal-visible failure marker on the failure path; --base path equals the declarative etc path; old runtime write gone; no bare `|| true`",
+      "command": "grep -n 'masked failure' / 'hardware-enrollment' / 'printf .*hardware-enrollment' / '|| true' modules/flake/iso-images.nix",
+      "result": "line 48 marker present; line 46 --base == line 53 declarative path; GONE_OK (printf gone); NO_BARE_TRUE_OK",
+      "pass": true
+    },
+    {
+      "id": "T1.7",
+      "scenario": "Generated unit script passes bash -n",
+      "command": "nix eval ... .systemd.services.hardware-enroll.script > /tmp; bash -n /tmp",
+      "result": "BASH_N_OK generated unit script",
+      "pass": true
+    },
+    {
+      "id": "T1.8",
+      "scenario": "guardrail: no nixos.autoinstall in boot.kernelParams",
+      "command": "nix eval ... .boot.kernelParams",
+      "result": "[\"root=fstab\",\"loglevel=4\",\"lsm=landlock,yama,bpf\"]",
+      "pass": true
+    }
+  ],
+  "note_on_plan_wording": "The plan acceptance text used `\"hostId\": \"antagony\"` with a space; `builtins.toJSON` emits compact JSON, so the observed value is `\"hostId\":\"antagony\"`. The parsed assertion (T1.4) proves the semantic claim directly.",
+  "result": "PASS"
+}

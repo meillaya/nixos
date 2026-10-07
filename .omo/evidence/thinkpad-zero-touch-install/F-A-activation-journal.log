@@ -1,0 +1,17 @@
+# Guest journal from the real ISO's emergency shell (qemu serial console), F-A
+# systemctl status initrd-switch-root.service --no-pager --full
+x initrd-switch-root.service - Switch Root
+     Loaded: loaded (/etc/systemd/system/initrd-switch-root.service; linked; preset: enabled)
+     Active: failed (Result: exit-code) since Tue 2026-10-06 21:14:22 UTC
+    Process: 207 ExecStart=systemctl --no-block switch-root /sysroot ${NEW_INIT} (code=exited, status=1/FAILURE)
+Oct 06 21:14:22 antagony @ystemctl[207]: Failed to switch root: Specified switch root path '/sysroot' does not seem to be an OS tree. os-release file is missing.
+Oct 06 21:14:22 antagony systemd[1]: initrd-switch-root.service: Failed with result 'exit-code'.
+Oct 06 21:14:22 antagony systemd[1]: Failed to start Switch Root.
+
+# journalctl -b -u initrd-nixos-activation.service --no-pager --full
+Oct 06 21:14:19 antagony systemd[1]: Starting NixOS Activation...
+Oct 06 21:14:21 antagony initrd-nixos-activation-start[176]: booting system configuration /nix/store/ddy21llcihhqbrrrcq8n5pbvj3f8bj26-nixos-system-antagony-26.11.20260923.4975466
+Oct 06 21:14:21 antagony initrd-nixos-activation-start[176]: running activation script...
+Oct 06 21:14:22 antagony initrd-nixos-activation-start[199]: bootstrap password hash validation failed: missing /var/lib/nixos-bootstrap/mei-password.hash
+Oct 06 21:14:22 antagony systemd[1]: initrd-nixos-activation.service: Deactivated successfully.
+Oct 06 21:14:22 antagony systemd[1]: Finished NixOS Activation.

@@ -1,0 +1,16 @@
+0. PYTHONPATH=/home/mei/nixos-wt/thinkpad-zero-touch-install-wave3 python3 scripts/hardware/gen_trust.py --host remembrance -o /tmp/nix-shell.tHvAMN/host-install.2841571/trust.json
+1. ssh root@10.0.0.1 'mkdir -p /root/enroll'
+2. scp trust.json root@10.0.0.1:/root/enroll/
+3. ssh root@10.0.0.1 'systemctl start hardware-enroll'
+4. scp -r root@10.0.0.1:/root/enroll/ /tmp/nix-shell.tHvAMN/host-install.2841571/
+5. cp /tmp/nix-shell.tHvAMN/host-install.2841571/remembrance.json config/hosts/intake/remembrance.json
+   cp /tmp/nix-shell.tHvAMN/host-install.2841571/remembrance.intake.json config/hosts/intake/remembrance.intake.json
+6. bin/nix-config-host-key-enroll /tmp/nix-shell.tHvAMN/host-install.2841571/remembrance.host-key remembrance
+7. git add config/hosts/intake/ [secrets/remembrance-keys.yaml] && git commit -m "enroll: refresh remembrance"
+   staging: var/lib/nixos-bootstrap/mei-password.hash (0700 dir, 0600, yescrypt) under /run/user/1000/nixos-install-staging.2gK5EGlW
+   staging: the plaintext password is printed once and never written to disk
+8. nh os build . -H remembrance
+9. : > /run/autoinstall-done
+   nix run github:nix-community/nixos-anywhere -- --flake .#remembrance --target-host root@10.0.0.1 --extra-files /run/user/1000/nixos-install-staging.2gK5EGlW
+   REFUSING: install requires --yes
+10. nh os switch . -H remembrance --target-host 10.0.0.1

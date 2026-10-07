@@ -1,0 +1,35 @@
+{
+  "command": "check",
+  "status": "pass",
+  "exitCode": 0,
+  "layout": "not_run",
+  "defects": [],
+  "counts": {
+    "blocker": 0,
+    "major": 0,
+    "minor": 0,
+    "total": 0
+  },
+  "gatesRun": [
+    "korean_no_keep_all",
+    "emoji_in_prose",
+    "em_dash_in_prose",
+    "en_dash_in_prose",
+    "heading_too_long",
+    "heading_generic",
+    "unsourced_number",
+    "palette_off_token",
+    "chart_without_figure",
+    "chart_svg_no_text",
+    "chart_svg_missing_labels",
+    "korean_serif_font",
+    "section_without_citation",
+    "missing_closing_section",
+    "missing_citation_section",
+    "broken_asset_reference"
+  ],
+  "gatesSkipped": [
+    "missing_required_section"
+  ]
+}
+check: PASS - 0 blocker, 0 major, 0 minor; layout not_run

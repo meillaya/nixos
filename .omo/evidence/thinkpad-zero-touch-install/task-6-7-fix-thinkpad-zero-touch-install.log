@@ -1,0 +1,227 @@
+# Wave-2 FIX evidence - t6/t7 --chown on a missing identity subtree
+Worktree: /home/mei/nixos-wt/thinkpad-zero-touch-install-wave2
+Defect tip (before): c85a8ffac1cb504aa0594eb226c1152e2c5e3008
+Date: 2026-10-06T17:25:49.050Z
+Harness: /tmp/ulw-fix-t67-20261006/harness.sh (sources the shipped functions from before/after copies; stub host-install.sh records forwarded args). Personal scratch only; the worktree is never mutated by it.
+
+
+########## REPRO - BEFORE, no key: --chown forwarded although the stage has NO home/ tree ##########
+=== MODE=no-key ===
+identity_staged=UNSET
+STAGE TREE:
+.
+CALL:
+install: installing antagony on this machine; --yes was given and the install erases the enrolled disk
+STUB host-install.sh: --host antagony --target-host 127.0.0.1 --install-only --yes --skip-verify --extra-files /tmp/ulw-fix-t67-20261006/before/stage --chown home/mei/.config 1000:100
+=== END MODE=no-key ===
+HARNESS_RC=0
+STDERR:
+install: warning: no age identity at /tmp/ulw-fix-t67-20261006/before/empty-home/.config/sops/age/keys.txt; the installed system will need one before it can decrypt secrets
+
+
+########## REPRO - BEFORE, key present: --chown forwarded (expected here) ##########
+=== MODE=key ===
+staging identity: /tmp/ulw-fix-t67-20261006/before/fake-key.txt -> home/mei/.config/sops/age/keys.txt (forward --chown home/mei/.config 1000:100)
+identity_staged=UNSET
+STAGE TREE:
+.
+./home
+./home/mei
+./home/mei/.config
+./home/mei/.config/sops
+./home/mei/.config/sops/age
+./home/mei/.config/sops/age/keys.txt
+CALL:
+install: installing antagony on this machine; --yes was given and the install erases the enrolled disk
+STUB host-install.sh: --host antagony --target-host 127.0.0.1 --install-only --yes --skip-verify --extra-files /tmp/ulw-fix-t67-20261006/before/stage --chown home/mei/.config 1000:100
+=== END MODE=key ===
+HARNESS_RC=0
+
+
+########## FAILURE MODE - clean no-key stage: nixos-anywhere chown -R pipeline rc=1 ##########
+pipeline rc=1
+stage tree:
+.
+./var
+./var/lib
+./var/lib/nixos-bootstrap
+STDERR:
+chown: cannot access '/tmp/nix-shell.tHvAMN/tmp.RRFEYCPGm0/home/mei/.config': No such file or directory
+
+RESULT: rc=1 'chown: cannot access .../home/mei/.config: No such file or directory' -> under nixos-anywhere 'set -euo pipefail' the install aborts AFTER disko formatted the disk.
+
+
+########## AFTER FIX - no key: NO --chown forwarded, rc=0 ##########
+=== MODE=no-key ===
+identity_staged=false
+STAGE TREE:
+.
+CALL:
+install: installing antagony on this machine; --yes was given and the install erases the enrolled disk
+STUB host-install.sh: --host antagony --target-host 127.0.0.1 --install-only --yes --skip-verify --extra-files /tmp/ulw-fix-t67-20261006/after/stage
+=== END MODE=no-key ===
+HARNESS_RC=0
+STDERR:
+install: warning: no age identity at /tmp/ulw-fix-t67-20261006/after/empty-home/.config/sops/age/keys.txt; the installed system will need one before it can decrypt secrets
+
+
+########## AFTER FIX - key present: exact --chown home/mei/.config 1000:100 still forwarded ##########
+=== MODE=key ===
+staging identity: /tmp/ulw-fix-t67-20261006/after/fake-key.txt -> home/mei/.config/sops/age/keys.txt (forward --chown home/mei/.config 1000:100)
+identity_staged=true
+STAGE TREE:
+.
+./home
+./home/mei
+./home/mei/.config
+./home/mei/.config/sops
+./home/mei/.config/sops/age
+./home/mei/.config/sops/age/keys.txt
+CALL:
+install: installing antagony on this machine; --yes was given and the install erases the enrolled disk
+STUB host-install.sh: --host antagony --target-host 127.0.0.1 --install-only --yes --skip-verify --extra-files /tmp/ulw-fix-t67-20261006/after/stage --chown home/mei/.config 1000:100
+=== END MODE=key ===
+HARNESS_RC=0
+
+
+########## AFTER FIX - real worktree app: --dry-run with NO key available ##########
+install: detected host antagony from DMI product "ThinkPad P52"
+install plan (host: antagony, target: root@127.0.0.1)
+  1. work tree   cp -a /home/mei/nixos-wt/thinkpad-zero-touch-install-wave2/. -> /root/nixos-install (reused if it already holds a flake)
+  2. enrollment  python3 -m scripts.hardware.auto_enroll --host antagony --base <machine record> --trust <generated> --out <workdir>/.install-staging
+  3. commit      config/hosts/intake/antagony.json + .intake.json
+  4. host key    bin/nix-config-host-key-enroll <host-key> antagony   (optional: --skip-fold keeps it local)
+  5. staging     tmpfs stage per run (removed on exit): var/lib/nixos-bootstrap/<user>-password.hash (0700 dir, 0600, yescrypt)
+                 var/lib/nixos-enrollment/<candidate,intake,host-key> (0700 dir, 0600), copied into the installed system
+                 home/<user>/.config/sops/age/keys.txt (0600) from $SOPS_AGE_KEY_FILE else ~/.config/sops/age/keys.txt
+                 transport: --extra-files <stage>
+                 the plaintext password is printed once and never written to disk
+  6. install     <workdir>/bin/host-install.sh --host antagony --target-host 127.0.0.1 --install-only --yes --skip-verify --extra-files <stage>
+                 (refused unless / is a live tmpfs/overlay root, or --allow-mounted-root)
+DRYRUN_RC=0
+
+
+########## AFTER FIX - real worktree app: --dry-run with a key present ##########
+install: detected host antagony from DMI product "ThinkPad P52"
+install plan (host: antagony, target: root@127.0.0.1)
+  1. work tree   cp -a /home/mei/nixos-wt/thinkpad-zero-touch-install-wave2/. -> /root/nixos-install (reused if it already holds a flake)
+  2. enrollment  python3 -m scripts.hardware.auto_enroll --host antagony --base <machine record> --trust <generated> --out <workdir>/.install-staging
+  3. commit      config/hosts/intake/antagony.json + .intake.json
+  4. host key    bin/nix-config-host-key-enroll <host-key> antagony   (optional: --skip-fold keeps it local)
+  5. staging     tmpfs stage per run (removed on exit): var/lib/nixos-bootstrap/<user>-password.hash (0700 dir, 0600, yescrypt)
+                 var/lib/nixos-enrollment/<candidate,intake,host-key> (0700 dir, 0600), copied into the installed system
+                 home/<user>/.config/sops/age/keys.txt (0600) from $SOPS_AGE_KEY_FILE else ~/.config/sops/age/keys.txt
+                 transport: --extra-files <stage> --chown home/mei/.config 1000:100
+                 the plaintext password is printed once and never written to disk
+  6. install     <workdir>/bin/host-install.sh --host antagony --target-host 127.0.0.1 --install-only --yes --skip-verify --extra-files <stage> --chown home/mei/.config 1000:100
+                 (refused unless / is a live tmpfs/overlay root, or --allow-mounted-root)
+DRYRUN_RC=0
+
+
+########## AFTER FIX - bash -n apps/x86_64-linux/install ##########
+bash -n: SYNTAX_OK
+
+
+########## AFTER FIX - bash tests/dendritic-apps.sh ##########
+dendritic-apps=PASS
+SUITE_RC=0
+
+
+########## AFTER FIX - diff ##########
+diff --git a/apps/x86_64-linux/install b/apps/x86_64-linux/install
+index 76e9f84..959fa59 100755
+--- a/apps/x86_64-linux/install
++++ b/apps/x86_64-linux/install
+@@ -41,6 +41,7 @@ install_only=false
+ skip_fold=false
+ allow_mounted_root=false
+ rescue_identity=false
++identity_staged=false
+ 
+ usage() {
+   cat <<'EOF'
+@@ -156,7 +157,8 @@ flake_root=$(cd -- "${script_dir}/../.." && pwd -P)
+ # Shared staging builder (wave 1): staging_init/staging_password mint the
+ # per-install password hash into a tmpfs stage that `nixos-anywhere
+ # --extra-files` copies into the target. The helper also reports the ownership
+-# target for the user-owned subtree, which the install phase forwards --chown.
++# target for the user-owned subtree, which the install phase forwards as
++# `--chown` only when that subtree was actually staged.
+ # shellcheck source=../../bin/_install-staging.sh
+ # shellcheck disable=SC1091
+ source "$flake_root/bin/_install-staging.sh"
+@@ -211,9 +213,13 @@ fi
+ 
+ if [[ "$dry_run" == true ]]; then
+   resolve_identity
+-  ownership_plan="home/<user>/.config <uid>:<gid>"
+-  if [[ -n "$install_user" ]]; then
+-    ownership_plan="home/${install_user}/.config ${install_uid}:${install_gid}"
++  # The user-owned identity subtree is staged only when a source exists, so
++  # --chown is forwarded only then: nixos-anywhere chown -R fails (rc=1) on a
++  # path that was never staged, and disko has already formatted the disk by
++  # that point. No source means no home/ tree, hence no --chown.
++  transport_plan="--extra-files <stage>"
++  if [[ "$rescue_identity" == true || -f "${SOPS_AGE_KEY_FILE:-$HOME/.config/sops/age/keys.txt}" ]]; then
++    transport_plan+=" --chown home/${install_user:-<user>}/.config ${install_uid:-<uid>}:${install_gid:-<gid>}"
+   fi
+   rescue_plan=""
+   if [[ "$rescue_identity" == true ]]; then
+@@ -228,9 +234,9 @@ if [[ "$dry_run" == true ]]; then
+   5. staging     tmpfs stage per run (removed on exit): var/lib/nixos-bootstrap/<user>-password.hash (0700 dir, 0600, yescrypt)
+                  var/lib/nixos-enrollment/<candidate,intake,host-key> (0700 dir, 0600), copied into the installed system
+                  home/<user>/.config/sops/age/keys.txt (0600) from \$SOPS_AGE_KEY_FILE else ~/.config/sops/age/keys.txt
+-                 transport: --extra-files <stage> --chown ${ownership_plan}
++                 transport: ${transport_plan}
+                  the plaintext password is printed once and never written to disk${rescue_plan}
+-  6. install     <workdir>/bin/host-install.sh --host ${host:-<host>} --target-host ${target_host} --install-only --yes --skip-verify --extra-files <stage> --chown ${ownership_plan}
++  6. install     <workdir>/bin/host-install.sh --host ${host:-<host>} --target-host ${target_host} --install-only --yes --skip-verify ${transport_plan}
+                  (refused unless / is a live tmpfs/overlay root, or --allow-mounted-root)
+ EOF
+   exit 0
+@@ -415,17 +421,23 @@ stage_enrollment_artifacts() {
+ # continues; the identity is never fed into the sops fold.
+ stage_age_identity() {
+   local stage="$1" keyfile
++  identity_staged=false
+   if [[ "$rescue_identity" == true ]]; then
+-    rescue_age_identity "$stage"
+-    return $?
++    if rescue_age_identity "$stage"; then
++      identity_staged=true
++    fi
++    return 0
+   fi
+   keyfile="${SOPS_AGE_KEY_FILE:-$HOME/.config/sops/age/keys.txt}"
+   if [[ ! -f "$keyfile" ]]; then
+     printf 'install: warning: no age identity at %s; the installed system will need one before it can decrypt secrets\n' "$keyfile" >&2
+     return 0
+   fi
+-  staging_identity "$stage" "$install_user" "$install_uid" "$install_gid" "$keyfile" \
+-    || printf 'install: warning: could not stage the age identity from %s; continuing\n' "$keyfile" >&2
++  if staging_identity "$stage" "$install_user" "$install_uid" "$install_gid" "$keyfile"; then
++    identity_staged=true
++  else
++    printf 'install: warning: could not stage the age identity from %s; continuing\n' "$keyfile" >&2
++  fi
+   return 0
+ }
+ 
+@@ -613,9 +625,10 @@ install_phase() {
+   if [[ -n "${stage:-}" ]]; then
+     transport+=(--extra-files "$stage")
+   fi
+-  if [[ -n "${install_user:-}" ]]; then
+-    # staging_identity reports the same ownership pair, so the stage always
+-    # forwards it and the user-owned .config subtree stays user-owned.
++  if [[ -n "${install_user:-}" && "$identity_staged" == true ]]; then
++    # Forward the ownership target only when staging_identity actually staged
++    # the .config subtree: nixos-anywhere chown -R fails (rc=1) on a missing
++    # path, and disko has already formatted the disk by that point.
+     transport+=(--chown "home/${install_user}/.config" "${install_uid}:${install_gid}")
+   fi
+   "$workdir/bin/host-install.sh" \
+
+
+########## CLEANUP RECEIPT ##########
+rm -rf /tmp/ulw-fix-t67-20261006 (scratch harness, before/after copies, temp HOMEs, stage dirs). Worktree /home/mei/nixos-wt/thinkpad-zero-touch-install-wave2 holds ONLY the intended edit.

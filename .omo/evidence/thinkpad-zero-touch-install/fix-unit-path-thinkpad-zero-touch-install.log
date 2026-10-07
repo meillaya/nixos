@@ -1,0 +1,68 @@
+# F-B fix evidence - the nixos-autoinstall unit cannot reach the app (unit PATH)
+Date: 2026-10-06T18:33:03.899Z
+Worktree: /home/mei/nixos-wt/thinkpad-zero-touch-install-wave3 (base tip a1c86ad)
+Brief: .omo/ulw-execute/briefs/wave3-fix-unit-path.md
+
+## Root cause
+mkApp (modules/flake/apps.nix:9-21) builds the app wrapper as:
+  #!/usr/bin/env bash
+  PATH=<git+pathDeps>:$PATH
+  exec <self>/apps/x86_64-linux/install "$@"
+The systemd service nixos-autoinstall.service (modules/flake/iso-images.nix) had no
+service-level `path`, so systemd default service PATH (coreutils/findutils/gnugrep/
+gnused/systemd) carried no bash: the wrapper shebang could not exec and the app never
+started. The app first actions are `nix eval` (apps/x86_64-linux/install:175, :256,
+:310, enroll()), so nix was also missing from that PATH.
+
+## BEFORE (existing evidence task-14-thinkpad-zero-touch-install.log:2467-2468)
+  > Oct 06 14:21:30 antagony nixos-autoinstall-start[1066]: env: 'bash': No such file or directory
+  > Oct 06 14:21:30 antagony systemd[1]: nixos-autoinstall.service: Main process exited, code=exited, status=127/n/a
+and the then-current assertion failed:
+  > !!! RequestedAssertionFailed: command `journalctl -u nixos-autoinstall.service --no-pager | grep -F 'install: '` failed (exit code 1)
+
+## Fix
+modules/flake/iso-images.nix - systemd.services.nixos-autoinstall gains:
+  path = [ pkgs.bash pkgs.coreutils pkgs.nix ];
+(sibling of serviceConfig; no unitConfig/serviceConfig field changed - the t11 eval wall
+pins ConditionKernelCommandLine/Type/RemainAfterExit/StandardOutput verbatim.)
+
+## AFTER (new run)
+Run 2 (tightened test) EXIT=0. `timeout 3000 nix build .#checks.x86_64-linux.iso-autostart-vm --no-link`
+rc=0. gatedBoot journal (nix log .#checks.x86_64-linux.iso-autostart-vm):
+  Oct 06 14:45:45 antagony nixos-autoinstall-start[1194]: Running install for x86_64-linux
+  Oct 06 14:45:45 antagony nixos-autoinstall-start[1194]: install: cannot evaluate the flake at /nix/store/qdrblfbxgac0hcsyyb2frk3qdl9215cs-source
+(the wrapper banner proves bash resolved; the app diagnostic proves the app body ran.)
+The old journal had 0 of these lines and 14x the old token (see BEFORE).
+
+Tightened assertions (tests/iso-autostart-vm.nix, gatedBoot):
+  grep -F 'Running install for x86_64-linux'   -> PASS (fail-before: 0 matches pre-fix)
+  grep -F 'install: '                          -> PASS (fail-before: 0 matches pre-fix)
+All durable assertions unchanged and green in the same run: plainBoot inactive/ConditionResult=no,
+rescue target inactive, no /run/autoinstall-done, empty data disk untouched (both variants);
+gatedBoot ConditionResult=yes, unit is-failed with Result=exit-code, rescue target reached.
+
+WHY THE HOST-MATCH DEATH IS NOT OBSERVED HERE (finding, not fixed by F-B):
+  - App dies at its first action, the declared_hosts `nix eval` (apps/x86_64-linux/install:256).
+  - systemd accounting for the unit: 282ms CPU over 25.584s wall, 7.1K outgoing IP -> the eval
+    BLOCKED on the network; the baked flake inputs cannot be resolved offline.
+  - The same store-path eval succeeds on the host (rc=0), including with --offline and under
+    unshare -rn, because the host store already holds the inputs.
+  - The VM test runs inside the Nix build sandbox, which has no internet; the shipped unit
+    declares `after network-online.target`, so on real hardware the app proceeds to
+    verify_host_match (todo 14's literal expectation) and dies there.
+  - Therefore the DMI/host-mismatch message is NOT asserted (it is unreachable in this sandbox).
+
+No `|| true` added; boot.kernelParams and every gate field untouched. git diff --stat: only
+modules/flake/iso-images.nix (+7) and tests/iso-autostart-vm.nix.
+
+## Verification of adjacent surfaces
+- tests/dendritic-config-eval.nix (the t11 eval wall that pins unitConfig.ConditionKernelCommandLine
+  and serviceConfig.Type/RemainAfterExit/StandardOutput): `nix-instantiate --eval --strict --expr
+  'import ./tests/dendritic-config-eval.nix {}'` -> "dendritic-config-eval=PASS", rc=0.
+- `nix-instantiate --parse modules/flake/iso-images.nix` and the same for tests/iso-autostart-vm.nix: PARSE_OK.
+
+## Commit
+5d4052f  fix(iso): give the autoinstall unit a usable PATH
+  modules/flake/iso-images.nix | 7 +++++++
+  tests/iso-autostart-vm.nix   | 37 +++++++++++++++++++++++--------------
+  (git show --stat HEAD = only those two files; branch thinkpad-zero-touch-install/wave3)

@@ -1,0 +1,87 @@
+[1/2] STEP 1/15: FROM docker.io/nixos/nix:2.34.8 AS build
+[1/2] STEP 2/15: ARG NIXPKGS_REV
+--> Using cache c4b4aa021930f4a3a9cd38851a3affc554029d5818b3cb85a8630a704be96d52
+--> c4b4aa021930
+[1/2] STEP 3/15: ARG BUN_REV
+--> Using cache 9300cab82186b40f336637e237d25b2a1f6765766767cb68e17e4b8383db51fc
+--> 9300cab82186
+[1/2] STEP 4/15: ARG RUNTIME
+--> Using cache 97059eee673ff767eaaf9dab0f1abf18303bf12ab46bf9ab2c612bb318782c02
+--> 97059eee673f
+[1/2] STEP 5/15: ARG OMO_WITH_CLAUDE_SDK
+--> Using cache e26f5a090de7d12d2e381d36287c293fe54ae63ccc701a3d12779ef363fbb76c
+--> e26f5a090de7
+[1/2] STEP 6/15: ARG WITH_TTYD
+--> Using cache 31212e97a37790746cb251260f5352c028d6ba2671b074e822977e3da3f9c1fd
+--> 31212e97a377
+[1/2] STEP 7/15: RUN printf '%s\n'       'experimental-features = nix-command flakes'       'sandbox = false'       'build-users-group ='       'warn-dirty = false'     > /etc/nix/nix.conf
+--> Using cache b4f7e133b4eddd8e52700bd38bbd3c8a71a03f17e6ada298cd1c2b6294c6dfbd
+--> b4f7e133b4ed
+[1/2] STEP 8/15: COPY m0-packages.txt /etc/m0/m0-packages.txt
+--> Using cache b0243394a048aafb27232e9cd8351f39ba8acf57205bfb2d2092a63606bf6a4b
+--> b0243394a048
+[1/2] STEP 9/15: RUN --mount=type=cache,target=/root/.cache/nix-m0     set -eux  && pkgs="github:NixOS/nixpkgs/${BUN_REV}#bun"  && while read -r name _; do       case "$name" in ''|'#'*) continue;; esac;       if [ "$name" = "ttyd" ] && [ "${WITH_TTYD}" != "1" ]; then continue; fi;       pkgs="$pkgs github:NixOS/nixpkgs/${NIXPKGS_REV}#$name";     done < /etc/m0/m0-packages.txt  && if [ "${RUNTIME}" = "node" ]; then pkgs="$pkgs github:NixOS/nixpkgs/${NIXPKGS_REV}#nodejs_24"; fi  && nix profile add --profile /nix/var/nix/profiles/m0 $pkgs  && export PATH="/nix/var/nix/profiles/m0/bin:$PATH"  && bun --version  && case "$(bun --version)" in       0.*|1.0.*|1.1.*|1.2.*|1.3.*)         echo "FATAL: bun $(bun --version) is below omo's floor (>= 1.4.0); bump BUN_REV"; exit 1 ;;     esac  && du -sh /nix
+--> Using cache c3d8edaeecc729cedeae11879f4dcc564817ff16c7aa1747a8524696019fcd33
+--> c3d8edaeecc7
+[1/2] STEP 10/15: COPY package.json package-lock.json /opt/omo/
+--> Using cache d261cff38ba50e72358f92ce3f73b23b6bdc88586864eedd3f0f4568236e04f1
+--> d261cff38ba5
+[1/2] STEP 11/15: COPY npm-ci.sh /opt/m0/npm-ci.sh
+--> Using cache 27ccf9f7bbfe30528e3ef5208ce8b4b29ca406d67801fbd7393557881c8cb3e4
+--> 27ccf9f7bbfe
+[1/2] STEP 12/15: RUN --mount=type=cache,target=/root/.npm-m0     nix shell github:NixOS/nixpkgs/${NIXPKGS_REV}#nodejs_24 -c bash /opt/m0/npm-ci.sh  && rm -rf /opt/omo/node_modules/.cache
+--> Using cache c7a20151c743a13160de094723e099d20d34a8168b1f574549e4907e1b12de83
+--> c7a20151c743
+[1/2] STEP 13/15: RUN if [ "${OMO_WITH_CLAUDE_SDK}" = "0" ]; then       set -eux;       du -sh /opt/omo/node_modules/@anthropic-ai/claude-agent-sdk-linux-x64;       rm -rf /opt/omo/node_modules/@anthropic-ai/claude-agent-sdk-linux-x64;     fi  && du -sh /opt/omo
+--> Using cache 5a3237f99a2b179694c640c31c5f92bf55e98b5b913ec0a7c80e475f8e30bae4
+--> 5a3237f99a2b
+[1/2] STEP 14/15: RUN set -eux  && nix registry pin nixpkgs "github:NixOS/nixpkgs/${NIXPKGS_REV}"  && mkdir -p /etc/m0  && cp /root/.config/nix/registry.json /etc/m0/registry.seed.json  && printf '%s\n' "${NIXPKGS_REV}" > /etc/m0/nixpkgs-rev  && printf '%s\n' "${BUN_REV}" > /etc/m0/bun-rev  && cat /etc/m0/nixpkgs-rev /etc/m0/bun-rev
+--> Using cache d3cce3759edf139d789498df88e34f2065f0ed83a1bc7b1077a485091364a4ce
+--> d3cce3759edf
+[1/2] STEP 15/15: RUN set -eux  && nix store gc  && du -sh /nix  && ls /nix/store | wc -l  && test -x /nix/var/nix/profiles/default/bin/nix  && test -x /nix/var/nix/profiles/m0/bin/bun
+--> Using cache 1e4b8e28b1c46f0eab6dde98f3252e6e93134e0ae1688d7da6983721fb7281ff
+--> 1e4b8e28b1c4
+[2/2] STEP 1/13: FROM docker.io/library/alpine:3.22
+[2/2] STEP 2/13: ARG RUNTIME
+--> Using cache ef16d5e3da529698c4696f2005f26a70a44b4ae2b596e18e5ecfc68e51a109ee
+--> ef16d5e3da52
+[2/2] STEP 3/13: COPY --from=build /nix /nix
+--> Using cache dc1f0a8885b9ddd586143d4e9db881f4588ecdd74eb3e324d4d5b017e5815ca4
+--> dc1f0a8885b9
+[2/2] STEP 4/13: COPY --from=build /opt/omo /opt/omo
+--> Using cache 6e6434838681f60a1364ce693aec38836a6d62040dd5f955c97bf5cdc09ba60c
+--> 6e6434838681
+[2/2] STEP 5/13: COPY --from=build /etc/m0 /etc/m0
+--> Using cache dd52d26c50a05566a7f732fcb34043a4d6a28f2884b75b8f3bb06cb413c74ae7
+--> dd52d26c50a0
+[2/2] STEP 6/13: COPY entrypoint.sh /usr/local/bin/railway-entrypoint.sh
+--> 2ca76844c53c
+[2/2] STEP 7/13: COPY m0-nixpkg.sh /opt/m0/bin/m0-nixpkg
+--> 44d05c85cfbb
+[2/2] STEP 8/13: ENV HOME=/home/agent     XDG_CONFIG_HOME=/home/agent/.config     XDG_DATA_HOME=/home/agent/.local/share     XDG_STATE_HOME=/home/agent/.local/state     XDG_CACHE_HOME=/home/agent/.cache     NIX_SSL_CERT_FILE=/nix/var/nix/profiles/m0/etc/ssl/certs/ca-bundle.crt     PATH=/home/agent/.nix-profile/bin:/opt/m0/bin:/nix/var/nix/profiles/m0/bin:/nix/var/nix/profiles/default/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin     SHELL=/nix/var/nix/profiles/m0/bin/bash     M0_RUNTIME=${RUNTIME}     M0_VARIANT=server     M0_AGENT_USER=admin     M0_INTERNAL_PORT=3080     M0_HEALTH_MODE=proxy     M0_REPLAY=1     OMO_TELEMETRY_DISABLED=1
+--> 6b77aec9487c
+[2/2] STEP 9/13: RUN set -eux  && mkdir -p /etc/nix /home/agent/workspace /run/m0  && printf '%s\n'       '# Added by the m0-agent image: the nix toolchain for LOGIN shells.'       'export PATH="/home/agent/.nix-profile/bin:/opt/m0/bin:/nix/var/nix/profiles/m0/bin:/nix/var/nix/profiles/default/bin:$PATH"'     > /etc/profile.d/00-m0-path.sh  && printf '%s\n'       'experimental-features = nix-command flakes'       'sandbox = false'       'build-users-group ='       'warn-dirty = false'       'ssl-cert-file = /nix/var/nix/profiles/m0/etc/ssl/certs/ca-bundle.crt'     > /etc/nix/nix.conf  && mkdir -p /nix/var/nix/profiles/per-user/root /nix/var/nix/gcroots /nix/var/nix/temproots  && ln -sfn /nix/var/nix/profiles/per-user/root/profile /root/.nix-profile  && chmod +x /usr/local/bin/railway-entrypoint.sh /opt/m0/bin/m0-nixpkg  && ln -sf /opt/m0/bin/m0-nixpkg /usr/local/bin/m0-nixpkg  && printf '%s\n' '#!/bin/sh'       'exec "$M0_RUNTIME" /opt/omo/node_modules/omo-ai/bin/omo.js "$@"'     > /opt/m0/bin/omo  && chmod +x /opt/m0/bin/omo  && du -sh /nix /opt/omo
++ mkdir -p /etc/nix /home/agent/workspace /run/m0
++ printf '%s\n' '# Added by the m0-agent image: the nix toolchain for LOGIN shells.' 'export PATH="/home/agent/.nix-profile/bin:/opt/m0/bin:/nix/var/nix/profiles/m0/bin:/nix/var/nix/profiles/default/bin:$PATH"'
++ printf '%s\n' 'experimental-features = nix-command flakes' 'sandbox = false' 'build-users-group =' 'warn-dirty = false' 'ssl-cert-file = /nix/var/nix/profiles/m0/etc/ssl/certs/ca-bundle.crt'
++ mkdir -p /nix/var/nix/profiles/per-user/root /nix/var/nix/gcroots /nix/var/nix/temproots
++ ln -sfn /nix/var/nix/profiles/per-user/root/profile /root/.nix-profile
++ chmod +x /usr/local/bin/railway-entrypoint.sh /opt/m0/bin/m0-nixpkg
++ ln -sf /opt/m0/bin/m0-nixpkg /usr/local/bin/m0-nixpkg
++ printf '%s\n' '#!/bin/sh' 'exec "$M0_RUNTIME" /opt/omo/node_modules/omo-ai/bin/omo.js "$@"'
++ chmod +x /opt/m0/bin/omo
++ du -sh /nix /opt/omo
+992M	/nix
+517M	/opt/omo
+--> fd2f7c1593c9
+[2/2] STEP 10/13: WORKDIR /home/agent/workspace
+--> b0be04c5e8a1
+[2/2] STEP 11/13: EXPOSE 8080
+--> 44bc3fede7d7
+[2/2] STEP 12/13: HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3   CMD wget -qO- "http://127.0.0.1:${PORT:-8080}/healthz" || exit 1
+--> 67fc54268e2c
+[2/2] STEP 13/13: ENTRYPOINT ["/nix/var/nix/profiles/m0/bin/tini","--","/usr/local/bin/railway-entrypoint.sh"]
+[2/2] COMMIT ulw-a7-m0-agent:v4
+--> 68006c26e3d4
+Successfully tagged localhost/ulw-a7-m0-agent:v4
+68006c26e3d44a4a8761671cebb90a5c7784fde707c14d5766ceca3569cd4d1d

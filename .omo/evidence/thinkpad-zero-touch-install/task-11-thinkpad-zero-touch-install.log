@@ -1,0 +1,31 @@
+# task-11 — Tests: the ISO eval wall (plan thinkpad-zero-touch-install, lane B wave 3)
+# worktree: /home/mei/nixos-wt/thinkpad-zero-touch-install-wave3
+
+$ cd /home/mei/nixos-wt/thinkpad-zero-touch-install-wave3 && timeout 900 nix-instantiate --eval --strict --expr 'import ./tests/dendritic-config-eval.nix {}'
+"dendritic-config-eval=PASS"
+EVAL_EXIT=0
+
+=== Adversarial probes ===
+[probe: misleading_success_output] scratch copy with the negative assertion flipped
+  (assert builtins.elem "nixos.autoinstall=1" isoConfigAntagony.boot.kernelParams;):
+  error: assertion '((builtins).elem "nixos.autoinstall=1" (isoConfigAntagony).boot.kernelParams)' failed
+  EXIT=1  => the negative assertion is live and falsifiable
+[probe: falsifiable unit condition] scratch copy with ConditionKernelCommandLine == "nixos.autoinstall=0":
+  error: string '"nixos.autoinstall=1"' is not equal to string '"nixos.autoinstall=0"'
+  EXIT=1
+[probe: stale_state] second run of the acceptance eval: "dendritic-config-eval=PASS" EXIT=0 (deterministic)
+[probe: dirty_worktree] git show --stat HEAD:
+commit 9eb23e0a59a02b904dd91dde43f73f03d5c0b04b
+Author: Meillaya <nathanagbomed@proton.me>
+Date:   Tue Oct 6 13:31:56 2026 -0400
+
+    test(iso): pin the autostart unit and the inert-by-default assertion
+
+ tests/dendritic-config-eval.nix | 30 ++++++++++++++++++++++++++++++
+ 1 file changed, 30 insertions(+)
+
+[cleanup] rm -f /home/mei/nixos-wt/thinkpad-zero-touch-install-wave3/tests/t11-scratch-eval.nix /home/mei/nixos-wt/thinkpad-zero-touch-install-wave3/tests/t11-scratch-cond-eval.nix — receipt: "No such file or directory" (removed)
+
+=== Post-commit acceptance ===
+commit 9eb23e0 test(iso): pin the autostart unit and the inert-by-default assertion
+cd /home/mei/nixos-wt/thinkpad-zero-touch-install-wave3 && nix-instantiate --eval --strict --expr 'import ./tests/dendritic-config-eval.nix {}' => "dendritic-config-eval=PASS" EXIT=0

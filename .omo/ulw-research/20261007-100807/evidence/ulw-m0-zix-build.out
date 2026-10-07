@@ -1,0 +1,15 @@
+warning: Git tree '/home/mei/machine0' has uncommitted changes
+error:
+       … while calling the 'import' builtin
+         at /home/mei/machine0/flake.nix:78:17:
+           77|           dsh = deepseek-harness.legacyPackages.${system}.presets.tui;
+           78|           zix = import ./pkgs/zix { pkgs = upstreamPkgs; };
+             |                 ^
+           79|         };
+
+       error: Path 'pkgs/zix' in the repository "/home/mei/machine0" is not tracked by Git.
+
+       To make it visible to Nix, run:
+
+       git -C "/home/mei/machine0" add "pkgs/zix"
+ZIX_BUILD_EXIT=1

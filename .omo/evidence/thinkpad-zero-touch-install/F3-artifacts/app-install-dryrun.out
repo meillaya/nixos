@@ -1,0 +1,13 @@
+install: detected host antagony from DMI product "ThinkPad P52"
+install plan (host: antagony, target: root@127.0.0.1)
+  1. work tree   cp -a /home/mei/nixos-wt/thinkpad-zero-touch-install-wave3/. -> /root/nixos-install (reused if it already holds a flake)
+  2. enrollment  python3 -m scripts.hardware.auto_enroll --host antagony --base <machine record> --trust <generated> --out <workdir>/.install-staging
+  3. commit      config/hosts/intake/antagony.json + .intake.json
+  4. host key    bin/nix-config-host-key-enroll <host-key> antagony   (optional: --skip-fold keeps it local)
+  5. staging     tmpfs stage per run (removed on exit): var/lib/nixos-bootstrap/<user>-password.hash (0700 dir, 0600, yescrypt)
+                 var/lib/nixos-enrollment/<candidate,intake,host-key> (0700 dir, 0600), copied into the installed system
+                 home/<user>/.config/sops/age/keys.txt (0600) from $SOPS_AGE_KEY_FILE else ~/.config/sops/age/keys.txt
+                 transport: --extra-files <stage> --chown home/mei/.config 1000:100
+                 the plaintext password is printed once and never written to disk
+  6. install     <workdir>/bin/host-install.sh --host antagony --target-host 127.0.0.1 --install-only --yes --skip-verify --extra-files <stage> --chown home/mei/.config 1000:100
+                 (refused unless / is a live tmpfs/overlay root, or --allow-mounted-root)

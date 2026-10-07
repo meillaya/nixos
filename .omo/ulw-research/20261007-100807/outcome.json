@@ -1,0 +1,40 @@
+{
+	"schemaVersion": 1,
+	"sessionDir": "/home/mei/nixos/.omo/ulw-research/20261007-100807",
+	"startedAt": "2026-10-07T14:08:07.000Z",
+	"finishedAt": "2026-10-07T15:23:50.960Z",
+	"elapsedMinutes": 76,
+	"lane": "no-format",
+	"interview": null,
+	"deliverables": [
+		{
+			"format": "html",
+			"status": "delivered",
+			"promised": true,
+			"updatedAt": "2026-10-07T14:57:31.323Z",
+			"path": "/home/mei/nixos/.omo/ulw-research/20261007-100807/report.html",
+			"bytes": 15304
+		},
+		{
+			"format": "md",
+			"status": "delivered",
+			"promised": true,
+			"updatedAt": "2026-10-07T14:57:31.390Z",
+			"path": "/home/mei/nixos/.omo/ulw-research/20261007-100807/SYNTHESIS.md",
+			"bytes": 11849
+		}
+	],
+	"renders": [],
+	"gates": {
+		"static": "pass",
+		"layout": "pass",
+		"visual": "pass",
+		"proofread": "pass"
+	},
+	"residualDefects": [],
+	"repair": null,
+	"sources": {
+		"total": 21,
+		"domains": 11
+	}
+}

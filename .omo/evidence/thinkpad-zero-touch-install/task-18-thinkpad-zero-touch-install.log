@@ -1,0 +1,170 @@
+# task-18 — execute the staging generator in the pinned check (wave5 lane A)
+
+- Worktree: /home/mei/nixos-wt/thinkpad-zero-touch-install-wave5 (branch thinkpad-zero-touch-install/wave5)
+- Plan todo 18 / brief .omo/ulw-execute/briefs/wave5-laneA.md; closes F2 major 3.
+- Skills noted: programming (a test must be able to fail), remove-ai-slops (no overfit assertion).
+
+## Change
+```
+diff --git a/modules/flake/checks.nix b/modules/flake/checks.nix
+index 8c2317a..81ae1fa 100644
+--- a/modules/flake/checks.nix
++++ b/modules/flake/checks.nix
+@@ -36,7 +36,9 @@
+       '';
+ 
+       install-staging = pkgs.runCommand "install-staging" {
+-        nativeBuildInputs = [ pkgs.bash pkgs.coreutils pkgs.gnugrep pkgs.nix pkgs.python3 ];
++        # mkpasswd: the test executes the staging generator for real, and the
++        # generator shells out to `mkpasswd --method=yescrypt --stdin`.
++        nativeBuildInputs = [ pkgs.bash pkgs.coreutils pkgs.gnugrep pkgs.mkpasswd pkgs.nix pkgs.python3 ];
+         NIX_CONFIG = "experimental-features = nix-command flakes";
+         src = inputs.self;
+       } ''
+diff --git a/tests/install-staging.sh b/tests/install-staging.sh
+index 5dfb4e8..6c991ef 100644
+--- a/tests/install-staging.sh
++++ b/tests/install-staging.sh
+@@ -1,8 +1,10 @@
+ #!/usr/bin/env bash
+ # tests/install-staging.sh - staging and transport invariants for the installer.
+ #
+-# Static greps over the live repo files plus one live `--dry-run`; no cached
+-# copies, so the check fails the moment a pinned token is removed.
++# Static greps over the live repo files, one live `--dry-run`, plus one BEHAVIORAL
++# block that actually runs the staging generator and asserts the artifact it
++# produces; no cached copies, so the check fails the moment a pinned token is
++# removed or the generator stops behaving.
+ #
+ # tests/bootstrap-password-lifecycle.sh (bind mounts over /var/lib and
+ # /etc/shadow) stays a deliberate manual gate, out of `nix flake check`.
+@@ -85,4 +87,56 @@ if grep -Eq '\$y\$' <<<"$plan"; then
+   fail "--dry-run printed a yescrypt hash; the plan must carry no secret"
+ fi
+ 
++# --- Behavioral: execute the generator and assert its artifact -------------
++# The greps above pin the helper's text; this block runs it for real (F2 major
++# 3: the generator had token coverage only). `mkpasswd` comes from the check's
++# nativeBuildInputs, so the same binary the installer uses is on PATH.
++. "$helper"
++
++stageprobe_user=stageprobe
++
++# staging_init must be called directly, never as $(staging_init): its EXIT trap
++# would run in the substitution subshell and delete the stage before we use it.
++staging_init >/dev/null \
++  || fail "staging_init did not find a writable tmpfs stage"
++stage=$STAGING_DIR
++[[ -n $stage && -d $stage ]] \
++  || fail "staging_init did not set STAGING_DIR to a directory"
++
++pw_out=$(staging_password "$stage" "$stageprobe_user") \
++  || fail "staging_password failed to hash a password"
++
++# The password is printed exactly once, and the printed line is the only place
++# it appears - never on disk.
++pw_lines=$(grep -c -- "^password for ${stageprobe_user}: " <<<"$pw_out" || true)
++[[ $pw_lines -eq 1 ]] \
++  || fail "staging_password must print the password exactly once; saw $pw_lines line(s)"
++if grep -Eq '\$y\$' <<<"$pw_out"; then
++  fail "staging_password printed the hash; only the plaintext password belongs on stdout"
++fi
++plaintext_pw=${pw_out#password for ${stageprobe_user}: }
++[[ -n $plaintext_pw && $plaintext_pw != "$pw_out" ]] \
++  || fail "could not read the plaintext password back from the printed line"
++
++hash_file="$stage/var/lib/nixos-bootstrap/${stageprobe_user}-password.hash"
++hash_dir=${hash_file%/*}
++[[ -f $hash_file ]] || fail "staging_password did not create $hash_file"
++[[ "$(stat -c '%a' -- "$hash_dir")" == 700 ]] \
++  || fail "staged hash directory must be 0700; got $(stat -c '%a' -- "$hash_dir")"
++[[ "$(stat -c '%a' -- "$hash_file")" == 600 ]] \
++  || fail "staged hash file must be 0600; got $(stat -c '%a' -- "$hash_file")"
++
++# The very regex the activation validator enforces, now checked against the
++# bytes the generator wrote rather than against its source text.
++hash_content=$(<"$hash_file")
++grep -Eqx -- "$hash_regex" <<<"$hash_content" \
++  || fail "staged hash does not match the bootstrap validator regex: $hash_content"
++
++if grep -rFq -- "$plaintext_pw" "$stage"; then
++  fail "the plaintext password leaked onto disk inside the stage"
++fi
++
++# The helper's EXIT trap removes the stage when this script exits.
++printf '%s\n' 'install-staging: behavioral generator block PASS'
++
+ printf '%s\n' 'install-staging=PASS'
+```
+- tests/install-staging.sh: new BEHAVIORAL block after the token greps. It sources
+  bin/_install-staging.sh, calls staging_init directly (never \$(staging_init) - the
+  helper's EXIT trap would delete the stage in the substitution subshell), runs
+  staging_password, and asserts: hash exists at var/lib/nixos-bootstrap/<user>-password.hash;
+  dir 0700; file 0600; content matches the validator regex; the password is printed
+  exactly once and the hash is not printed; no plaintext leaks into the stage.
+  The stage is removed by the helper's own EXIT trap.
+- modules/flake/checks.nix: added pkgs.mkpasswd to the install-staging check's
+  nativeBuildInputs (it was bash/coreutils/gnugrep/nix/python3), so the real
+  `mkpasswd --method=yescrypt --stdin` the installer uses is on the check's PATH.
+
+## Acceptance criteria
+```
+$ bash -n tests/install-staging.sh && echo OK
+OK
+
+$ PATH=/nix/store/vn4jxcayjiid198w0dwpnbkxr6blwrpf-mkpasswd-5.6.6/bin:$PATH bash tests/install-staging.sh; echo "rc=$?"     # run 1 (happy)
+install-staging: behavioral generator block PASS
+install-staging=PASS
+rc=0
+
+$ PATH=/nix/store/vn4jxcayjiid198w0dwpnbkxr6blwrpf-mkpasswd-5.6.6/bin:$PATH bash tests/install-staging.sh; echo "rc=$?"     # run 2 (stale_state / flaky)
+install-staging: behavioral generator block PASS
+install-staging=PASS
+rc=0
+
+$ cd /home/mei/nixos-wt/thinkpad-zero-touch-install-wave5 && nix build --no-link .#checks.x86_64-linux.install-staging; echo "BUILD_RC=$?"
+BUILD_RC=0
+
+$ nix build --rebuild -L --no-link .#checks.x86_64-linux.install-staging
+install-staging> install-staging: behavioral generator block PASS
+install-staging> install-staging=PASS
+RC=0
+```
+The sandboxed check runs the behavioral block for real (staging_init finds the
+sandbox's /dev/shm tmpfs; the mode/regex/no-plaintext assertions execute inside
+the build).
+
+## Adversarial probe — misleading_success_output (garbage mkpasswd must fail the block)
+```
+$ scratch=$(mktemp -d -t ulw-stub-XXXXXX); cp -a /home/mei/nixos-wt/thinkpad-zero-touch-install-wave5/. $scratch/; rm -rf $scratch/.git
+$ mkdir -p $scratch/stubbin
+$ printf '#!/usr/bin/env bash\necho "GARBAGE-not-a-hash"\n' > $scratch/stubbin/mkpasswd
+$ chmod +x $scratch/stubbin/mkpasswd
+$ cd $scratch && PATH="$scratch/stubbin:$PATH" bash tests/install-staging.sh; echo "rc=$?"
+install-staging: generated hash does not match the bootstrap validator regex   (stderr)
+install-staging: staging_password failed to hash a password                    (stderr)
+rc=1                                                                            => the new block FAILS as required
+```
+
+## Cleanup receipt
+```
+$ rm -rf /tmp/ulw-stub-Q6b6s2 && (test -e /tmp/ulw-stub-Q6b6s2 && echo STILL_THERE || echo removed)
+removed
+$ ls /dev/shm | grep nixos-install-staging || echo "no stage dirs"
+no stage dirs
+```
+No background build sessions remain (bash_1 completed exit 0); no leftover stage
+directories.
+
+## Commit (atomic; dirty_worktree probe)
+```
+$ git show --stat --format='commit %H%nsubject: %s' HEAD
+commit 11f544ab7bc2607bc65faaccb33c7428cd5b1ada
+subject: test(install): execute the staging generator and assert its artifact
+
+ modules/flake/checks.nix |  4 +++-
+ tests/install-staging.sh | 58 ++++++++++++++++++++++++++++++++++++++++++++++--
+ 2 files changed, 59 insertions(+), 3 deletions(-)
+```
+
+DoneClaim: {"task": "18: execute the staging generator and assert its artifact (tests/install-staging.sh + modules/flake/checks.nix)", "changed_files": ["tests/install-staging.sh", "modules/flake/checks.nix"], "tests": ["bash tests/install-staging.sh (run 1) => install-staging=PASS (rc=0)", "bash tests/install-staging.sh (run 2) => install-staging=PASS (rc=0)", "nix build --no-link .#checks.x86_64-linux.install-staging => rc=0", "nix build --rebuild -L ... => 'behavioral generator block PASS'", "garbage mkpasswd stub scratch => rc=1 with 'generated hash does not match the bootstrap validator regex'"], "manual_qa": ["nix sandbox run of the check exercises staging_init + staging_password against the real pkgs.mkpasswd"], "cleanup": ["rm -rf /tmp/ulw-stub-Q6b6s2 (verified removed)", "no nixos-install-staging dirs left in /dev/shm", "background nix build bash_1 completed exit 0"], "risks": ["the stage now depends on a writable tmpfs on the check's PATH host; nix sandbox provides /dev/shm (sandbox-dev-shm-size set) and the check passed on this host", "the check prints the generated probe password into the build log; it is a random throwaway hash for a probe user, not a real credential"]}

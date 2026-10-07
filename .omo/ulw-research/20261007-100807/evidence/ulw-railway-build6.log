@@ -1,0 +1,39 @@
+STEP 1/14: FROM alpine:3.21
+STEP 2/14: ARG AGENT=omo
+--> Using cache 84bfe4298afa5da36a72f8a308f6425d509e9e319e834518ef27c0211878f02f
+--> 84bfe4298afa
+STEP 3/14: ARG OMO_VERSION=5.1.22
+--> Using cache d91583fcf025cef57a6c040485cbe8117d27c39d62bcf4b6613d5f8f03f90b13
+--> d91583fcf025
+STEP 4/14: ENV NIX_CONFIG="experimental-features = nix-command flakes"     HOME=/home/agent     PATH=/home/agent/.nix-profile/bin:/root/.nix-profile/bin:/opt/npm/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+--> Using cache f712b8ba2c93dd96ad6b869ed02408c7ced4e3f43cebb0f277073fce5c4d4727
+--> f712b8ba2c93
+STEP 5/14: RUN apk add --no-cache       bash       caddy       ca-certificates       nix       openssl       python3       tini       ttyd  && mkdir -p /etc/nix /home/agent /workspace  && printf 'build-users-group =\n' > /etc/nix/nix.conf  && command -v nix caddy ttyd tini
+--> Using cache b4f963987e6a5cb5679dc92b4631cf13e38484e116a15f5bb0cf48ba0b55a4b3
+--> b4f963987e6a
+STEP 6/14: COPY vendor/zix /opt/zix
+--> Using cache f52d8ef87d96e72e048e8ecec1f6738f9080544bf67738530e4bb8d31626cd0e
+--> f52d8ef87d96
+STEP 7/14: RUN printf '#!/bin/sh\nexec python3 /opt/zix/cli.py "$@"\n' > /usr/local/bin/zix  && chmod 0755 /usr/local/bin/zix  && zix --version
+--> Using cache d7b09e09b064de58e299d15457ccc63b9164bddab37496e0e9437182e9c4366f
+--> d7b09e09b064
+STEP 8/14: RUN set -eux;     case "$AGENT" in       omo|dsh) nix profile install --profile /root/.nix-profile nixpkgs#nodejs_24 ;;       none) : ;;       *) echo "unknown AGENT=$AGENT (omo|dsh|none)"; exit 1 ;;     esac;     if [ "$AGENT" = "dsh" ]; then apk add --no-cache --virtual .dsh-build build-base; fi;     export PATH="/root/.nix-profile/bin:$PATH";     case "$AGENT" in       omo)         node --version;         npm install -g --prefix /opt/npm "omo-ai@${OMO_VERSION}";         /opt/npm/bin/omo --version ;;       dsh)         node --version;         npm install -g --prefix /opt/npm @deepseek-ai/dsh ;;       none) : ;;     esac;     if [ "$AGENT" = "dsh" ]; then apk del .dsh-build; fi;     nix store gc || true;     rm -rf /root/.cache /root/.npm /home/agent/.npm
+--> Using cache 32b189f5a41292cbd9bbdf7d1bbb64d5d679d7f1e5512cfafd5252d08a76b69f
+--> 32b189f5a412
+STEP 9/14: RUN printf 'no agent in this image (AGENT=none): nix + zix only\\n' > /workspace/README.txt
+--> Using cache 775a4f98d830df69078817671aa2d97bbb5f706ef1fa63809a6b672809fcbad3
+--> 775a4f98d830
+STEP 10/14: COPY railway-entrypoint.sh /usr/local/bin/railway-entrypoint.sh
+--> 06b08ba9bc24
+STEP 11/14: RUN chmod 0755 /usr/local/bin/railway-entrypoint.sh
+--> ef31a20b7374
+STEP 12/14: ENV AGENT=${AGENT}
+--> aed4b5cd0c56
+STEP 13/14: EXPOSE 8080
+--> 5ea9b5e172f8
+STEP 14/14: ENTRYPOINT ["/sbin/tini", "--", "/usr/local/bin/railway-entrypoint.sh"]
+COMMIT railway-nix-agent:omo
+--> f07f11175e40
+Successfully tagged localhost/railway-nix-agent:omo
+f07f11175e403412ae53b2f78d81905dec159916d130eacadb7d03c703ebfb4a
+BUILD6_EXIT=0

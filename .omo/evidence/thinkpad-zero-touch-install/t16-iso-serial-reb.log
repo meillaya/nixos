@@ -1,0 +1,9 @@
+source: the newly built ISO's own isolinux boot entry (LINUX/INITRD/APPEND)
+QEMU=/nix/store/y5lw20ymidqg7x3q6f23vkf734id7fmr-qemu-11.1.1/bin/qemu-system-x86_64
+ISO=/nix/store/9bqrwpqybmvv400q806w7rvbq9z2j6y7-nixos-26.11.20260923.4975466-x86_64-linux.iso/iso/nixos-26.11.20260923.4975466-x86_64-linux.iso
+KERNEL=/nix/store/3znssfyqj0a29cyngp5n0309cparnmpc-linux-7.2.7/bzImage
+INITRD=/nix/store/blzcihisk86k7wr2337gj8wqng0lpym4-initrd-linux-7.2.7/initrd
+SYSTEM=/nix/store/0gwn2sk14ql1294b2v1z9x6d6fzd1adh-nixos-system-antagony-26.11.20260923.4975466 (fixed; activate has no bootstrap validator)
+APPEND=init=/nix/store/0gwn2sk14ql1294b2v1z9x6d6fzd1adh-nixos-system-antagony-26.11.20260923.4975466/init root=fstab loglevel=4 lsm=landlock,yama,bpf console=ttyS0,115200n8
+=== qemu (serial -> /home/mei/nixos/.omo/evidence/thinkpad-zero-touch-install/t16-serial-only.log) ===
+qemu-system-x86_64: terminating on signal 15 from pid 14685 (timeout)

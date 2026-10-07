@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>ULW-Research Synthesis</title>
+  <style>
+    html {
+      color: #1a1a1a;
+      background-color: #fdfdfd;
+    }
+    body {
+      margin: 0 auto;
+      max-width: 36em;
+      padding-left: 50px;
+      padding-right: 50px;
+      padding-top: 50px;
+      padding-bottom: 50px;
+      hyphens: auto;
+      overflow-wrap: break-word;
+      text-rendering: optimizeLegibility;
+      font-kerning: normal;
+    }
+    @media (max-width: 600px) {
+      body {
+        font-size: 0.9em;
+        padding: 12px;
+      }
+      h1 {
+        font-size: 1.8em;
+      }
+    }
+    @media print {
+      html {
+        background-color: white;
+      }
+      body {
+        background-color: transparent;
+        color: black;
+        font-size: 12pt;
+      }
+      p, h2, h3 {
+        orphans: 3;
+        widows: 3;
+      }
+      h2, h3, h4 {
+        page-break-after: avoid;
+      }
+    }
+    p {
+      margin: 1em 0;
+    }
+    a {
+      color: #1a1a1a;
+    }
+    a:visited {
+      color: #1a1a1a;
+    }
+    img {
+      max-width: 100%;
+    }
+    svg {
+      height: auto;
+      max-width: 100%;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 1.4em;
+    }
+    h5, h6 {
+      font-size: 1em;
+      font-style: italic;
+    }
+    h6 {
+      font-weight: normal;
+    }
+    ol, ul {
+      padding-left: 1.7em;
+      margin-top: 1em;
+    }
+    li > ol, li > ul {
+      margin-top: 0;
+    }
+    blockquote {
+      margin: 1em 0 1em 1.7em;
+      padding-left: 1em;
+      border-left: 2px solid #e6e6e6;
+      color: #606060;
+    }
+    code {
+      font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
+      font-size: 85%;
+      margin: 0;
+      hyphens: manual;
+    }
+    pre {
+      margin: 1em 0;
+      overflow: auto;
+    }
+    pre code {
+      padding: 0;
+      overflow: visible;
+      overflow-wrap: normal;
+    }
+    .sourceCode {
+     background-color: transparent;
+     overflow: visible;
+    }
+    hr {
+      border: none;
+      border-top: 1px solid #1a1a1a;
+      height: 1px;
+      margin: 1em 0;
+    }
+    table {
+      margin: 1em 0;
+      border-collapse: collapse;
+      width: 100%;
+      overflow-x: auto;
+      display: block;
+      font-variant-numeric: lining-nums tabular-nums;
+    }
+    table caption {
+      margin-bottom: 0.75em;
+    }
+    tbody {
+      margin-top: 0.5em;
+      border-top: 1px solid #1a1a1a;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    th {
+      border-top: 1px solid #1a1a1a;
+      padding: 0.25em 0.5em 0.25em 0.5em;
+    }
+    td {
+      padding: 0.125em 0.5em 0.25em 0.5em;
+    }
+    header {
+      margin-bottom: 4em;
+      text-align: center;
+    }
+    #TOC li {
+      list-style: none;
+    }
+    #TOC ul {
+      padding-left: 1.3em;
+    }
+    #TOC > ul {
+      padding-left: 0;
+    }
+    #TOC a:not(:hover) {
+      text-decoration: none;
+    }
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
+</head>
+<body>
+<header id="title-block-header">
+<h1 class="title">ULW-Research Synthesis</h1>
+</header>
+<h1
+id="ulw-research-synthesis-zero-touch-nixos-install-for-the-thinkpad-antagony">ULW-Research
+Synthesis: zero-touch NixOS install for the ThinkPad (antagony)</h1>
+<p>Members + lanes: 8 members (6 axes + 2 attack) + 14 lanes · Waves: 2
+· Excursions: 3 · Sources: 28 numbered (46 ledger rows) · Debate rounds:
+6 logged rounds / 10 attack verdicts (skeptic lane13, contrarian lane14)
+· Elapsed: MEASURED 24 min (outcome finish elapsedMinutes)</p>
+<h2 id="executive-summary-evidence-s1s20s25">Executive summary
+(evidence: [S1][S20][S25])</h2>
+<p>The user asked for: no second USB, a login password written
+automatically, reuse of the sops material, minimal manual steps on both
+ISOs, and a verdict on “maybe we need a custom installer”.</p>
+<ol type="1">
+<li><strong>The hard requirement is the password, and the fix is a
+RESTORE (10-40 lines).</strong> This repo shipped the mechanism until
+2026-08-19: a SHA-pinned <code>mkpasswd --method=yescrypt</code>
+per-install password staged via
+<code>nixos-anywhere --extra-files</code> into
+<code>/var/lib/nixos-bootstrap/mei-password.hash</code> (0700 dir / 0600
+root file) and consumed by the existing activation contract. It was lost
+in the <code>d4f2559</code> merge; the later target-side rewrite kept
+everything except the caller. The validator contract still exists
+(symlink checks fixed, yescrypt enforced, sentinel consumption tested);
+<code>hashedPasswordFile</code> is the highest-precedence password
+option on the pinned nixpkgs, so a staged file overrides any alternative
+(initialPassword literals are silently overridden, do not use them).
+Executed proof (VA4): a generated yescrypt hash staged per the contract
+passes the repo’s real validator (<code>rc=0</code>, silent), while
+mode-644 and sha512 variants fail with the contract’s messages.</li>
+<li><strong>“Reuse the sops store” is not a requirement as stated, but
+one identity is load-bearing and irreversible.</strong> Nothing in
+<code>modules/**</code> declares <code>sops.secrets</code>
+(lane14/lane25 greps); executed runs show
+<code>gen_trust --host antagony</code> succeeds with no store (fleet
+fallback) while <code>--host remembrance</code> fails closed without it;
+the fold only escrows a host key nothing consumes. What DOES matter: the
+<code>&amp;workstation</code> age identity at
+<code>~/.config/sops/age/keys.txt</code> is the only held recipient that
+unwraps <code>secrets/github-ssh.yaml</code>, it lives on the disk being
+wiped, and the fleet/install-authorizer private key is not present on
+this laptop (executed grep). Carry the identity into the installed root
+(same <code>--extra-files</code> staging) or it is destroyed. Reusing
+<code>remembrance-keys.yaml</code> is impossible here anyway (its rule
+encrypts to <code>&amp;admin</code>+<code>&amp;recovery</code>, not
+held). [S20][S25]</li>
+<li><strong>No second USB is solved by the same staging step</strong>:
+put the enrollment artifacts, the age identity, and (optionally) the
+GitHub key into the installed system’s persistent
+<code>/var/lib/...</code> root; <code>--save</code> stops being a
+requirement (the ISO’s work tree is only RAM). [S20][S21]</li>
+<li><strong>Autostart is the user-requested extra; it must be a trigger,
+never an authorization.</strong> The flake ISO can chain the existing
+<code>hardware-enroll</code> oneshot into a gated install unit
+(<code>ConditionKernelCommandLine = "nixos.autoinstall=1"</code>,
+<code>SuccessAction = reboot</code>, <code>OnFailure</code> to a rescue
+target, console output). A plain boot of the stick must stay inert. The
+autostart path additionally requires a DMI/disk match against the
+enrolled record and a persistent completion marker so a reboot cannot
+re-run a finished or partial install (nixos-anywhere’s disko path wipes
+with no confirmation of its own). The official NixOS ISO cannot
+autostart (no custom units); there the one command remains, and it
+inherits the same password/identity staging because that lives in the
+app. [S22][S23]</li>
+<li><strong>Verdict: no new installer project.</strong> The flake ISO
+already is a custom installer; the marginal capability is autostart,
+which is about one module plus test coverage. A new project buys nothing
+the user asked for, and its known shapes (grub.cfg patching) are
+brittle. [S10][S20][S22]</li>
+</ol>
+<h2 id="findings-by-theme">Findings by theme</h2>
+<h3 id="password-restore-the-caller-keep-the-contract">1. Password:
+restore the caller, keep the contract</h3>
+<ul>
+<li>Contract:
+<code>hashedPasswordFile = /var/lib/nixos-bootstrap/mei-password.hash</code>;
+validator before <code>users</code>, consumer rewrites to <code>!</code>
+after; <code>$y$</code>, one LF line, salt &lt;=86, 0:0, 700/600, no
+symlinks [S3]; the old gate-review symlink hole is closed
+(<code>! -L</code> before <code>-e</code>) [S18].</li>
+<li>Precedence on the pinned nixpkgs: <code>hashedPasswordFile</code>
+wins (rightmost in <code>overrideOrderMutable</code>; nixpkgs’ own VM
+test calls the old warning order “in fact wrong”) [S12][S19].</li>
+<li>Generator must be non-interactive (<code>mkpasswd</code> prompts by
+default; use <code>--stdin</code>) [S19].</li>
+<li>Historical caller (recovered verbatim): tmpfs stage, regex
+validation, <code>--extra-files</code>, <code>--build-on local</code>,
+<code>--no-substitute-on-destination</code>, stdin passthrough
+[S1].</li>
+<li>Executed: VA4; staging modes VA1; downstream acceptance of
+<code>$y$</code> by libxcrypt/shadow/PAM [S4].</li>
+</ul>
+<h3
+id="identity-and-artifacts-what-must-leave-the-disk-before-it-is-wiped">2.
+Identity and artifacts: what must leave the disk before it is wiped</h3>
+<ul>
+<li><code>&amp;workstation</code> age identity + the
+<code>&amp;github</code> SSH key (derived:
+<code>~/.ssh/id_ed25519</code> is the GitHub key) + (if present) any
+<code>secrets/*.yaml</code> to stage into the installed root [S20][S25];
+<code>path:</code>-built ISOs can alternatively bake untracked material,
+at the cost of world-readable copies in /nix/store [S15][S25].</li>
+<li>Old-disk route verified [S25]: <code>btrfs.ko</code> ships in the
+kernel modules output, subvolume <code>@home</code> mounts read-only
+from an ISO, and the identity lives there; btrfs-progs is absent but a
+single-device <code>mount -o subvol=@home,ro</code> needs no userspace
+helper [S24][S25].</li>
+<li>Enrollment artifacts (candidate, intake document, host key) ride the
+same staging [S21]; <code>--save</code> becomes optional [S20].</li>
+<li>The fold remains for machines that hold a writable store; on this
+laptop it is skipped, and nothing at runtime consumes the folded key
+[S20][S21].</li>
+</ul>
+<h3 id="autostart-on-the-flake-iso-gated">3. Autostart on the flake ISO
+(gated)</h3>
+<ul>
+<li>Unit shape, ordering and gate per lane12 [S22]:
+<code>Wants/After network-online.target</code>,
+<code>After sshd.service hardware-enroll.service</code>,
+<code>Type=oneshot</code>, <code>RemainAfterExit</code>,
+<code>ConditionKernelCommandLine</code>,
+<code>SuccessAction=reboot</code>, <code>OnFailure</code> to a rescue
+target, journal+console.</li>
+<li>Safety additions (skeptic) [S23]: the flag is a trigger, never
+authorization; require a host/disk match and a persistent completion
+marker; no auto-reboot loop.</li>
+<li>The ISO must also gain
+<code>boot.supportedFilesystems = [ "btrfs" "vfat" ]</code>
+(btrfs-progs) and <code>boot.kernelModules = [ "btrfs" ]</code> (stage-2
+load) so it can read the old disk first; <code>kmod</code> is already in
+the ISO’s systemPackages (lead eval) [S6][S23][S24].</li>
+<li>Pre-existing defect found: <code>iso-images.nix</code> writes
+<code>/etc/hardware-enrollment/&lt;host&gt;.json</code> without creating
+the directory, so the ISO’s <code>hardware-enroll</code> oneshot fails
+silently under <code>|| true</code> [S24]. One-line fix
+(<code>mkdir -p</code>).</li>
+</ul>
+<h3 id="official-nixos-iso-honest-residue">4. Official NixOS ISO: honest
+residue</h3>
+<p>One command remains; the same app-side staging gives the same
+password/identity result; the flakes flag is required. No custom unit
+can be added [S22]. The official ISO’s
+<code>initialHashedPassword</code> collision affects root/nixos only,
+not mei, and the flake ISO does not import that profile [S19].</p>
+<h3 id="engine-choice">5. Engine choice</h3>
+<p>Keep the app’s SSH-to-self nixos-anywhere path (no local mode exists
+upstream; SSH-to-self is what the app already does;
+<code>--extra-files</code> lands before activation with modes preserved)
+[S5][S22]. disko-install is the only native-local alternative but has a
+0755 parent-dir trap, no <code>--chown</code>, and continues after a
+failed disko script (#1046) [S17].</p>
+<h2 id="codebase-findings-absolute-paths-sources-s11s21">Codebase
+findings (absolute paths, sources [S11][S21])</h2>
+<ul>
+<li><code>apps/x86_64-linux/install</code>: entry point; no
+password/identity staging today; <code>--skip-fold --save</code> is a
+workaround for the RAM work tree; live-root guard + <code>--yes</code>
+are the only gates.</li>
+<li><code>bin/host-install.sh</code>: <code>--install-only</code> path
+has no <code>--extra-files</code>; must forward a staging dir.</li>
+<li><code>modules/nixos/bootstrap-password.nix</code>: the contract to
+satisfy (validator before <code>users</code>, consumer after,
+<code>! -L</code> before <code>-e</code>,
+<code>hashedPasswordFile</code> path).</li>
+<li><code>modules/flake/iso-images.nix</code>:
+<code>hardware-enroll</code> oneshot (missing <code>mkdir -p</code>
+defect), installer marker, ISO built from the host config via
+<code>images.iso</code>.</li>
+<li><code>modules/aspects/features/sops.nix</code>:
+<code>sops.age.sshKeyPaths = ~/.ssh/id_ed25519</code> (the identity the
+new host needs).</li>
+<li><code>.sops.yaml</code>: <code>remembrance-keys.yaml</code> rule
+encrypts to <code>&amp;admin</code>+<code>&amp;recovery</code>
+only.</li>
+</ul>
+<h2 id="sources-ranked">Sources (ranked)</h2>
+<p>S1 recovered <code>bin/nixos-anywhere-bootstrap-password.sh</code> @
+f7015a56 (lane2 via GitHub API; deleted in d4f2559). S2 prior research +
+gate reviews @ d4f2559 (lane2 recovery). S3
+<code>modules/nixos/bootstrap-password.nix</code> +
+<code>tests/bootstrap-password-lifecycle.sh</code>. S4 nixpkgs rl-2211 +
+libxcrypt/shadow/PAM (lane4) + VA4. S5 nixos-anywhere src L876-885 +
+tests/from-nixos.nix @ 3c6e0cc (lane3/lane9/anywhere-flags). S6 lead nix
+evals: iso.antagony vs iso.remembrance (btrfs gap), kernel config
+(<code>CONFIG_BTRFS_FS=m</code>), kmod present. S7 sops-nix module +
+sops-install-secrets @ dcd241b (lane4). S8 discourse 39748 (grub
+patching brittle). S9 repo tests + checks.nix (lane1): ISO autostart
+zero coverage. S10 discourse 33244/50618/51068/47022 + tfc + misuzu +
+Bossearch (lane7/prior-art). S11 repo commits 6992dd2/731de47 and the
+app source. S12 nixpkgs users-groups.nix
+<code>overrideOrderMutable</code> + update-users-groups.pl. S13 disko
+<code>_legacyDestroy</code> (no confirmation) @ ff8702b4 (lane9 pin
+corrected by lane13). S14 lead probes: age-keygen -y, sops -d, find
+sweeps; .sops.yaml rules (lane6). S15 lead probes: <code>path:</code> vs
+<code>git+file</code> flake inclusion. S16 /proc/mounts + fstab; CachyOS
+subvolume layout (lane6). S17 disko-install source + #1046 +
+nixos-anywhere #455 (lane8/anywhere-flags/lane9). S18 lane11: the
+symlink hole is closed at HEAD (<code>! -L</code> before
+<code>-e</code>). S19 lane11: nixpkgs
+<code>password-option-override-ordering.nix</code> (rightmost wins;
+mkpasswd interactive). S20 lane14: nothing consumes the store; the
+<code>&amp;workstation</code> identity is the irreversible item. S21
+lane10: the gap map (G1-G7) and the port-vs-reinvent verdicts. S22
+lane12: the ISO unit/gate design + official-ISO residue + test plan. S23
+lane13: skeptic verdicts; trigger-not-authorization rule; pin
+corrections; independence audit. S24 lead greps/evals:
+<code>/etc/hardware-enrollment</code> has no creator (defect); kmod
+present. S25 secrets-route executed report: identity inventory,
+gen_trust runs (antagony OK / remembrance fails), old-disk mount proof
+(btrfs.ko present), path: vs git inclusion + world-readable leak
+surface, fleet/install-authorizer private key absent.</p>
+<h2 id="verified-claims-method-s1s3s5s19s24">Verified claims (method:
+[S1][S3][S5][S19][S24])</h2>
+<ul>
+<li>VA1 (executed, lead): tar staging with <code>--no-same-owner</code>
+preserves 0600 files and 0700 dirs exactly under umask 022/077; setuid
+is dropped for non-root extraction only.</li>
+<li>VA2 (executed, lead): pinned kernel <code>CONFIG_BTRFS_FS=m</code>;
+<code>iso.antagony</code> lacks btrfs/vfat support and btrfs-progs;
+<code>iso.remembrance</code> has both; <code>kmod</code> present on both
+ISOs.</li>
+<li>VA3 (executed, lead): <code>path:</code> flakes include untracked
+files; <code>git+file</code> does not.</li>
+<li>VA4 (executed, lead): generated yescrypt hash + LF + 0700/0600 +
+unlocked shadow, validator <code>rc=0</code> silent; 0644 gives rc=1
+“expected numeric owner 0:0 mode 0600”; sha512 gives rc=1 “expected
+yescrypt hash”.</li>
+<li>VA5 (source-verified): password precedence; <code>!</code> sentinel
+safe under mutableUsers.</li>
+<li>VA6 (source-verified, lane3 + upstream test):
+<code>--extra-files</code> runs before nixos-install; modes preserved;
+owner root.</li>
+<li>VA7 (source-verified, lane9/lane13): nixos-anywhere’s disko path
+wipes without confirmation.</li>
+<li>VA8 (executed, secrets-route):
+<code>gen_trust --host antagony</code> exit 0 without a store;
+<code>--host remembrance</code> exit 1;
+<code>mount -o subvol=@home,ro</code> works from an ISO; the fleet key
+is absent.</li>
+</ul>
+<h2 id="epistemic-instrumentation-summary-sources-s2s23">Epistemic
+instrumentation (summary, sources [S2][S23])</h2>
+<p>Intent-diff closed: I1 (staging solves no-USB), I2 (restore solves
+password), I3 (reframed to identity preservation), I4 (gated autostart
+on the flake ISO; honest official-ISO residue), I5 (gates preserved:
+<code>--yes</code> + live-root + trigger-not-authorization), I6 (no new
+installer). Claim graph: 11 nodes (wave-2 findings are folded into the
+wave files and this synthesis); the high-risk nodes carry at least two
+independent sources or an executed verification; the independence audit
+is recorded (C7/C2 are single-source clusters; the silent-wipe claim has
+three foreign sources). Observation manifest: 11 rows plus the wave-file
+observations. Verification economics: all contested mechanisms either
+executed (VA1-VA4, VA8) or source-pinned; the one unexecuted item is a
+real ISO boot with the gate.</p>
+<h2 id="debate-record-sources-s20s23">Debate record (sources
+[S20][S23])</h2>
+<ul>
+<li>Skeptic (lane13): 5 verdicts. C7 STANDS (scope-limited to root
+extraction), C8 WEAK (btrfs-progs false, module-load unverified),
+silent-wipe STANDS (pin corrected to ff8702b4), C2 STANDS for the
+contract / WEAK for the staging leg, plus an independence audit that
+demoted two “multi-source” claims to single-source clusters.</li>
+<li>Contrarian (lane14): 5 premise attacks. Custom-installer is a
+category error; store-reuse is not a requirement (identity preservation
+is); the password caller is the only missing piece; <code>--save</code>
+is redundant once staging lands in the target; R2 is the load-bearing
+requirement.</li>
+<li>Both attacks changed this synthesis: the identity-preservation
+addition, the trigger-not-authorization rule, the ISO additions
+(kernelModules + supportedFilesystems), and the downgrade of “reuse the
+store” from requirement to reframed risk.</li>
+</ul>
+<h2
+id="contradictions-and-their-resolution-sources-s5s23">Contradictions
+and their resolution (sources [S5][S23])</h2>
+<ol type="1">
+<li>extra-files “after installation” (docs) vs before nixos-install
+(code), code wins (three readers).</li>
+<li><code>--no-root-passwd</code> vs <code>--no-root-password</code>,
+both accepted aliases; not a rename.</li>
+<li>Password precedence: old warning wording vs source; source wins,
+hashedPasswordFile is rightmost.</li>
+<li>btrfs on the ISO: upstream ISOs support it (profiles/base.nix) vs
+this repo’s ISO (host config), both true; the repo’s pending host needs
+the explicit additions.</li>
+<li>disko pin: lane9 cited 725ea35; this flake pins ff8702b4;
+corrected.</li>
+<li><code>--disko-mode destroy</code> documented but rejected by the
+parser.</li>
+</ol>
+<h2 id="unresolved-refuted-sources-s20s25">Unresolved / refuted (sources
+[S20][S25])</h2>
+<ul>
+<li>Unresolved: a real ISO boot exercising the gate (needs a hardware
+round trip); whether the user’s “first sops store” exists somewhere
+unreachable; reddit-class sources (anonymous access gated; the browsing
+lanes could not render).</li>
+<li>Refuted: “a custom installer project is needed”; “the sops store
+must be reused”; <code>initialPassword</code> as a solution (silently
+overridden + plaintext); “/run staging” (historical research plus
+unreachable across install).</li>
+</ul>
+<h2 id="gaps-sources-s9s25">Gaps (sources [S9][S25])</h2>
+<ul>
+<li>Browsing lanes produced extracted text, not screenshots (child
+toolset had no browser); a provenance gap, not a claim gap.</li>
+<li>The <code>hardware-enroll</code> directory defect and the ISO
+additions are source-verified but not boot-tested.</li>
+<li>The lead’s own helper script was deleted for a hook policy
+(triple-quoted data blob); nothing was executed from it.</li>
+</ul>
+<h2 id="expansion-trace-sources-s22s23">Expansion trace (sources
+[S22][S23])</h2>
+<p>Wave 1: 8 members + 9 lanes, 7 lane returns + 1 member return; 5
+members errored at startup (runtime provider failures), so wave 2
+replaced them with lanes 10-14. Leads L1-L31 tracked in
+expansion-log.md. Convergence: no new unchecked leads after wave 2;
+remaining items are user-input questions or hardware-round-trip
+verifications.</p>
+<h2 id="method-how-this-research-was-made">Method: how this research was
+made</h2>
+<ul>
+<li>Team: 8 members at creation (one per axis plus a skeptic and a
+contrarian). Five members errored at startup with no transcript (runtime
+provider failures); those axes were re-covered by replacement task
+lanes. 14 lanes ran in total across two waves.</li>
+<li>Lanes: 2 explore (repo tests; repo history), 5 librarian
+(nixos-anywhere source; NixOS/sops docs; prior art; transport; repo
+dive), 2 browsing (discourse and GitHub threads, armed with the
+ultimate-browsing skill; they could not render or screenshot, so they
+returned first-party extracted text instead), 3 replacement lanes (repo
+gaps; password proof; ISO design), 2 attack lanes (skeptic;
+contrarian).</li>
+<li>Waves: wave 1 launched 8 members + 9 lanes in one turn; wave 2
+launched the replacement and attack lanes and followed each returned
+lead. Convergence: no new unchecked leads after wave 2.</li>
+<li>Searches: English-first web search across official docs, GitHub
+sources at pinned SHAs, and community threads; repository claims read
+from the working tree at the session’s commits (6992dd2 and the
+docs-only 5a33373), with deleted history recovered through the GitHub
+API.</li>
+<li>Verifications: 7 executed checks by the lead (VA1-VA4 plus eval
+probes) and lane-executed checks (secrets-route’s gen_trust runs and the
+old-disk mount proof); the one mechanism not executed end-to-end is a
+real ISO boot with the autostart gate.</li>
+<li>Debate: the skeptic returned 5 verdicts and the contrarian 5 premise
+attacks; both changed the synthesis (identity preservation,
+trigger-not-authorization, the ISO kernel-module fix, and the downgrade
+of store reuse from requirement to reframed risk).</li>
+<li>Correction log: the draft treated “reuse the sops store” as a
+requirement and autostart as core; the contrarian’s evidence reframed
+the first and the skeptic’s the second. The disko citation was corrected
+to the shipping pin ff8702b4. The btrfs claim was corrected from
+“btrfs-progs present” to “absent on iso.antagony; one-line fix”. A lead
+helper script was deleted for a hook policy and two session files were
+rewritten after a tooling mistake (async read) clobbered them; this
+synthesis is the restored and verified version.</li>
+</ul>
+</body>
+</html>

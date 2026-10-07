@@ -1,0 +1,92 @@
+# Task 19 - make the unit-script assertion non-tautological
+
+Wave: 5 lane B
+Worktree: /home/mei/nixos-wt/thinkpad-zero-touch-install-wave5 (branch thinkpad-zero-touch-install/wave5)
+Base: main 7689b0c (HEAD parent at commit time: 006c314, a sibling-lane commit on the same branch)
+Commit: be2ac143bf07f288bcf50c490bfe48149e935e8f `test(iso): make the unit-script assertion non-tautological`
+Plan: .omo/plans/thinkpad-zero-touch-install.md todo 19 (closes F2 "near-tautological assertion" nit)
+
+## What changed
+
+tests/dendritic-config-eval.nix, ISO installer wall (was line 292):
+
+    -assert hasInfix "install" isoAutoinstallUnit.script;
+    +# Invocation, not tautology: a bare `hasInfix "install"` matched the
+    +# wrapper's own `/nix/store/...-install/bin/install` store path.
+    +assert hasInfix (builtins.unsafeDiscardStringContext flake.apps.x86_64-linux.install.program) isoAutoinstallUnit.script;
+    +assert hasInfix "--host antagony" isoAutoinstallUnit.script;
+     assert hasInfix "--rescue-identity" isoAutoinstallUnit.script;
+
+No other assertion weakened, renumbered, or removed; `git show --stat HEAD` = this one file only
+(1 file changed, 4 insertions(+), 1 deletion(-)).
+
+## Why
+
+The unit script is:
+
+    /nix/store/<hash>-install/bin/install --host antagony --yes --rescue-identity
+
+`hasInfix "install" ... .script` matched the wrapper's OWN store path (`...-install/bin/install`),
+so it could only fail if the whole program reference disappeared - it never proved the invocation
+or the flags. The replacement pins (a) the wrapper store path derived from the flake app, and
+(b) the `--host antagony` plan flag; the existing `--rescue-identity` assertion is retained.
+`unsafeDiscardStringContext` is required: the app program is a store-path string, and Nix rejects
+a store-path string used as a regex pattern (`.error: the string ... is not allowed to refer to a
+store path`). The script string keeps its context and read-only use is unaffected.
+
+## Evidence
+
+### Baseline (tautology) - pre-change
+    $ cd /home/mei/nixos-wt/thinkpad-zero-touch-install-wave5 && \
+      nix-instantiate --eval --strict --expr 'import ./tests/dendritic-config-eval.nix {}'
+    "dendritic-config-eval=PASS"
+    RC=0
+  (confirms the tautological assertion, and every other assertion, pass before the change)
+
+### Acceptance PASS - post-change, pre-commit
+    $ nix-instantiate --eval --strict --expr 'import ./tests/dendritic-config-eval.nix {}'
+    "dendritic-config-eval=PASS"
+    RC=0
+
+### Acceptance PASS - post-commit rerun (same content, commit be2ac14)
+    $ nix-instantiate --eval --strict --expr 'import ./tests/dendritic-config-eval.nix {}'
+    "dendritic-config-eval=PASS"
+    RC=0
+
+### Falsifiability - scratch copy under /tmp (path: flake ref reads the working tree)
+
+Scratch tree: /tmp/ulw-t19-scratch (tar copy of the worktree, .git excluded).
+
+Flip A - drop ` --host ${host}` from the unit script (old tautology would still pass):
+
+    $ sed -i 's/ --host [^ ]*//' /tmp/ulw-t19-scratch/modules/flake/iso-images.nix
+    # line 107 -> "${config.flake.apps.x86_64-linux.install.program} --yes --rescue-identity"
+    $ nix-instantiate --eval --strict --expr 'import /tmp/ulw-t19-scratch/tests/dendritic-config-eval.nix {}'
+    error: assertion '(hasInfix "--host antagony" (isoAutoinstallUnit).script)' failed
+           at /tmp/ulw-t19-scratch/tests/dendritic-config-eval.nix:295:1
+    RC=1
+
+Flip B - strip the leading wrapper store-path token from the unit script:
+
+    $ sed -i '/--rescue-identity/ s|^\( *\)[^ ]* |\1|' /tmp/ulw-t19-scratch/modules/flake/iso-images.nix
+    # line 107 -> "            --host ${host} --yes --rescue-identity"
+    $ nix-instantiate --eval --strict --expr 'import /tmp/ulw-t19-scratch/tests/dendritic-config-eval.nix {}'
+    error: assertion '(hasInfix ((builtins).unsafeDiscardStringContext (flake).apps.x86_64-linux.install.program) (isoAutoinstallUnit).script)' failed
+           at /tmp/ulw-t19-scratch/tests/dendritic-config-eval.nix:294:1
+    RC=1
+
+Both flips fail at exactly the tightened assertions; flip A fails on a mutation the old
+`hasInfix "install"` assertion would have accepted, which is the point of the tightening.
+
+## Cleanup receipts
+
+- rm -rf /tmp/ulw-t19-scratch
+- rm -f /tmp/ulw-t19-baseline.txt /tmp/ulw-t19-after.txt /tmp/ulw-t19-flipA.txt /tmp/ulw-t19-flipB.txt /tmp/ulw-t19-final.txt
+- killed background bash/monitor sessions (bash_7/8/12/14/16/17/20/21/23/24/29/30)
+
+## Risks / notes
+
+- LSP diagnostic `unknown builtin getFlake` at tests/dendritic-config-eval.nix:1:19 is a pre-existing
+  nixf false positive (present before this change); not introduced here.
+- The sibling lane's uncommitted edits to modules/flake/checks.nix and tests/install-staging.sh were
+  present in this worktree and were intentionally NOT staged or touched.

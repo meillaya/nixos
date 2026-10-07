@@ -1,0 +1,4 @@
+checking outputs of '/nix/store/v0dphinr5znk278zrn891p276vqa7jbc-install-staging.drv'...
+install-staging> install-staging: behavioral generator block PASS
+install-staging> install-staging=PASS
+REBUILD_RC=0

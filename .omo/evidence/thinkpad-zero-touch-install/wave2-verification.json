@@ -1,0 +1,107 @@
+{
+  "verified_tip": "c85a8ffac1cb504aa0594eb226c1152e2c5e3008",
+  "verified_at": "2026-10-06T17:20:35Z",
+  "worktree": "/home/mei/nixos-wt/thinkpad-zero-touch-install-wave2",
+  "branch": "thinkpad-zero-touch-install/wave2",
+  "verifier": "independent adversarial (wave 2)",
+  "todos": {
+    "6": {
+      "title": "App: stage the password and forward the transport",
+      "commit": "f9d32659f5c7a381f423e407f6907859f95eb50c",
+      "verdict": "needs-fix",
+      "confidence": 0.8,
+      "evidence": [
+        "PASS acceptance: `./apps/x86_64-linux/install --dry-run --host antagony` rc=0 prints the staging step, the `--extra-files` transport and the exact `--chown home/mei/.config 1000:100` pair, with NO 'password for' line.",
+        "PASS `bash tests/dendritic-apps.sh` -> dendritic-apps=PASS rc=0.",
+        "PASS real-run harness (shipped app under `unshare -Ur -m`, hardware transport stubbed): exit 0; 'password for mei: <24-char>' printed EXACTLY once; stage tree modes 0700 dirs / 0600 files (var/lib/nixos-bootstrap/mei-password.hash, var/lib/nixos-enrollment/*, home/mei/.config/sops/age/keys.txt); hash matches ^\\$y\\$...; 0 plaintext occurrences under stage; host-install.sh called with `--extra-files <stage> --chown home/mei/.config 1000:100`.",
+        "PASS failure QA: stubbed-failing mkpasswd -> app exit=1 'install-staging: mkpasswd failed to hash the password' and sentinel ABSENT (host-install.sh NOT invoked; dies before transport).",
+        "PASS `grep -c 'password for' apps/x86_64-linux/install` = 0 (the single print lives in the sourced helper = 1).",
+        "PASS dirty_worktree: commit f9d3265 touches ONLY apps/x86_64-linux/install (67+/2-); no plaintext secret, no stage dir, no .direnv/.omo.",
+        "DEFECT (introduced here): install_phase forwards `--chown home/<user>/.config <uid>:<gid>` UNCONDITIONALLY whenever install_user is set (apps/x86_64-linux/install:639-643), not only when staging_identity actually staged the .config subtree. Plan t6 text says forward 'the helper-reported ownership pair'. See todo 7 finding: with no age identity the path is never staged and nixos-anywhere `chown -R` on the missing path aborts the install (under `set -euo pipefail`)."
+      ],
+      "repro": "cd {WT} && ./apps/x86_64-linux/install --dry-run --host antagony ; bash tests/dendritic-apps.sh ; unshare -Ur -m bash -c 'mount -t tmpfs tmpfs /root; /tmp/ulw-v2/harness-app.sh happy antagony'",
+      "note": "All of todo 6's stated acceptance criteria reproduce; the needs-fix is the latent unconditional --chown."
+    },
+    "7": {
+      "title": "App: stage the artifacts and the identity; retire the --save requirement",
+      "commit": "c1bc2ea0e6a71bda9ca33523613ae357bc6d1c7b",
+      "verdict": "needs-fix",
+      "confidence": 0.8,
+      "evidence": [
+        "PASS acceptance: dry-run lists the enrollment-artifact staging (var/lib/nixos-enrollment/<candidate,intake,host-key>) AND the identity staging (home/<user>/.config/sops/age/keys.txt from $SOPS_AGE_KEY_FILE else ~/.config/sops/age/keys.txt).",
+        "PASS real-run harness with a key present: identity staged at home/mei/.config/sops/age/keys.txt mode 0600, .config subtree 0700, ancestors 0755; helper prints `(forward --chown home/mei/.config 1000:100)`.",
+        "PASS the --save hard die is gone: with --skip-fold and no --save the app prints announce_unfolded_key (warning) and continues (exit 0); no 'die' path for the missing store. `grep -c 'identity fallback order'`=2 in the app; staging_artifacts=1 call; staging_identity=1 call.",
+        "PASS dirty_worktree: commit c1bc2ea touches ONLY apps/x86_64-linux/install (58+/11-).",
+        "DEFECT (reachable via this todo's warn-and-continue): with NO age key, `HOME=/tmp/ulw-v2/nohome` run warns 'no age identity at ...' and continues, staging ONLY var/lib/* (the stage tree contains NO home/ path) \u2014 yet the app STILL forwards `--chown home/mei/.config 1000:100`.",
+        "Confirmed nixos-anywhere semantics: src/nixos-anywhere.sh has `set -euo pipefail`; the install phase runs (line ~885) `printf ... | pr -2t | runSsh 'while read file ownership; do chown -R \"$ownership\" \"/mnt/$file\"; done'` with no `|| true`. Local simulation of that pipeline against an empty /mnt: `chown: cannot access '/tmp/ulw-v2/mnt/home/mei/.config': No such file or directory` and pipeline rc=1.",
+        "SEVERITY: nixos-anywhere runs `runDisko` (Formatting hard drive with disko, src line 1058) BEFORE the install phase (line 1061) where the chown happens \u2014 so on a target without the age identity, the one-command installer can FORMAT the disk and then abort before installing the system."
+      ],
+      "repro": "env -u SOPS_AGE_KEY_FILE HOME=<empty-dir> GIT_CONFIG_GLOBAL=/dev/null unshare -Ur -m bash -c 'mount -t tmpfs tmpfs /root; /tmp/ulw-v2/harness-app.sh happy antagony'  # witness: warning + --chown forwarded + no home/ tree",
+      "note": "Todo 7's literal acceptance (dry-run lists staging; no die on missing --save) reproduces. The needs-fix is that 'warn and continue' binds a --chown at a path that was never staged, turning a benign warning into a post-wipe install failure. Fix: forward --chown only when the identity/.config subtree was actually staged (or test -e the path)."
+    },
+    "8": {
+      "title": "App: --rescue-identity and the host/disk match",
+      "commit": "a55e272cc66bd2a94e7e6d28defcb8e2eb0f0903",
+      "verdict": "confirmed",
+      "confidence": 0.9,
+      "evidence": [
+        "PASS acceptance: `--dry-run --rescue-identity` rc=0 prints the rescue step ('mount the live btrfs @home read-only, copy ~/.config/sops/age/keys.txt into the stage, unmount ... dies if the identity is missing').",
+        "PASS real-run harness Phase P (pending record): host=antagony with DMI 'ThinkPad P52' accepted ('host match OK (pending record)'); host=foo (pending) DIES: \"DMI product 'ThinkPad P52' maps to 'antagony', not '--host foo'; refusing to install the wrong declaration\" with sentinel ABSENT (before any staging/transport).",
+        "PASS real-run harness Phase E (enrolled record): candidate==baked -> 'host match OK (enrolled record)'; candidate.sizeBytes+1 -> DIES 'storage.expected.sizeBytes differs: baked=500107862016 candidate=500107862017' with sentinel ABSENT (before any wipe).",
+        "PASS dirty_worktree: commit a55e272 touches ONLY apps/x86_64-linux/install (193+/5-)."
+      ],
+      "repro": "unshare -Ur -m bash -c 'mount -t tmpfs tmpfs /root; /tmp/ulw-v2/harness-app.sh match remembrance' ; ... harness-app.sh mismatch remembrance ; ... harness-app.sh pendmismatch foo ; ./apps/x86_64-linux/install --dry-run --host antagony --rescue-identity",
+      "note": "Rescue-mount runtime behaviour (mount/umount of the live subvolume) was verified at the app dry-run + code level and by the todo's own harness claim; a real mount needs the target disk and is out of scratch reach. The acceptance-level assertions (dry-run line, host/disk match dies before wipe) all reproduce."
+    },
+    "9": {
+      "title": "ISO: bake the flake, add the gated unit and the rescue target",
+      "commit": "c85a8ffac1cb504aa0594eb226c1152e2c5e3008",
+      "verdict": "confirmed",
+      "confidence": 0.85,
+      "evidence": [
+        "PASS (equivalent assertions, formal t11 wall not landed) `nix eval` for BOTH antagony and remembrance: wantedBy=[multi-user.target]; wants=[network-online.target]; after=[network-online.target sshd.service hardware-enroll.service]; unitConfig.ConditionKernelCommandLine=nixos.autoinstall=1; ConditionPathExists=!/run/autoinstall-done; SuccessAction=reboot; OnFailure=[iso-install-rescue.target]; service Type=oneshot/RemainAfterExit=true/StandardOutput=StandardError=journal+console; unitText renders all of the above; rescue target text present; rescue shell wantedBy=[iso-install-rescue.target] ExecStart='bash -i' StandardInput=tty-force TTYPath=/dev/tty1 Type=idle.",
+        "PASS script references the app wrapper: script = '/nix/store/cax3llhwblgnpbip9ksrky7w0fhizm0p-install/bin/install --host <host> --yes --rescue-identity'; the wrapper execs /nix/store/y01jykmqxzaf79fc9kc483vhmc8if4zr-source/apps/x86_64-linux/install (the baked source also carries bin/_install-staging.sh).",
+        "PASS flake.isoConfig exposed [antagony,remembrance] and flake.iso built from it: f.iso.antagony == f.isoConfig.antagony.config.system.build.images.iso (true) and same for remembrance.",
+        "PASS NEGATIVE: flagInKernelParams=false (boot.kernelParams = [root=fstab, loglevel=4, lsm=landlock,yama,bpf]); supportedFilesystems btrfs+vfat; kernelModules contains btrfs; system.fsPackages contains btrfs-progs; variant_id=installer; environment.etc 'hardware-enrollment/<host>.json' contains \"hostId\":\"<host>\".",
+        "PASS falsifiability (failure QA): `extendModules` override of ConditionKernelCommandLine reflects in the rendered unit text; injecting boot.kernelParams=['nixos.autoinstall=1'] flips flagInParams to true. Scratch-copy mutations of modules/flake/iso-images.nix confirm: deleting the condition -> unitConfig ABSENT + unit text loses it; injecting the kernel param -> kernelParams starts with nixos.autoinstall=1.",
+        "PASS `nix build .#iso.antagony --dry-run` rc=0 instantiates /nix/store/7fwk1ihfcq60a3wwnlk9a0wpnd2d2wpi-nixos-...iso.drv (141 derivations).",
+        "PASS misleading_success_output: `grep -c '|| true' modules/flake/iso-images.nix` = 0; OnFailure=iso-install-rescue.target present; no plaintext secret.",
+        "PASS dirty_worktree: commit c85a8ff touches ONLY modules/flake/iso-images.nix (67+/6-)."
+      ],
+      "repro": "cd {WT} && nix eval --impure --json --file /tmp/ulw-v2/t9-fields.nix ; nix eval --impure --json --file /tmp/ulw-v2/t9-override.nix ; nix build .#iso.antagony --dry-run",
+      "note": "Formal eval wall (plan todo 11) and the twin-boot VM (todo 14) are wave-3; the EQUIVALENT assertions were verified directly at this tip, including the negative kernelParams check and its falsifiability. Runtime gating (unit actually inert on a plain boot) remains todo 14's VM scope."
+    },
+    "15": {
+      "title": "Operator path: mint and stage the password",
+      "commit": "eca7ddc6c26f883924fc5722c55c16c699ffc6b4",
+      "verdict": "confirmed",
+      "confidence": 0.9,
+      "evidence": [
+        "PASS acceptance: `bash bin/host-install.sh --dry-run --target-host 1.2.3.4` rc=0 prints the password-staging step + `--extra-files <stage>` transport and NO secret (no 'password for' line, no hash).",
+        "PASS `--install-only` dry-run prints no staging step ('0-7. (skipped: --install-only)').",
+        "PASS the script sources the shared helper (bin/host-install.sh:141) and contains no duplicated hash regex or STAGING_HASH_REGEX (grep -c = 0).",
+        "PASS malformed_input: stubbed-failing mkpasswd -> rc=1 'install-staging: mkpasswd failed to hash the password' before the plan (no nixos-anywhere line). Missing --stage-identity SRC -> rc=1 'error: --stage-identity: file not found'. Valid --stage-identity -> plan shows identity staging + `--chown home/mei/.config 1000:100` with no secret.",
+        "PASS stale_state: two dry-runs use DISTINCT stages (nixos-install-staging.qwvWjRFj / .t9MvsNQt), 0 leftover stage dirs (trap cleans); no /run/autoinstall-done left.",
+        "PASS dirty_worktree: commit eca7ddc touches ONLY bin/host-install.sh (120+/2-)."
+      ],
+      "repro": "cd {WT} && bash bin/host-install.sh --dry-run --target-host 1.2.3.4 ; bash bin/host-install.sh --dry-run --target-host 1.2.3.4 --install-only ; bash bin/host-install.sh --dry-run --target-host 1.2.3.4 --stage-identity /nonexistent",
+      "note": "The operator path forwards --chown ONLY when --stage-identity is given (operator_chown_path set), so it does NOT share the todo-6/7 missing-path defect. The full non-dry operator run (stage_enroll/stage_fold \u2192 nixos-anywhere) was not executed end-to-end (needs a live target + sops secrets); its staging/marker behaviour is covered by the dry-run, the helper probes, and wave-1's marker-order evidence."
+    }
+  },
+  "adversarial": {
+    "stale_state": "PASS \u2014 decisive evals run twice with identical results; content-sensitivity proven by mutating a scratch copy (delete ConditionKernelCommandLine -> unitConfig ABSENT and unit text loses it; inject boot.kernelParams nixos.autoinstall=1 -> kernelParams reflects it). Staging is fresh every run: t6/t7 app runs and two t15 dry-runs use distinct mktemp stages with 0 leftovers; the app regenerates the password hash each run.",
+    "dirty_worktree": "PASS \u2014 `git status --porcelain` empty at tip c85a8ff at start and end; `nix eval`/dry-run/build never mutated the worktree; each of the 5 wave-2 commits touches EXACTLY its own todo's file (f9d3265->apps/x86_64-linux/install, eca7ddc->bin/host-install.sh, c1bc2ea->apps/x86_64-linux/install, a55e272->apps/x86_64-linux/install, c85a8ff->modules/flake/iso-images.nix); no commit contains a plaintext password, a literal $y$ hash, a staged dir, or .direnv/.omo.",
+    "misleading_success_output": "MIXED \u2014 dry-runs print NO secret (app and operator); `grep -c '|| true'` in modules/flake/iso-images.nix = 0 and the unit's failure path lands in iso-install-rescue.target; 'password for' is printed exactly once per real run (apps/x86_64-linux/install has 0 print statements; the single print is in the shared helper) and 0 in dry-run; t15 --install-only prints no staging step. HOWEVER the t7 no-key path is misleading: it prints a reassuring warning and continues while forwarding --chown at a never-staged path, which aborts nixos-anywhere after disko has formatted the disk (see todos 6/7).",
+    "malformed_input": "PASS \u2014 stubbed-failing mkpasswd dies in BOTH entry points before any transport (app exit=1 with host-install.sh not invoked; operator exit=1 before the plan); missing --stage-identity SRC dies with a clear message; host/DMI mismatch (pending: DMI maps to antagony, --host foo) and enrolled candidate-vs-baked mismatch (sizeBytes) both die BEFORE any staging and before the wipe."
+  },
+  "cross_wave": "Plan todo 9's acceptance references the todo-11 eval wall, which is NOT landed at this tip (wave 3). Verified the EQUIVALENT assertions directly: the unit's wantedBy/wants/after/ConditionKernelCommandLine/ConditionPathExists/SuccessAction/OnFailure/Type/RemainAfterExit/StandardOutput+StandardError for BOTH hosts, the racked rescue target + rescue shell, the script referencing the app wrapper (and the wrapper execing this worktree's source), flake.isoConfig exposed and flake.iso built from it, and the NEGATIVE assertion that 'nixos.autoinstall=1' is absent from boot.kernelParams \u2014 the latter proven falsifiable by a scratch-copy injection (flagInParams false -> true). The formal wall (t11) and the twin-boot VM (t14) still must land in wave 3; runtime gating was not boot-tested here.",
+  "drift": "No drift: worktree tip c85a8ffac1cb504aa0594eb226c1152e2c5e3008 at start and end; tree clean throughout; no commit moved during verification.",
+  "incident_reprobe": "REPAIRED & CONFIRMED \u2014 config/hosts/intake/remembrance.json (3936 B, blob 97dbfda4...) and remembrance.intake.json (4988 B, blob 830627c8...) are byte-identical to HEAD (git hash-object == git rev-parse HEAD:<path>), parse as JSON, and no commit in `git rev-list --all` contains a 0-byte version of either file (checked with git cat-file -s over every commit).",
+  "cleanup": [
+    "rm -rf /tmp/ulw-v2 (harness, fake-bin, scratch flake copy, fake key, logs)",
+    "verified 0 leftover nixos-install-staging.* dirs under /dev/shm and /run/user/1000",
+    "verified /run/autoinstall-done absent on the host",
+    "verified worktree clean (git status --porcelain empty) and untouched",
+    "no servers/tmux/browsers/ports were started; no monitors left armed"
+  ]
+}

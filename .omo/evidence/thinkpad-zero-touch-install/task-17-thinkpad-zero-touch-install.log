@@ -1,0 +1,46 @@
+# task-17 — drop the unused staging_plan helper (wave5 lane A)
+
+- Worktree: /home/mei/nixos-wt/thinkpad-zero-touch-install-wave5 (branch thinkpad-zero-touch-install/wave5, base main 7689b0c)
+- Plan todo 17 / brief .omo/ulw-execute/briefs/wave5-laneA.md; closes F2 major 1.
+- Skill noted: programming (smallest correct change; dead code). No LSP for bash on host -> bash -n used.
+
+## Pre-state
+```
+$ cd /home/mei/nixos-wt/thinkpad-zero-touch-install-wave5 && git rev-parse HEAD
+7689b0c242a7e4afecd0a8985ebcdb524cd1a0d4
+$ grep -rn 'staging_plan' bin/ apps/ tests/ modules/
+bin/_install-staging.sh:166:staging_plan() {
+```
+(bin/AGENTS.md does not exist in this worktree; F2's prose reference is absent here.)
+
+## Change
+```
+[object Object]
+```
+
+## Acceptance criteria
+```
+$ cd /home/mei/nixos-wt/thinkpad-zero-touch-install-wave5 && grep -rn 'staging_plan' bin/ apps/ tests/ modules/; echo "rc=$?"
+rc=1                                  # 0 hits  => PASS
+$ bash -n bin/_install-staging.sh && echo "bash-n OK rc=$?"
+bash-n OK rc=0                        # => PASS
+$ bash tests/install-staging.sh; echo "rc=$?"
+install-staging=PASS
+rc=0                                  # => PASS
+```
+
+## Commit (atomic; dirty_worktree probe)
+```
+$ commit 006c31463155f770f402447e0666593e4a36ff69
+subject: refactor(install): drop the unused staging_plan helper
+
+ bin/_install-staging.sh | 11 -----------
+ 1 file changed, 11 deletions(-)
+```
+Only bin/_install-staging.sh is in the commit; the sibling lane's unstaged
+tests/dendritic-config-eval.nix edit was left in the working tree and NOT staged.
+
+## Cleanup
+None spawned (pure text removal); no temp files, no processes.
+
+DoneClaim: {"task": "17: drop the unused staging_plan helper (bin/_install-staging.sh)", "changed_files": ["bin/_install-staging.sh"], "tests": ["grep -rn staging_plan bin/ apps/ tests/ modules/ => 0 hits (rc=1)", "bash -n bin/_install-staging.sh => rc=0", "bash tests/install-staging.sh => install-staging=PASS (rc=0)"], "manual_qa": ["git show --stat 006c314 => 1 file changed, 11 deletions(-), only bin/_install-staging.sh"], "cleanup": ["no resources spawned"], "risks": ["none: staging_plan had zero call sites and is a pure heredoc; no runtime behavior changed"]}

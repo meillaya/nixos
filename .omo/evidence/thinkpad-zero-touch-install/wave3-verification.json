@@ -1,0 +1,97 @@
+{
+  "verified_tip": "5d4052fe69c268574a8fffda12cc64b72476f44c",
+  "verified_at": "2026-10-06T20:58:58.261Z",
+  "verify_scope": "wave 3 (todos 10, 11, 13, 14) of plan thinkpad-zero-touch-install; independent re-run, worktree read-only",
+  "todos": {
+    "10": {
+      "verdict": "confirmed",
+      "title": "Tests: staging invariants and the app/dry-run greps",
+      "commit": "19e2e11",
+      "evidence": [
+        "bash tests/install-staging.sh -> install-staging=PASS, rc=0, run twice identical (deterministic)",
+        "bash tests/dendritic-apps.sh -> dendritic-apps=PASS, rc=0",
+        "check wired in modules/flake/checks.nix (install-staging runCommand) + dendritic-apps greps extended with '--extra-files <stage>'",
+        "mutation: --method=yescrypt -> sha512 => rc=1 (scratch copy)",
+        "mutation: '--extra-files <stage>' -> MUTATED in the app plan => rc=1 (scratch copy)",
+        "mutation: 'password for %s: %s' mangled in helper => rc=1 (scratch copy)",
+        "git show --stat 19e2e11: only checks.nix, dendritic-apps.sh, install-staging.sh"
+      ],
+      "repro": "cd /home/mei/nixos-wt/thinkpad-zero-touch-install-wave3 && bash tests/install-staging.sh && bash tests/dendritic-apps.sh",
+      "confidence": 0.95
+    },
+    "11": {
+      "verdict": "confirmed",
+      "title": "Tests: the ISO eval wall (unit fields + negative kernelParams)",
+      "commit": "9eb23e0",
+      "evidence": [
+        "nix-instantiate --eval --strict --expr 'import ./tests/dendritic-config-eval.nix {}' -> \"dendritic-config-eval=PASS\", EVAL_RC=0",
+        "wall pins flake.isoConfig.antagony extended config: btrfs/vfat supportedFilesystems, btrfs kernelModule, variant_id==installer, enrollment JSON hostId, all unit fields (wantedBy/wants/after/ConditionKernelCommandLine/ConditionPathExists/SuccessAction/OnFailure/Type/RemainAfterExit/StandardOutput), script contains 'install'+'--rescue-identity', NEGATIVE !(elem 'nixos.autoinstall=1' boot.kernelParams)",
+        "mutation (scratch in-tree copy): negative assertion '!' removed => assertion failed, rc=1",
+        "mutation: ConditionKernelCommandLine expected value -> 'nixos.autoinstall=0' => string-not-equal, rc=1",
+        "unit still matches plan fields at tip 5d4052f after the F-B fix (F-B only added a `path` field; no asserted field changed)"
+      ],
+      "repro": "cd /home/mei/nixos-wt/thinkpad-zero-touch-install-wave3 && nix-instantiate --eval --strict --expr 'import ./tests/dendritic-config-eval.nix {}'",
+      "confidence": 0.95
+    },
+    "13": {
+      "verdict": "confirmed",
+      "title": "Docs: staging, opt-in gate, rescue route",
+      "commit": "0cc6c55",
+      "evidence": [
+        "grep -Fq -- '--extra-files' README.md docs/service-notes/*.md -> rc=0",
+        "grep -Fq 'nixos.autoinstall=1' docs/service-notes/nixos-anywhere-iso-install.md -> rc=0",
+        "documented flags present: --extra-files (9 mentions across 3 docs), --chown (6), --stage-identity (6), --rescue-identity (6)",
+        "git show --stat 0cc6c55: only README.md + 2 service notes (3 files); the earlier force-added bin/AGENTS.md was dropped in the known rebase (brief-accepted)",
+        "prose only -> QA-by-read + greps; no machine-consumed value to pin beyond the greps"
+      ],
+      "repro": "cd /home/mei/nixos-wt/thinkpad-zero-touch-install-wave3 && grep -Fq -- '--extra-files' README.md docs/service-notes/*.md && grep -Fq 'nixos.autoinstall=1' docs/service-notes/nixos-anywhere-iso-install.md",
+      "confidence": 0.9
+    },
+    "14": {
+      "verdict": "confirmed",
+      "title": "Tests: the gate-inertness VM (twin boot)",
+      "commit": "a1c86ad (+5d4052f F-B fix)",
+      "evidence": [
+        "nix build .#checks.x86_64-linux.iso-autostart-vm --no-link -> rc=0 at tip; output /nix/store/2rxmyc2jlfgz2m58imiqqjdg476sgc5q-vm-test-run-iso-autostart-vm VALID",
+        "variant (a) plainBoot: ActiveState=inactive, ConditionResult=no, rescue target inactive, !-e /run/autoinstall-done, data disk /dev/vdb unformatted (blkid empty) -- all must-succeed passed",
+        "variant (b) gatedBoot: ConditionResult=yes, systemctl is-failed, Result=exit-code, rescue target reached, no marker, data disk untouched",
+        "gatedBoot journal: wrapper banner 'Running install for x86_64-linux' + app diagnostic 'install: cannot evaluate the flake at /nix/store/qdrbl...-source' => the app actually started at tip (F-B PATH fix effective)",
+        "mutation: ConditionKernelCommandLine forced null => variant (a) fails at 'test ... = inactive' (RequestedAssertionFailed), MUT_BUILD_RC=1",
+        "F-B revert mutation: unit service path forced [] => reproduces \"env: 'bash': No such file or directory\" status=127 and the NEW assertion grep 'Running install for x86_64-linux' FAILS (RequestedAssertionFailed), FB_MUT_RC=1 -- the tightened assertion is falsifiable on the exact regression it names",
+        "test-script duration in the passing run: 'run the VM test script, in 53.36 seconds'"
+      ],
+      "limitation": "The plan's t14 acceptance literally says variant (b) 'dies at the host-match check'. It does not: in the VM's offline sandbox the app dies at its FIRST action, `nix eval` of the baked flake ('install: cannot evaluate the flake ...'), so the host-match guard is never reached. The landed test therefore pins the reachable observables (unit runs -> fails cleanly -> rescue target activates -> no disk write -> app started), not the specific failure reason. This is documented in the test header. Honest, but the host-match guard's runtime behaviour is NOT exercised by CI.",
+      "repro": "cd /home/mei/nixos-wt/thinkpad-zero-touch-install-wave3 && nix build .#checks.x86_64-linux.iso-autostart-vm --no-link",
+      "confidence": 0.9
+    }
+  },
+  "adversarial": {
+    "flaky_tests": "PASS - t10 install-staging.sh + dendritic-apps.sh each run twice, identical output/rc. t14 VM assertions are event/state-based (systemctl show -p ActiveState/ConditionResult/Result, wait_for_unit, wait_until_succeeds), not timing-based; no fixed sleeps in the test script. t11 eval run twice, identical.",
+    "misleading_success_output": "PASS - t10 fails on 3 independent token removals; t11 fails on the negative-assertion flip and the condition-value flip; t14 variant (a) fails when the condition is removed. Decisive F-B check: the PRE-fix test (a1c86ad) only grepped the syslog id 'nixos-autoinstall-start' and PASSED while the unit died at 127 (recorded in the worker log, journal line \"env: 'bash': No such file or directory\"); the tip test greps the wrapper banner + app diagnostic and FAILS under a replicated unit-PATH revert (status=127). No pass-by-construction.",
+    "stale_state": "PASS - evals reflect current files: t11 eval deterministic across two runs; t10 twice identical; build used the worktree at tip 5d4052f (git HEAD unchanged start->end).",
+    "dirty_worktree": "PASS - git status --porcelain empty at start and after every probe; worktree modified count 0 after all mutations (mutations done in /tmp scratch copies, never the worktree). Commits contain only their todo's files; no secrets/.direnv/.omo product edits.",
+    "vm_duration": "t14 test-script run 53.36s (two QEMU boots). Cold closure build of the check at tip ~10 min (fetched/built the full workstation closure carrying home-manager, chrome, heroic, etc.).",
+    "hungry_or_long_commands": "VM build bounded by timeout 1800; nix-instantiate bounded by timeout 900; mutation builds bounded by timeout 1200. No hangs observed.",
+    "malformed_input": "n/a - wave-3 changes are tests/docs/one unit PATH field; no new external input parser is introduced by these todos.",
+    "prompt_injection": "n/a - no untrusted-content ingestion path in these todos.",
+    "cancel_resume": "n/a - these todos add no long-running manageable/resumable job."
+  },
+  "drift": "Worktree tip stable at 5d4052f for the whole verification (started and ended at 5d4052fe69c268574a8fffda12cc64b72476f44c). No commits moved. F-B fix 5d4052f confirmed: adds `path = [ pkgs.bash pkgs.coreutils pkgs.nix ]` to the nixos-autoinstall unit and tightens the gatedBoot assertions from a syslog-id grep to wrapper-banner + app-diagnostic greps.",
+  "cleanup": [
+    "rm /tmp/ulw-t10m.IWsKy4, /tmp/ulw-t10m2.*, /tmp/ulw-t11m.* (scratch repo copies) - all gone",
+    "rm /tmp/ulw-t14-mut.nix, /tmp/ulw-fb-mut.nix (mutation copies) - all gone",
+    "rm /tmp/ulw-verify (build log) - removed",
+    "monitors killed (t14 build watcher, disk guards); no qemu/virtiofsd from verification left (VM tests self-clean)"
+  ],
+  "t9_cross_check": {
+    "note": "Wave-3 tests consume t9's shipped artifacts verbatim; no drift, no second definition, no bypass.",
+    "findings": [
+      "Single unit definition: 83:        systemd.services.nixos-autoinstall = {",
+      "Unit name 'nixos-autoinstall.service' referenced consistently across modules/ and tests/ (11 refs); rescue target 'iso-install-rescue' (8 refs).",
+      "The t11 wall asserts flake.isoConfig.antagony.config.systemd.services.\"nixos-autoinstall\" -- the exact t9-extended config; flake.isoConfig exposure confirmed: 5:# built from the extended per-host config `flake.isoConfig.<host>`.\n141:  flake.isoConfig = lib.genAttrs isoHosts isoConfigFor;\n142:  flake.iso = lib.genAttrs isoHosts (host: config.flake.isoConfig.${host}.config.system.build.images.iso);",
+      "The t14 VM boots isoConfig.type.getSubModules (t9's module set) directly, so both wave-3 tests exercise t9's unit, not a copy.",
+      "Must-NOT holds: 'nixos.autoinstall=1' appears only in the unit's ConditionKernelCommandLine + comments (never in boot.kernelParams); grep in modules/bin/apps for kernelParams+autoinstall => NONE",
+      "t11 asserts the t9 unit fields (condition, OnFailure, SuccessAction, path-independent fields); t14 provably falsifies the condition (removal -> variant (a) fails) and the F-B PATH (revert -> banner assertion fails), so the shipped safe-failure chain is pinned end to end."
+    ]
+  }
+}

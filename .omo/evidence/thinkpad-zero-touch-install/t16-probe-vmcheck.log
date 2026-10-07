@@ -1,0 +1,78 @@
+warning: Git tree '/tmp/t16-probe' has uncommitted changes
+warning: Using 'builtins.derivation' to create a derivation named 'options.json' that references the store path '/nix/store/398fqjqkp383m7pyla9nxpi1is5vzywh-source' without a proper context. The resulting derivation will not have a correct store reference, so this is unreliable and may stop working in the future.
+warning: Using 'builtins.derivation' to create a derivation named 'options.json' that references the store path '/nix/store/398fqjqkp383m7pyla9nxpi1is5vzywh-source' without a proper context. The resulting derivation will not have a correct store reference, so this is unreliable and may stop working in the future.
+these 20 derivations will be built:
+  /nix/store/brk0iiq162iiwb1ajl1jy6c2w8w37466-install.drv
+  /nix/store/bj32y7a2ss70nyv0q5gyw6r6spl15bnk-unit-script-nixos-autoinstall-start.drv
+  /nix/store/dvmhjl24pzw73m2fgga0ikw8awa7hm21-unit-nixos-autoinstall.service.drv
+  /nix/store/p1ks4kl68hzxhij3c95lvyam3ca8fcy5-system-units.drv
+  /nix/store/di21f6vysr262a6jy1ymv2grswcc8f0h-etc.drv
+  /nix/store/7g2p90j7iayyq0hk4s1w2yy8y4534g98-activate.drv
+  /nix/store/1d8pggwiicxazkxvcb7rjr5lvkqxiyi9-nixos-system-antagony-test.drv
+  /nix/store/gbpy3q2kr7qrifj8p2jqxnyi5v91rbrs-closure-info.drv
+  /nix/store/15fgs2kan1fzys3mssvnpkhj82bznn56-run-nixos-vm.drv
+  /nix/store/qv36aj21adzid2cia06m6zbgl17hhg83-system-units.drv
+  /nix/store/gkhjpm4g6h71lhv6g3s3ga48nwqg0pxj-etc.drv
+  /nix/store/7k7gvkzjka392y2z16w0qn9pmmwg7zp5-activate.drv
+  /nix/store/ir3dbsn6z8m1c4fy22vmlsqc576schnr-nixos-system-antagony-test.drv
+  /nix/store/w5fi5pgwn7mp10mr93arq6475yv8c8ic-closure-info.drv
+  /nix/store/rwkbapbfinciz1098yc2c9wbmps40jh6-run-nixos-vm.drv
+  /nix/store/6f3k1r9zm0wlz8sx2rix5gqr7vvm9xwd-nixos-vm.drv
+  /nix/store/l4kip6arsqvw80n68kf06mrfpvwbsl56-nixos-vm.drv
+  /nix/store/srjnh0annd55ql5bsalv2yxh9ql976fl-driverConfiguration.json.drv
+  /nix/store/zm4f3vbkxp877axz0gz11gc18n0s6s0l-nixos-test-driver-iso-autostart-vm.drv
+  /nix/store/wiwz9165lrh1c1nh0sidzwry0v11gi4k-vm-test-run-iso-autostart-vm.drv
+building '/nix/store/brk0iiq162iiwb1ajl1jy6c2w8w37466-install.drv'...
+building '/nix/store/bj32y7a2ss70nyv0q5gyw6r6spl15bnk-unit-script-nixos-autoinstall-start.drv'...
+building '/nix/store/dvmhjl24pzw73m2fgga0ikw8awa7hm21-unit-nixos-autoinstall.service.drv'...
+building '/nix/store/p1ks4kl68hzxhij3c95lvyam3ca8fcy5-system-units.drv'...
+building '/nix/store/qv36aj21adzid2cia06m6zbgl17hhg83-system-units.drv'...
+building '/nix/store/di21f6vysr262a6jy1ymv2grswcc8f0h-etc.drv'...
+building '/nix/store/gkhjpm4g6h71lhv6g3s3ga48nwqg0pxj-etc.drv'...
+building '/nix/store/7g2p90j7iayyq0hk4s1w2yy8y4534g98-activate.drv'...
+building '/nix/store/1d8pggwiicxazkxvcb7rjr5lvkqxiyi9-nixos-system-antagony-test.drv'...
+building '/nix/store/7k7gvkzjka392y2z16w0qn9pmmwg7zp5-activate.drv'...
+building '/nix/store/gbpy3q2kr7qrifj8p2jqxnyi5v91rbrs-closure-info.drv'...
+building '/nix/store/ir3dbsn6z8m1c4fy22vmlsqc576schnr-nixos-system-antagony-test.drv'...
+building '/nix/store/15fgs2kan1fzys3mssvnpkhj82bznn56-run-nixos-vm.drv'...
+building '/nix/store/w5fi5pgwn7mp10mr93arq6475yv8c8ic-closure-info.drv'...
+building '/nix/store/l4kip6arsqvw80n68kf06mrfpvwbsl56-nixos-vm.drv'...
+building '/nix/store/rwkbapbfinciz1098yc2c9wbmps40jh6-run-nixos-vm.drv'...
+building '/nix/store/6f3k1r9zm0wlz8sx2rix5gqr7vvm9xwd-nixos-vm.drv'...
+building '/nix/store/srjnh0annd55ql5bsalv2yxh9ql976fl-driverConfiguration.json.drv'...
+building '/nix/store/zm4f3vbkxp877axz0gz11gc18n0s6s0l-nixos-test-driver-iso-autostart-vm.drv'...
+building '/nix/store/wiwz9165lrh1c1nh0sidzwry0v11gi4k-vm-test-run-iso-autostart-vm.drv'...
+❌ git+file:///tmp/t16-probe#checks.x86_64-linux.iso-autostart-vm
+error: Cannot build '/nix/store/wiwz9165lrh1c1nh0sidzwry0v11gi4k-vm-test-run-iso-autostart-vm.drv'.
+       Reason: builder failed with exit code 1.
+       Output paths:
+         /nix/store/1bidhpcdq75wg4n5sy3xcq8ywhx3zlby-vm-test-run-iso-autostart-vm
+       Last 25 log lines:
+       >         f'--no-pager show "{unit}" --property="{property}"',
+       >         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+       >         user,
+       >         ^^^^^
+       >     )
+       >     ^
+       >   File "/nix/store/sriy4r0q27j8r84xmfnwwzc7q3jqgm4m-nixos-test-driver-1.1/lib/python3.14/site-packages/test_driver/machine/__init__.py", line 370, in systemctl
+       >     return self.execute(f"systemctl {q}")
+       >            ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^
+       >   File "/nix/store/sriy4r0q27j8r84xmfnwwzc7q3jqgm4m-nixos-test-driver-1.1/lib/python3.14/site-packages/test_driver/machine/__init__.py", line 722, in execute
+       >     return self._execute(
+       >            ~~~~~~~~~~~~~^
+       >         command=command,
+       >         ^^^^^^^^^^^^^^^^
+       >     ...<2 lines>...
+       >         timeout=as_timedelta(timeout) if timeout is not None else None,
+       >         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+       >     )
+       >     ^
+       >   File "/nix/store/sriy4r0q27j8r84xmfnwwzc7q3jqgm4m-nixos-test-driver-1.1/lib/python3.14/site-packages/test_driver/machine/__init__.py", line 983, in _execute
+       >     self.connect()
+       >     ~~~~~~~~~~~~^^
+       >   File "/nix/store/sriy4r0q27j8r84xmfnwwzc7q3jqgm4m-nixos-test-driver-1.1/lib/python3.14/site-packages/test_driver/machine/__init__.py", line 1177, in connect
+       >     raise RuntimeError("Shell disconnected")
+       > RuntimeError: Shell disconnected
+       For full logs, run:
+         nix log /nix/store/wiwz9165lrh1c1nh0sidzwry0v11gi4k-vm-test-run-iso-autostart-vm.drv
+PROBE_BUILD_RC=1

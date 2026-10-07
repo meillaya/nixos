@@ -1,0 +1,53 @@
+===================== todo 8 evidence: 2026-10-06T12:42:12-04:00 =====================
+########## bash -n apps/x86_64-linux/install
+SYNTAX_OK rc=0
+########## dry-run (no flag): no rescue line, still --install-only/auto_enroll
+install: detected host antagony from DMI product "ThinkPad P52"
+install plan (host: antagony, target: root@127.0.0.1)
+  1. work tree   cp -a /home/mei/nixos-wt/thinkpad-zero-touch-install-wave2/. -> /root/nixos-install (reused if it already holds a flake)
+  2. enrollment  python3 -m scripts.hardware.auto_enroll --host antagony --base <machine record> --trust <generated> --out <workdir>/.install-staging
+  3. commit      config/hosts/intake/antagony.json + .intake.json
+  4. host key    bin/nix-config-host-key-enroll <host-key> antagony   (optional: --skip-fold keeps it local)
+  5. staging     tmpfs stage per run (removed on exit): var/lib/nixos-bootstrap/<user>-password.hash (0700 dir, 0600, yescrypt)
+                 var/lib/nixos-enrollment/<candidate,intake,host-key> (0700 dir, 0600), copied into the installed system
+                 home/<user>/.config/sops/age/keys.txt (0600) from $SOPS_AGE_KEY_FILE else ~/.config/sops/age/keys.txt
+                 transport: --extra-files <stage> --chown home/mei/.config 1000:100
+                 the plaintext password is printed once and never written to disk
+  6. install     <workdir>/bin/host-install.sh --host antagony --target-host 127.0.0.1 --install-only --yes --skip-verify --extra-files <stage> --chown home/mei/.config 1000:100
+                 (refused unless / is a live tmpfs/overlay root, or --allow-mounted-root)
+0
+########## dry-run --rescue-identity: rescue step present, no 'password for'
+  5b. rescue     mount the live btrfs @home read-only, copy ~/.config/sops/age/keys.txt into the stage, unmount (--rescue-identity; dies if the identity is missing)
+########## tests/dendritic-apps.sh
+dendritic-apps=PASS
+dendritic-apps rc=0
+########## QA harness (shipped functions, unshare -Ur -m, fake DMI + stubbed mounts)
+bound DMI product_version -> ThinkPad P52
+=== Phase P (pending record): DMI product must map to --host ===
+PASS: pending + host=antagony (DMI ThinkPad P52) accepted
+PASS: pending + host=remembrance dies naming the DMI mapping
+PASS: unknown DMI product dies with no-override message
+=== Phase E (enrolled record): candidate vs baked ===
+PASS: enrolled identical pair accepted
+PASS: differing sizeBytes rejected
+PASS: differing logicalSectorBytes rejected
+PASS: differing modelSha256 rejected
+PASS: differing serialSha256 rejected
+PASS: differing diskById rejected
+PASS: differing cpuVendor rejected
+=== rescue: mount/umount/keys, and refusal paths ===
+PASS: rescue success rc=0
+PASS: rescued identity staged at home/mei/.config/sops/age/keys.txt mode 0600
+PASS: mount always unmounted and mountpoint removed (no leftover mount)
+PASS: rescue fallback (subvolid=5, @home/mei) succeeded
+PASS: rescue with no key dies with a clear message
+PASS: rescue failure also unmounts (no leftover mount)
+PASS: rescue refuses outside a live root
+PASS: rescue dies when the device is missing
+=== SUMMARY pass=18 fail=0 ===
+harness rc=0
+########## real-app end-to-end attempt (enroll blocked by absent operator secrets)
+install: reusing work tree /tmp/ulw8/scratchwt
+INVALID TRUST GENERATION: failed to decrypt secrets/remembrance-keys.yaml with sops and no matching fleet operator facts for remembrance; restore the operator secrets
+install: trust generation failed; pass --trust <file> or restore the operator secrets
+APP_RC=1

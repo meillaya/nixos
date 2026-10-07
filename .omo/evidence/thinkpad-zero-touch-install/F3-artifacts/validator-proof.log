@@ -1,0 +1,21 @@
+EUID=0 uid=0 gid=0
+tmpfs check: tmpfs /dev/shm
+--- mount fresh tmpfs over /var/lib (mount ns) ---
+mount rc=0
+--- staging_init ---
+/run/user/1000/nixos-install-staging.OJsMKSu9
+STAGING_DIR=/run/user/1000/nixos-install-staging.OJsMKSu9
+--- staging_password <stage> mei ---
+password for mei: K4agyjGqirvbr7VzbLqFKI4p
+staging_password rc=0
+produced: 600 74 /run/user/1000/nixos-install-staging.OJsMKSu9/var/lib/nixos-bootstrap/mei-password.hash
+hash prefix: $y$j9T
+regex: match
+--- install produced hash (0:0 / 0700 dir / 0600 file), as nixos-anywhere would ---
+0:0:700 /var/lib/nixos-bootstrap
+0:0:600 /var/lib/nixos-bootstrap/mei-password.hash
+--- run REAL activation validator (expect rc=0, silent) ---
+VALIDATOR_RC=0
+--- adversarial: tamper hash to a non-yescrypt blob (expect rc=1 + message) ---
+bootstrap password hash validation failed: expected yescrypt hash
+TAMPER_VALIDATOR_RC=1

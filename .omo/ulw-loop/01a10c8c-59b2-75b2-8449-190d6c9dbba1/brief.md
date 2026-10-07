@@ -1,0 +1,9 @@
+- Axis A repo gap map: file:line evidence of what blocks a zero-touch ThinkPad install
+- Axis B remote-install tool surface: nixos-anywhere/nixos-install flags proven from source
+- Axis C password provisioning: executed proof that a staged hash satisfies the repo validator
+- Axis D secrets route: inventory + transport mechanisms for the sops material on this laptop
+- Axis E prior art: clan/nixos-facter/disko-install/unattended-install patterns
+- Axis F ISO autostart: design for the ISO to run the install itself, plus official-ISO limits
+- Attack rounds: skeptic + contrarian verdicts on every contested claim
+- Verification: executed proofs for contested/non-code claims
+- Synthesis + delivery: cited SYNTHESIS.md, gates, closing briefing

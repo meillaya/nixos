@@ -1,0 +1,7 @@
+dendritic-architecture rc=124
+dendritic-boundaries rc=0
+dendritic-apps rc=0
+dendritic-shells rc=0
+package-policy rc=0
+install-staging rc=0
+bootstrap-password-mutations rc=0

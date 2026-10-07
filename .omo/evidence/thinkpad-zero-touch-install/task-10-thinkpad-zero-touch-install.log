@@ -1,0 +1,103 @@
+=== todo 10 evidence: staging/transport invariants (wave 3 lane A) ===
+worktree: /home/mei/nixos-wt/thinkpad-zero-touch-install-wave3
+HEAD at capture start: ae0a3ef593a6efda94c74bef4d80fdf30a8138ff
+date: 2026-10-06T13:36:12-04:00
+
+### syntax
+install-staging.sh: bash -n OK
+dendritic-apps.sh: bash -n OK
+
+### flaky probe: each script run twice
+--- install-staging run 1 ---
+install-staging=PASS
+rc=0
+--- install-staging run 2 ---
+install-staging=PASS
+rc=0
+--- dendritic-apps run 1 ---
+dendritic-apps=PASS
+rc=0
+--- dendritic-apps run 2 ---
+dendritic-apps=PASS
+rc=0
+
+### real flake surface: build the wired check in the sandbox
+warning: Git tree '/home/mei/nixos-wt/thinkpad-zero-touch-install-wave3' has uncommitted changes
+this derivation will be built:
+  /nix/store/bg196pzqmd8qpvcqwvsbp894yls3rsr5-install-staging.drv
+building '/nix/store/bg196pzqmd8qpvcqwvsbp894yls3rsr5-install-staging.drv'...
+/nix/store/snxkv96qkymmhigfmnax86bqgjgq3x61-install-staging
+build rc=0
+
+### misleading-success / stale-state probe: token removals must fail (scratch copy)
+--- baseline ---
+install-staging=PASS
+baseline rc=0
+--- mutation 1: --method=yescrypt -> --method=sha512 ---
+install-staging: bin/_install-staging.sh is missing the pinned token: --method=yescrypt
+mutation1 rc=1
+--- mutation 2: '--extra-files <stage>' -> '--extra-files <MUTATED>' ---
+install-staging: --dry-run plan does not print the --extra-files transport step
+mutation2 rc=1
+--- restored ---
+install-staging=PASS
+restored rc=0
+cleanup: rm -rf /tmp/ulw-t10-mutate ; ls -d /tmp/ulw-t10-mutate 2>/dev/null => rc=0 (2 = gone)
+
+### repo-wide eval wall: timeout 1500 nix flake check --all-systems --no-build
+evaluating 'checks.aarch64-darwin.dendritic-apps'...
+evaluating 'checks.x86_64-linux.dendritic-apps'...
+evaluating 'checks.x86_64-linux.install-staging'...
+✅ checks.x86_64-linux.install-staging
+✅ checks.x86_64-linux.dendritic-apps
+✅ checks.aarch64-darwin.dendritic-apps
+evaluating 'checks.aarch64-darwin.install-staging'...
+✅ checks.aarch64-darwin.install-staging
+flake-check pipeline rc=0
+
+### the unshare verdict recorded in the install-staging.sh header
+# tests/bootstrap-password-lifecycle.sh (bind mounts over /var/lib and
+# /etc/shadow) stays a deliberate manual gate, out of `nix flake check`.
+# unshare probe verdict (2026-10-06, this host): `unshare -Ur -m` succeeds and a
+# bind mount works inside the namespace, so the suite *could* run under a user
+# namespace - it is left manual anyway because the plan's Must-NOT rules keep the
+# destructive-risk bind-mount harness out of the check suite. Verified with:
+#   unshare -Ur -m -- bash -c 'mkdir -p $d/a $d/b; mount --bind $d/a $d/b' => BIND_OK
+
+=== end ===
+
+### final verification at committed HEAD
+HEAD: a25219f1588091d8cc110b3dc492ee44644567e6 test(install): pin the staging and transport invariants
+--- install-staging.sh ---
+install-staging=PASS
+rc=0
+--- dendritic-apps.sh ---
+dendritic-apps=PASS
+rc=0
+--- git show --stat HEAD (dirty-worktree probe: only the three paths) ---
+a25219f test(install): pin the staging and transport invariants
+
+ modules/flake/checks.nix | 11 ++++++
+ tests/dendritic-apps.sh  |  1 +
+ tests/install-staging.sh | 88 ++++++++++++++++++++++++++++++++++++++++++++++++
+ 3 files changed, 100 insertions(+)
+--- timeout 1500 nix flake check --all-systems --no-build ---
+evaluating 'checks.x86_64-linux.dendritic-config-eval'...
+evaluating 'checks.x86_64-linux.dendritic-apps'...
+✅ checks.x86_64-linux.dendritic-apps
+evaluating 'checks.aarch64-darwin.install-staging'...
+✅ checks.aarch64-darwin.install-staging
+evaluating 'checks.aarch64-darwin.dendritic-config-eval'...
+evaluating 'checks.aarch64-darwin.dendritic-apps'...
+✅ checks.aarch64-darwin.dendritic-apps
+evaluating 'checks.x86_64-linux.install-staging'...
+✅ checks.x86_64-linux.install-staging
+✅ checks.aarch64-darwin.dendritic-config-eval
+✅ checks.x86_64-linux.dendritic-config-eval
+flake-check pipeline rc=0
+=== end final verification ===
+
+### cleanup receipts (verified after the run)
+rm -rf /tmp/ulw-t10-mutate ; ls -d /tmp/ulw-t10-mutate 2>/dev/null => rc=0 (2 = removed)
+ls /run/user/1000/nixos-install-staging.* => rc=2 (2 = none left)
+no servers, tmux sessions, browsers, containers or bound ports were created by this lane

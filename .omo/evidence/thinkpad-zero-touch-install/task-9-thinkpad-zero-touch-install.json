@@ -1,0 +1,241 @@
+{
+  "task": "9: ISO: bake the flake, add the gated unit and the rescue target",
+  "lane": "wave 2 / lane A",
+  "worktree": "/home/mei/nixos-wt/thinkpad-zero-touch-install-wave2",
+  "branch": "thinkpad-zero-touch-install/wave2",
+  "commit": "c85a8ffac1cb504aa0594eb226c1152e2c5e3008",
+  "commit_message": "feat(iso): opt-in gated auto-install with a rescue target",
+  "changed_files": [
+    "modules/flake/iso-images.nix"
+  ],
+  "acceptance": {
+    "note": "The formal eval wall is plan todo 11 (wave 3, not landed). This lane ran the equivalent direct evals for every assertion the plan lists for todo 9, plus the negative kernelParams assertion.",
+    "unit_name_consistency": "nixos-autoinstall.service referenced for the unit everywhere; OnFailure -> iso-install-rescue.target; rescue shell -> iso-install-rescue-shell.service",
+    "fields_asserted_both_hosts": "PASS for antagony and remembrance (40+ assertions over wantedBy/wants/after/unitConfig/serviceConfig/script/rescue target/shell/negative kernelParams/isoMatchesIsoConfig)",
+    "dry_run_antagony": "PASS rc=0 — nix build .#iso.antagony --dry-run under timeout 900; the plan instantiates /nix/store/7fwk1ihfcq60a3wwnlk9a0wpnd2d2wpi-nixos-26.11.20260923.4975466-x86_64-linux.iso.drv (141 derivations to build, 933 paths to fetch)"
+  },
+  "tests": [
+    "nix eval --impure --json --file /tmp/ulw-t9/fields.nix => PASS (all unit/service/rescue/shell fields exact for antagony + remembrance; script = wrapper store path + '--host <host> --yes --rescue-identity'; no 'nixos.autoinstall=1' in boot.kernelParams; flake.iso == flake.isoConfig-built iso)",
+    "nix build .#iso.antagony --dry-run => PASS rc=0 (ISO drv instantiated)",
+    "nix eval --impure --json --file /tmp/ulw-t9/override.nix => PASS (mutating ConditionKernelCommandLine changes the rendered unit text; appending boot.kernelParams only in the test-only override works; pristine params stay clean)",
+    "bash tests/dendritic-architecture.sh => PASS (dendritic-architecture=PASS, rc=0)",
+    "bash tests/dendritic-boundaries.sh => PASS (dendritic-boundaries=PASS, rc=0)",
+    "bash tests/dendritic-apps.sh => PASS (dendritic-apps=PASS, rc=0)",
+    "grep -c '|| true' modules/flake/iso-images.nix => 0 (only the pre-existing enrollment '|| echo' remains)",
+    "git show --stat HEAD => only modules/flake/iso-images.nix (67 insertions, 6 deletions)"
+  ],
+  "adversarial_probes": {
+    "misleading_success_output": "PASS — no '|| true' anywhere in the file (grep -c = 0); the new unit has no failure masking; OnFailure=iso-install-rescue.target confirmed in the rendered [Unit] text both hosts.",
+    "stale_state": "PASS — flake.iso.<host> is now built from flake.isoConfig.<host>; direct eval shows flake.iso.antagony == flake.isoConfig.antagony.config.system.build.images.iso; a rebuild-free eval (nix eval) shows the new unit after the edit.",
+    "dirty_worktree": "PASS — git show --stat HEAD lists only modules/flake/iso-images.nix; commit c85a8ff.",
+    "hung_or_long_commands": "PASS — nix build .#iso.antagony --dry-run ran under timeout 900 with rc=0; no real ISO build was attempted.",
+    "generated_or_cached_artifacts": "PASS — the unit script renders to the flake's app wrapper /nix/store/cax3llhwblgnpbip9ksrky7w0fhizm0p-install/bin/install (source has no '/nix/store/' literal); the realised wrapper execs /nix/store/y01jykmqxzaf79fc9kc483vhmc8if4zr-source/apps/x86_64-linux/install (same source path the baked /etc/nixos-install/flake points at)."
+  },
+  "qa_scenarios": {
+    "happy": "eval the unit fields — fields.nix assertions all PASS for both hosts (see raw.fields_raw).",
+    "failure": "delete/flip the condition => wall fails. The wall (todo 11) is not landed; analogue run: extendModules override of ConditionKernelCommandLine changes both the option value and the rendered unit text (see raw.override_raw), and the pristine boot.kernelParams negative assertion is falsifiable (test-only boot.kernelParams override appends the flag)."
+  },
+  "manual_qa": [
+    "/home/mei/nixos/.omo/evidence/thinkpad-zero-touch-install/task-9-thinkpad-zero-touch-install.json"
+  ],
+  "cleanup": [
+    "monitors bash_1..bash_4 all completed (one-shot commands, no live sessions)",
+    "rm -rf /tmp/ulw-t9 (after evidence embedding)",
+    "no tmux/servers/ports/browsers were started"
+  ],
+  "risks": [
+    "Plan todo 11 (ISO eval wall) and todo 14 (gate-inertness VM) are wave-3 items and were NOT landed by this lane; this lane proved the same assertions via direct nix evals instead. The formal wall must still land in wave 3.",
+    "Runtime behavior (unit activation gating, rescue shell takeover on tty1) was verified at configuration/eval level (rendered unit text), not by booting the ISO — that is todo 14's scope.",
+    "Design decision beyond the plan's field list: `environment.etc.\"nixos-install/flake\".source = \"${inputs.self}\"` implements the todo title 'bake the flake' and consumes the newly added `inputs` arg; the app wrapper already carries the same source in its closure, so this is a stable manual path, not a functional dependency.",
+    "The rescue shell sets StandardOutput/StandardError=tty (plus TTYReset/TTYVHangup/TTYVTDisallocate) so the interactive shell is visible on tty1; the plan named only bash -i / StandardInput=tty-force / TTYPath=/dev/tty1.",
+    "nix-store --realise of the wrapper emitted a no-root GC warning; nothing is held."
+  ],
+  "raw": {
+    "fields_expr_nix": "\nlet\n  f = builtins.getFlake \"path:/home/mei/nixos-wt/thinkpad-zero-touch-install-wave2\";\n  probe = name:\n    let\n      c = f.isoConfig.${name}.config;\n      u = c.systemd.services.nixos-autoinstall;\n      units = c.systemd.units;\n      shell = c.systemd.services.iso-install-rescue-shell;\n    in {\n      wantedBy = u.wantedBy;\n      wants = u.wants;\n      after = u.after;\n      unitConfig = u.unitConfig;\n      serviceConfig = {\n        inherit (u.serviceConfig) Type RemainAfterExit StandardOutput StandardError;\n      };\n      script = u.script;\n      shellServiceConfig = shell.serviceConfig;\n      unitText = units.\"nixos-autoinstall.service\".text or \"ABSENT\";\n      rescueTargetText = units.\"iso-install-rescue.target\".text or \"ABSENT\";\n      shellText = units.\"iso-install-rescue-shell.service\".text or \"ABSENT\";\n      kernelParams = c.boot.kernelParams;\n      sshdEnabled = c.services.openssh.enable;\n      bakedFlake = c.environment.etc.\"nixos-install/flake\".source;\n      isoMatchesIsoConfig = f.iso.${name} == f.isoConfig.${name}.config.system.build.images.iso;\n    };\nin {\n  antagony = probe \"antagony\";\n  remembrance = probe \"remembrance\";\n}\n",
+    "override_expr_nix": "\nlet\n  f = builtins.getFlake \"path:/home/mei/nixos-wt/thinkpad-zero-touch-install-wave2\";\n  lib = f.inputs.nixpkgs.lib;\n  mutated = f.isoConfig.antagony.extendModules {\n    modules = [ {\n      systemd.services.nixos-autoinstall.unitConfig.ConditionKernelCommandLine =\n        lib.mkForce \"nixos.autoinstall=0\";\n    } ];\n  };\n  forcedFlag = f.isoConfig.antagony.extendModules {\n    modules = [ { boot.kernelParams = [ \"nixos.autoinstall=1\" ]; } ];\n  };\n  pristine = f.isoConfig.antagony.config;\nin {\n  pristineCondition = pristine.systemd.services.nixos-autoinstall.unitConfig.ConditionKernelCommandLine;\n  mutatedCondition = mutated.config.systemd.services.nixos-autoinstall.unitConfig.ConditionKernelCommandLine;\n  mutatedUnitText = mutated.config.systemd.units.\"nixos-autoinstall.service\".text;\n  pristineUnitText = pristine.systemd.units.\"nixos-autoinstall.service\".text;\n  forcedKernelParams = forcedFlag.config.boot.kernelParams;\n  pristineKernelParams = pristine.boot.kernelParams;\n  rescueTargetText = pristine.systemd.units.\"iso-install-rescue.target\".text;\n  shellServiceText = pristine.systemd.units.\"iso-install-rescue-shell.service\".text;\n}\n",
+    "fields_raw": {
+      "antagony": {
+        "after": [
+          "network-online.target",
+          "sshd.service",
+          "hardware-enroll.service"
+        ],
+        "bakedFlake": "/nix/store/y01jykmqxzaf79fc9kc483vhmc8if4zr-source",
+        "isoMatchesIsoConfig": true,
+        "kernelParams": [
+          "root=fstab",
+          "loglevel=4",
+          "lsm=landlock,yama,bpf"
+        ],
+        "rescueTargetText": "[Unit]\nDescription=ISO auto-install rescue (the install attempt failed)\n\n",
+        "script": "/nix/store/cax3llhwblgnpbip9ksrky7w0fhizm0p-install/bin/install --host antagony --yes --rescue-identity\n",
+        "serviceConfig": {
+          "RemainAfterExit": true,
+          "StandardError": "journal+console",
+          "StandardOutput": "journal+console",
+          "Type": "oneshot"
+        },
+        "shellServiceConfig": {
+          "ExecStart": "/nix/store/2ndah67h0z5m31v2wkdmg2md4380ggr5-bash-interactive-5.3p15/bin/bash -i",
+          "StandardError": "tty",
+          "StandardInput": "tty-force",
+          "StandardOutput": "tty",
+          "TTYPath": "/dev/tty1",
+          "TTYReset": true,
+          "TTYVHangup": true,
+          "TTYVTDisallocate": true,
+          "Type": "idle"
+        },
+        "shellText": "[Unit]\nDescription=ISO auto-install rescue shell on tty1\n\n[Service]\nEnvironment=\"LOCALE_ARCHIVE=/nix/store/hvznc01w42na6hiad627833ci4dhjvnc-glibc-locales-2.42-84/lib/locale/locale-archive\"\nEnvironment=\"PATH=/nix/store/xjl7p8dvyk2j53kqf7f43kdj4ypbxz7g-coreutils-9.11/bin:/nix/store/i9wgqa0l88aprvpwfaq5hkfa6pklhlv0-findutils-4.11.0/bin:/nix/store/xmvbzzxm5snla5a2cyfhm7hjy9bifx7n-gnugrep-3.12/bin:/nix/store/qf2wzyq4irhgyhnq3s2hz0ldjq3w8a3x-gnused-4.10/bin:/nix/store/baxgs06659w4i6ggsfr56srjrb52v1h8-systemd-261.2/bin:/nix/store/xjl7p8dvyk2j53kqf7f43kdj4ypbxz7g-coreutils-9.11/sbin:/nix/store/i9wgqa0l88aprvpwfaq5hkfa6pklhlv0-findutils-4.11.0/sbin:/nix/store/xmvbzzxm5snla5a2cyfhm7hjy9bifx7n-gnugrep-3.12/sbin:/nix/store/qf2wzyq4irhgyhnq3s2hz0ldjq3w8a3x-gnused-4.10/sbin:/nix/store/baxgs06659w4i6ggsfr56srjrb52v1h8-systemd-261.2/sbin\"\nEnvironment=\"TZDIR=/nix/store/fh8svr4ds87z84iarfnxrlfpjlbmc816-tzdata-2026c/share/zoneinfo\"\nExecStart=/nix/store/2ndah67h0z5m31v2wkdmg2md4380ggr5-bash-interactive-5.3p15/bin/bash -i\nStandardError=tty\nStandardInput=tty-force\nStandardOutput=tty\nTTYPath=/dev/tty1\nTTYReset=true\nTTYVHangup=true\nTTYVTDisallocate=true\nType=idle\n\n[Install]\nWantedBy=iso-install-rescue.target\n",
+        "sshdEnabled": true,
+        "unitConfig": {
+          "After": "network-online.target sshd.service hardware-enroll.service",
+          "ConditionKernelCommandLine": "nixos.autoinstall=1",
+          "ConditionPathExists": "!/run/autoinstall-done",
+          "OnFailure": [
+            "iso-install-rescue.target"
+          ],
+          "SuccessAction": "reboot",
+          "Wants": "network-online.target"
+        },
+        "unitText": "[Unit]\nAfter=network-online.target sshd.service hardware-enroll.service\nConditionKernelCommandLine=nixos.autoinstall=1\nConditionPathExists=!/run/autoinstall-done\nOnFailure=iso-install-rescue.target\nSuccessAction=reboot\nWants=network-online.target\n\n[Service]\nEnvironment=\"LOCALE_ARCHIVE=/nix/store/hvznc01w42na6hiad627833ci4dhjvnc-glibc-locales-2.42-84/lib/locale/locale-archive\"\nEnvironment=\"PATH=/nix/store/xjl7p8dvyk2j53kqf7f43kdj4ypbxz7g-coreutils-9.11/bin:/nix/store/i9wgqa0l88aprvpwfaq5hkfa6pklhlv0-findutils-4.11.0/bin:/nix/store/xmvbzzxm5snla5a2cyfhm7hjy9bifx7n-gnugrep-3.12/bin:/nix/store/qf2wzyq4irhgyhnq3s2hz0ldjq3w8a3x-gnused-4.10/bin:/nix/store/baxgs06659w4i6ggsfr56srjrb52v1h8-systemd-261.2/bin:/nix/store/xjl7p8dvyk2j53kqf7f43kdj4ypbxz7g-coreutils-9.11/sbin:/nix/store/i9wgqa0l88aprvpwfaq5hkfa6pklhlv0-findutils-4.11.0/sbin:/nix/store/xmvbzzxm5snla5a2cyfhm7hjy9bifx7n-gnugrep-3.12/sbin:/nix/store/qf2wzyq4irhgyhnq3s2hz0ldjq3w8a3x-gnused-4.10/sbin:/nix/store/baxgs06659w4i6ggsfr56srjrb52v1h8-systemd-261.2/sbin\"\nEnvironment=\"TZDIR=/nix/store/fh8svr4ds87z84iarfnxrlfpjlbmc816-tzdata-2026c/share/zoneinfo\"\nExecStart=/nix/store/pq6gy4qxa6mmbv128crvb25w6aaf1n26-unit-script-nixos-autoinstall-start/bin/nixos-autoinstall-start \nRemainAfterExit=true\nStandardError=journal+console\nStandardOutput=journal+console\nType=oneshot\n\n[Install]\nWantedBy=multi-user.target\n",
+        "wantedBy": [
+          "multi-user.target"
+        ],
+        "wants": [
+          "network-online.target"
+        ]
+      },
+      "remembrance": {
+        "after": [
+          "network-online.target",
+          "sshd.service",
+          "hardware-enroll.service"
+        ],
+        "bakedFlake": "/nix/store/y01jykmqxzaf79fc9kc483vhmc8if4zr-source",
+        "isoMatchesIsoConfig": true,
+        "kernelParams": [
+          "root=fstab",
+          "loglevel=4",
+          "lsm=landlock,yama,bpf"
+        ],
+        "rescueTargetText": "[Unit]\nDescription=ISO auto-install rescue (the install attempt failed)\n\n",
+        "script": "/nix/store/cax3llhwblgnpbip9ksrky7w0fhizm0p-install/bin/install --host remembrance --yes --rescue-identity\n",
+        "serviceConfig": {
+          "RemainAfterExit": true,
+          "StandardError": "journal+console",
+          "StandardOutput": "journal+console",
+          "Type": "oneshot"
+        },
+        "shellServiceConfig": {
+          "ExecStart": "/nix/store/2ndah67h0z5m31v2wkdmg2md4380ggr5-bash-interactive-5.3p15/bin/bash -i",
+          "StandardError": "tty",
+          "StandardInput": "tty-force",
+          "StandardOutput": "tty",
+          "TTYPath": "/dev/tty1",
+          "TTYReset": true,
+          "TTYVHangup": true,
+          "TTYVTDisallocate": true,
+          "Type": "idle"
+        },
+        "shellText": "[Unit]\nDescription=ISO auto-install rescue shell on tty1\n\n[Service]\nEnvironment=\"LOCALE_ARCHIVE=/nix/store/hvznc01w42na6hiad627833ci4dhjvnc-glibc-locales-2.42-84/lib/locale/locale-archive\"\nEnvironment=\"PATH=/nix/store/xjl7p8dvyk2j53kqf7f43kdj4ypbxz7g-coreutils-9.11/bin:/nix/store/i9wgqa0l88aprvpwfaq5hkfa6pklhlv0-findutils-4.11.0/bin:/nix/store/xmvbzzxm5snla5a2cyfhm7hjy9bifx7n-gnugrep-3.12/bin:/nix/store/qf2wzyq4irhgyhnq3s2hz0ldjq3w8a3x-gnused-4.10/bin:/nix/store/baxgs06659w4i6ggsfr56srjrb52v1h8-systemd-261.2/bin:/nix/store/xjl7p8dvyk2j53kqf7f43kdj4ypbxz7g-coreutils-9.11/sbin:/nix/store/i9wgqa0l88aprvpwfaq5hkfa6pklhlv0-findutils-4.11.0/sbin:/nix/store/xmvbzzxm5snla5a2cyfhm7hjy9bifx7n-gnugrep-3.12/sbin:/nix/store/qf2wzyq4irhgyhnq3s2hz0ldjq3w8a3x-gnused-4.10/sbin:/nix/store/baxgs06659w4i6ggsfr56srjrb52v1h8-systemd-261.2/sbin\"\nEnvironment=\"TZDIR=/nix/store/fh8svr4ds87z84iarfnxrlfpjlbmc816-tzdata-2026c/share/zoneinfo\"\nExecStart=/nix/store/2ndah67h0z5m31v2wkdmg2md4380ggr5-bash-interactive-5.3p15/bin/bash -i\nStandardError=tty\nStandardInput=tty-force\nStandardOutput=tty\nTTYPath=/dev/tty1\nTTYReset=true\nTTYVHangup=true\nTTYVTDisallocate=true\nType=idle\n\n[Install]\nWantedBy=iso-install-rescue.target\n",
+        "sshdEnabled": true,
+        "unitConfig": {
+          "After": "network-online.target sshd.service hardware-enroll.service",
+          "ConditionKernelCommandLine": "nixos.autoinstall=1",
+          "ConditionPathExists": "!/run/autoinstall-done",
+          "OnFailure": [
+            "iso-install-rescue.target"
+          ],
+          "SuccessAction": "reboot",
+          "Wants": "network-online.target"
+        },
+        "unitText": "[Unit]\nAfter=network-online.target sshd.service hardware-enroll.service\nConditionKernelCommandLine=nixos.autoinstall=1\nConditionPathExists=!/run/autoinstall-done\nOnFailure=iso-install-rescue.target\nSuccessAction=reboot\nWants=network-online.target\n\n[Service]\nEnvironment=\"LOCALE_ARCHIVE=/nix/store/hvznc01w42na6hiad627833ci4dhjvnc-glibc-locales-2.42-84/lib/locale/locale-archive\"\nEnvironment=\"PATH=/nix/store/xjl7p8dvyk2j53kqf7f43kdj4ypbxz7g-coreutils-9.11/bin:/nix/store/i9wgqa0l88aprvpwfaq5hkfa6pklhlv0-findutils-4.11.0/bin:/nix/store/xmvbzzxm5snla5a2cyfhm7hjy9bifx7n-gnugrep-3.12/bin:/nix/store/qf2wzyq4irhgyhnq3s2hz0ldjq3w8a3x-gnused-4.10/bin:/nix/store/baxgs06659w4i6ggsfr56srjrb52v1h8-systemd-261.2/bin:/nix/store/xjl7p8dvyk2j53kqf7f43kdj4ypbxz7g-coreutils-9.11/sbin:/nix/store/i9wgqa0l88aprvpwfaq5hkfa6pklhlv0-findutils-4.11.0/sbin:/nix/store/xmvbzzxm5snla5a2cyfhm7hjy9bifx7n-gnugrep-3.12/sbin:/nix/store/qf2wzyq4irhgyhnq3s2hz0ldjq3w8a3x-gnused-4.10/sbin:/nix/store/baxgs06659w4i6ggsfr56srjrb52v1h8-systemd-261.2/sbin\"\nEnvironment=\"TZDIR=/nix/store/fh8svr4ds87z84iarfnxrlfpjlbmc816-tzdata-2026c/share/zoneinfo\"\nExecStart=/nix/store/fxafzsnax4w629xci85i98ncljwf9n00-unit-script-nixos-autoinstall-start/bin/nixos-autoinstall-start \nRemainAfterExit=true\nStandardError=journal+console\nStandardOutput=journal+console\nType=oneshot\n\n[Install]\nWantedBy=multi-user.target\n",
+        "wantedBy": [
+          "multi-user.target"
+        ],
+        "wants": [
+          "network-online.target"
+        ]
+      }
+    },
+    "override_raw": {
+      "forcedKernelParams": [
+        "nixos.autoinstall=1",
+        "root=fstab",
+        "loglevel=4",
+        "lsm=landlock,yama,bpf"
+      ],
+      "mutatedCondition": "nixos.autoinstall=0",
+      "mutatedUnitText": "[Unit]\nAfter=network-online.target sshd.service hardware-enroll.service\nConditionKernelCommandLine=nixos.autoinstall=0\nConditionPathExists=!/run/autoinstall-done\nOnFailure=iso-install-rescue.target\nSuccessAction=reboot\nWants=network-online.target\n\n[Service]\nEnvironment=\"LOCALE_ARCHIVE=/nix/store/hvznc01w42na6hiad627833ci4dhjvnc-glibc-locales-2.42-84/lib/locale/locale-archive\"\nEnvironment=\"PATH=/nix/store/xjl7p8dvyk2j53kqf7f43kdj4ypbxz7g-coreutils-9.11/bin:/nix/store/i9wgqa0l88aprvpwfaq5hkfa6pklhlv0-findutils-4.11.0/bin:/nix/store/xmvbzzxm5snla5a2cyfhm7hjy9bifx7n-gnugrep-3.12/bin:/nix/store/qf2wzyq4irhgyhnq3s2hz0ldjq3w8a3x-gnused-4.10/bin:/nix/store/baxgs06659w4i6ggsfr56srjrb52v1h8-systemd-261.2/bin:/nix/store/xjl7p8dvyk2j53kqf7f43kdj4ypbxz7g-coreutils-9.11/sbin:/nix/store/i9wgqa0l88aprvpwfaq5hkfa6pklhlv0-findutils-4.11.0/sbin:/nix/store/xmvbzzxm5snla5a2cyfhm7hjy9bifx7n-gnugrep-3.12/sbin:/nix/store/qf2wzyq4irhgyhnq3s2hz0ldjq3w8a3x-gnused-4.10/sbin:/nix/store/baxgs06659w4i6ggsfr56srjrb52v1h8-systemd-261.2/sbin\"\nEnvironment=\"TZDIR=/nix/store/fh8svr4ds87z84iarfnxrlfpjlbmc816-tzdata-2026c/share/zoneinfo\"\nExecStart=/nix/store/pq6gy4qxa6mmbv128crvb25w6aaf1n26-unit-script-nixos-autoinstall-start/bin/nixos-autoinstall-start \nRemainAfterExit=true\nStandardError=journal+console\nStandardOutput=journal+console\nType=oneshot\n\n[Install]\nWantedBy=multi-user.target\n",
+      "pristineCondition": "nixos.autoinstall=1",
+      "pristineKernelParams": [
+        "root=fstab",
+        "loglevel=4",
+        "lsm=landlock,yama,bpf"
+      ],
+      "pristineUnitText": "[Unit]\nAfter=network-online.target sshd.service hardware-enroll.service\nConditionKernelCommandLine=nixos.autoinstall=1\nConditionPathExists=!/run/autoinstall-done\nOnFailure=iso-install-rescue.target\nSuccessAction=reboot\nWants=network-online.target\n\n[Service]\nEnvironment=\"LOCALE_ARCHIVE=/nix/store/hvznc01w42na6hiad627833ci4dhjvnc-glibc-locales-2.42-84/lib/locale/locale-archive\"\nEnvironment=\"PATH=/nix/store/xjl7p8dvyk2j53kqf7f43kdj4ypbxz7g-coreutils-9.11/bin:/nix/store/i9wgqa0l88aprvpwfaq5hkfa6pklhlv0-findutils-4.11.0/bin:/nix/store/xmvbzzxm5snla5a2cyfhm7hjy9bifx7n-gnugrep-3.12/bin:/nix/store/qf2wzyq4irhgyhnq3s2hz0ldjq3w8a3x-gnused-4.10/bin:/nix/store/baxgs06659w4i6ggsfr56srjrb52v1h8-systemd-261.2/bin:/nix/store/xjl7p8dvyk2j53kqf7f43kdj4ypbxz7g-coreutils-9.11/sbin:/nix/store/i9wgqa0l88aprvpwfaq5hkfa6pklhlv0-findutils-4.11.0/sbin:/nix/store/xmvbzzxm5snla5a2cyfhm7hjy9bifx7n-gnugrep-3.12/sbin:/nix/store/qf2wzyq4irhgyhnq3s2hz0ldjq3w8a3x-gnused-4.10/sbin:/nix/store/baxgs06659w4i6ggsfr56srjrb52v1h8-systemd-261.2/sbin\"\nEnvironment=\"TZDIR=/nix/store/fh8svr4ds87z84iarfnxrlfpjlbmc816-tzdata-2026c/share/zoneinfo\"\nExecStart=/nix/store/pq6gy4qxa6mmbv128crvb25w6aaf1n26-unit-script-nixos-autoinstall-start/bin/nixos-autoinstall-start \nRemainAfterExit=true\nStandardError=journal+console\nStandardOutput=journal+console\nType=oneshot\n\n[Install]\nWantedBy=multi-user.target\n",
+      "rescueTargetText": "[Unit]\nDescription=ISO auto-install rescue (the install attempt failed)\n\n",
+      "shellServiceText": "[Unit]\nDescription=ISO auto-install rescue shell on tty1\n\n[Service]\nEnvironment=\"LOCALE_ARCHIVE=/nix/store/hvznc01w42na6hiad627833ci4dhjvnc-glibc-locales-2.42-84/lib/locale/locale-archive\"\nEnvironment=\"PATH=/nix/store/xjl7p8dvyk2j53kqf7f43kdj4ypbxz7g-coreutils-9.11/bin:/nix/store/i9wgqa0l88aprvpwfaq5hkfa6pklhlv0-findutils-4.11.0/bin:/nix/store/xmvbzzxm5snla5a2cyfhm7hjy9bifx7n-gnugrep-3.12/bin:/nix/store/qf2wzyq4irhgyhnq3s2hz0ldjq3w8a3x-gnused-4.10/bin:/nix/store/baxgs06659w4i6ggsfr56srjrb52v1h8-systemd-261.2/bin:/nix/store/xjl7p8dvyk2j53kqf7f43kdj4ypbxz7g-coreutils-9.11/sbin:/nix/store/i9wgqa0l88aprvpwfaq5hkfa6pklhlv0-findutils-4.11.0/sbin:/nix/store/xmvbzzxm5snla5a2cyfhm7hjy9bifx7n-gnugrep-3.12/sbin:/nix/store/qf2wzyq4irhgyhnq3s2hz0ldjq3w8a3x-gnused-4.10/sbin:/nix/store/baxgs06659w4i6ggsfr56srjrb52v1h8-systemd-261.2/sbin\"\nEnvironment=\"TZDIR=/nix/store/fh8svr4ds87z84iarfnxrlfpjlbmc816-tzdata-2026c/share/zoneinfo\"\nExecStart=/nix/store/2ndah67h0z5m31v2wkdmg2md4380ggr5-bash-interactive-5.3p15/bin/bash -i\nStandardError=tty\nStandardInput=tty-force\nStandardOutput=tty\nTTYPath=/dev/tty1\nTTYReset=true\nTTYVHangup=true\nTTYVTDisallocate=true\nType=idle\n\n[Install]\nWantedBy=iso-install-rescue.target\n"
+    },
+    "dry_run_digest": {
+      "rc": 0,
+      "path": "/tmp/ulw-t9/dryrun.log (raw; digest embedded below)",
+      "line_count": 1081,
+      "head": [
+        "warning: Git tree '/home/mei/nixos-wt/thinkpad-zero-touch-install-wave2' has uncommitted changes",
+        "waiting for another Nix process to finish fetching input 'github:hercules-ci/flake-parts/427bf4bd9435fdf21321c8cc628c24efc14c0f7a?narHash=sha256-4dtXQk/NMePegK/nWp5NSeuZKLATItOq61lpEvmXqGw%3D'...",
+        "waiting for another Nix process to finish fetching input 'https://github.com/sini/gen-algebra/archive/dd682674edad388c439c6f2b08f84c31feec1b68.zip?narHash=sha256-Lus/dMa/CjERJMySG12RDArQKW4G3A6X/UQUi7KNWfA%3D'...",
+        "warning: Using 'builtins.derivation' to create a derivation named 'options.json' that references the store path '/nix/store/398fqjqkp383m7pyla9nxpi1is5vzywh-source' without a proper context. The resulting derivation will not have a correct store reference, so this is unreliable and may stop working in the future.",
+        "these 141 derivations will be built:",
+        "  /nix/store/vahpg1wpzdjiyw24qs61wwkxalxwmrf8-sudoers-in.drv",
+        "  /nix/store/03jsxaxqcab8779j0x6h0yw6swism6rs-sudoers.drv",
+        "  /nix/store/b530cmf1sm9h1w74gw9yhkwgii2zlsvn-initrd-hostname.drv",
+        "  /nix/store/fvva57pbi1bsy096mzhf028f1cv31hnk-initrd-mdadm.conf.drv",
+        "  /nix/store/9crq7402m83knc4m6d10hqpz68pdm7kv-unit-initrd-preservation.target.drv",
+        "  /nix/store/gcbgw7j3m1zlp0h00glhv5n2ldqcqm2g-initrd-units.drv",
+        "  /nix/store/rm39fhqhfbkh7yzrj5rw47wshffx6qz6-linux-7.2.7-modules-shrunk.drv",
+        "  /nix/store/xypymhbr1jw0r78vm1vgrcc757lhg4k7-initrd-linux-7.2.7.drv",
+        "  /nix/store/13hlhc6f37cyzb1yhs33qzcccy12b240-boot.json.drv",
+        "  /nix/store/b8ra3mypq2ns0hxmj1hsnag93q9s9svc-sshd.conf-final.drv",
+        "  /nix/store/2f7rkzsglkj2fwm1375dfgw33y78r7w1-check-sshd-config.drv",
+        "  /nix/store/hfyam4hlzqa6s0a92bg3i1wwaj5dfrvw-users-groups.json.drv",
+        "  /nix/store/m08cbf2jggm2xfzahckp37982dq0rzz1-dry-activate.drv",
+        "  /nix/store/q73brp76bpj3jvd7pxcw7a8b22d4wnj6-i2c-udev-rules.drv",
+        "  /nix/store/13jxsycx02ibkp5cy6gbliai9kw65ggk-hwdb.bin.drv",
+        "  /nix/store/wgm0p89ijg9gqcbshjwjs3x0sx7pv3qh-desktops.drv",
+        "  /nix/store/1vz18z824qx7771ycsqkfamf70arrcr4-etc-pam-environment.drv"
+      ],
+      "iso_derivation_line": "  /nix/store/7fwk1ihfcq60a3wwnlk9a0wpnd2d2wpi-nixos-26.11.20260923.4975466-x86_64-linux.iso.drv",
+      "summary": "these 933 paths will be fetched (1.5 GiB download, 3.1 GiB unpacked):",
+      "tail": [
+        "  /nix/store/l95kdxnnwkpy0p6v24s27avwx9g9bhx6-zix-0.8.2",
+        "  /nix/store/h8i2g6bdfrmiprpbbiyz35l3d538fcah-zlib-1.3.2-static",
+        "  /nix/store/m737zfgqhm6xg6w2mrmxfs7pz50qagqa-zsh-5.9.2-doc",
+        "  /nix/store/x7zgbl3mkd7gvn53s66fycpd67101ixa-zsh-5.9.2-info",
+        "  /nix/store/m7injzwxxisaj887vd6qkfp6wka7a4kw-zstd-1.5.7",
+        "  /nix/store/jipl6f7jdijnkvmrvzk0a525w973qxfg-zstd-1.5.7-man",
+        "  /nix/store/ml5i7lmsgvl652l519xcdwhhm85azsd8-zvbi-0.2.45",
+        ""
+      ]
+    },
+    "apps_test_log": "dendritic-apps=PASS\n"
+  },
+  "post_commit_verification": {
+    "note": "Re-run after the commit (dirty -> clean flake source snapshot): the committed tree yields the identical unit fields and a clean dry-run.",
+    "fields_reprobe": "ALL ASSERTIONS PASS for antagony + remembrance (same values as the pre-commit probe: unit fields, script with the app wrapper path and '--host <host> --yes --rescue-identity', rescue target + shell, isoMatchesIsoConfig=true, negative kernelParams).",
+    "dry_run": {
+      "rc": 0,
+      "iso_derivation": "  /nix/store/7fwk1ihfcq60a3wwnlk9a0wpnd2d2wpi-nixos-26.11.20260923.4975466-x86_64-linux.iso.drv",
+      "new_unit_derivations_in_plan": [
+        "  /nix/store/lysqimaqx0v6qmqw2q1h27hr208cnl4x-unit-iso-install-rescue-shell.service.drv",
+        "  /nix/store/s153lhf3s4c2zs2kfiyin1jw281bzc24-unit-iso-install-rescue.target.drv",
+        "  /nix/store/z689sr7lj4bs4yf877iqbnylrcm9yvm7-install.drv",
+        "  /nix/store/xf3c1qx81dl9fd64c2r7rp064i8lfk18-unit-script-nixos-autoinstall-start.drv",
+        "  /nix/store/y7fzh1vyzh4spkxch8hzzv4vyynp8g8q-unit-nixos-autoinstall.service.drv"
+      ],
+      "summary": "these 933 paths will be fetched (1.5 GiB download, 3.1 GiB unpacked):"
+    },
+    "masked_failure_grep": "grep -c '|| true' modules/flake/iso-images.nix => 0 (pre- and post-commit)."
+  }
+}

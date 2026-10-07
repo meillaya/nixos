@@ -1,0 +1,92 @@
+{
+  "verified_tip": "b210a75cc930bd130ed1fba965ab2f932f4a32b8",
+  "verified_at": "2026-10-06T16:00:14.886Z",
+  "verified_commits": [
+    "4897953->b210a75 (amended, only trap line differs)",
+    "bc05cb4",
+    "5688845",
+    "bde4937",
+    "ceca3a7",
+    "bb696d1",
+    "18fc43e"
+  ],
+  "todos": {
+    "1": {
+      "verdict": "confirmed",
+      "confidence": 0.97,
+      "evidence": [
+        "nix eval iso.antagony/remembrance etc text (2 runs) => {antagony:antagony, remembrance:remembrance} hostId parsed; identical both runs",
+        "nix build .#iso.antagony --dry-run => RC=0; .#iso.remembrance --dry-run => RC=2nd RC=0",
+        "scratch copy WITHOUT environment.etc entry => error: attribute '\"hardware-enrollment/antagony.json\"' missing (RC=1) -> eval assertion is meaningful",
+        "static: no bare '|| true'; marker 'hardware-enroll: masked failure (artifact presence is the gate)' line 48; oneshot --base path line 46 == declarative etc path line 53; runtime printf write gone; commit 5688845 touches only modules/flake/iso-images.nix"
+      ],
+      "repro": "nix eval --impure --json --expr 'let f=builtins.getFlake (toString <wt>); g=h:(builtins.fromJSON f.iso.${h}.passthru.config.environment.etc.\"hardware-enrollment/${h}.json\".text).hostId; in {antagony=g \"antagony\"; remembrance=g \"remembrance\";}'"
+    },
+    "2": {
+      "verdict": "confirmed",
+      "confidence": 0.97,
+      "evidence": [
+        "nix eval both hosts (2 runs, identical): boot.supportedFilesystems=[btrfs,iso9660,overlay,squashfs,tmpfs,vfat]; boot.kernelModules includes btrfs; system.fsPackages includes btrfs-progs-7.1",
+        "baseline git+file rev=5a333732 (pre-change): supported=[iso9660,overlay,squashfs,tmpfs] (no btrfs/vfat), kernel no btrfs, fs=[dosfstools] only -> change is causal",
+        "nix build .#iso.antagony --dry-run RC=0; .#iso.remembrance --dry-run RC=0; commit bc05cb4 touches only iso-images.nix"
+      ],
+      "repro": "nix eval --impure --json --expr 'let f=builtins.getFlake (toString <wt>); g=h:let c=f.iso.${h}.passthru.config; in {host=h;supported=builtins.attrNames c.boot.supportedFilesystems;kernel=c.boot.kernelModules;fs=map (p:p.pname or \"?\") c.system.fsPackages;}; in [(g \"antagony\")(g \"remembrance\")]'"
+    },
+    "3": {
+      "verdict": "confirmed",
+      "confidence": 0.97,
+      "evidence": [
+        "sourced in scratch shell: staging_init => tmpfs path; staging_password rc=0 prints exactly once; dir 700, file 600, 1 line, matches module regex; no plaintext anywhere in stage",
+        "staging_identity => keys.txt 600, home 755, .config 700; staging_artifacts => 0700 dir",
+        "stub mkpasswd exit 1 => rc=1, no hash file; stub bad output => rc=1, no hash file",
+        "REAL validator under unshare -Ur -m (extracted activation script): dir 0:0:700, file 0:0:600, validator rc=0 silent (IS-1 proof)",
+        "bash -n bin/_install-staging.sh OK; commit ceca3a7 adds only bin/_install-staging.sh"
+      ],
+      "repro": "bash -c 'source bin/_install-staging.sh; staging_init>/dev/null; staging_password \"$STAGING_DIR\" mei; stat -c %a \"$STAGING_DIR/var/lib/nixos-bootstrap/mei-password.hash\"'"
+    },
+    "4": {
+      "verdict": "confirmed",
+      "confidence": 0.95,
+      "evidence": [
+        "bash -n bin/host-install.sh OK",
+        "dry-run --extra-files /tmp/x --chown home/mei/.config 1000:100 => plan line 9 carries '--extra-files /tmp/x --chown home/mei/.config 1000:100'",
+        "marker ': > /run/autoinstall-done' at line 239 precedes 'nix run ...nixos-anywhere' at line 241 and sits after the --yes re-check (line 223)",
+        "failure arms: '--chown PATH' (missing owner) rc=64; '--extra-files' (missing value) rc=64; commit 18fc43e touches only bin/host-install.sh"
+      ],
+      "repro": "bash bin/host-install.sh --dry-run --host antagony --extra-files /tmp/x --chown home/mei/.config 1000:100"
+    },
+    "5": {
+      "verdict": "confirmed",
+      "confidence": 0.97,
+      "evidence": [
+        "grep -Fq 'pkgs.mkpasswd' modules/flake/apps.nix => present",
+        "nix eval apps.x86_64-linux.install.program RUN1=RUN2=/nix/store/rkrfpawk0nwrgw971y9lc0ibf5p6ai5z-install/bin/install (rc=0)",
+        "realized wrapper PATH contains .../mkpasswd-5.6.6/bin; commit bb696d1 adds only the one apps.nix line"
+      ],
+      "repro": "nix eval --impure --raw --expr '(builtins.getFlake (toString <wt>)).apps.x86_64-linux.install.program'"
+    },
+    "12": {
+      "verdict": "confirmed",
+      "confidence": 0.9,
+      "evidence": [
+        "bash tests/bootstrap-password-mutations.sh => 7 controls PASS, 6 mutants KILLED, rc=0 (deterministic across reruns)",
+        "falsification (scratch copy with users.mutableUsers=false as BOOTSTRAP_MUTATIONS_REPO) => control-mutable-users=FAIL, rc=1 -> the check detects a broken pinned condition (not passing by construction)",
+        "nix eval .checks.x86_64-linux --apply builtins.attrNames => includes bootstrap-password-mutations; nix flake check --all-systems --no-build => rc=0",
+        "commit bde4937 (checks.nix + script) and b210a75 (HOME fix) are correctly scoped"
+      ],
+      "caveat": "nix build .#checks.x86_64-linux.bootstrap-password-mutations fails in the nix build sandbox (offline: builtins.getFlake re-fetches github flake inputs). PRE-EXISTING, not wave-1: the peer check dendritic-apps also fails to build (bad /usr/bin/env interpreter); the repo only ever runs 'nix flake check --no-build' (README:245, docs). Acceptance criteria for todo 12 are met.",
+      "repro": "bash tests/bootstrap-password-mutations.sh"
+    }
+  },
+  "adversarial": {
+    "stale_state": "Todos 1, 2, 5 decisive evals run twice -> identical (hostId pair; btrfs/vfat/btrfs-progs both hosts; same install.program store path). Mutation script reruns deterministic. PASS.",
+    "dirty_worktree": "git status --porcelain empty at b210a75. Per-commit file lists exactly match the plan: 18fc43e host-install.sh; bb696d1 apps.nix; ceca3a7 _install-staging.sh; bde4937 checks.nix+mutations.sh; 5688845 iso-images.nix; bc05cb4 iso-images.nix; b210a75 mutations.sh. No .omo/.direnv/stage/tmpdir paths in history; no plaintext hash/password in any diff. PASS.",
+    "misleading_success_output": "host-install --dry-run prints no secret; the ISO oneshot's '|| true' is replaced by a journal-visible marker; the t12 check exits 1 when its pinned condition is mutated (scratch copy); flake-check eval rc=0 does not mask a failing script (proven by mutation). PASS.",
+    "other": "Peer-check offline-build failure (dendritic-apps rc=126 /usr/bin/env, bootstrap-password-mutations rc=1 no-network) is repo-wide and pre-existing under `nix build`; repo documents only `nix flake check --no-build`. Not ascribed to wave 1. The helper API requires calling staging_init directly (not via $(...)) - documented in the helper; a $(...) misuse deletes the stage via the EXIT trap, which I reproduced and then corrected."
+  },
+  "drift": "Brief expected tip 4897953; actual tip b210a75. Both are children of bc05cb4; whole-tree diff 4897953..b210a75 is one line in tests/bootstrap-password-mutations.sh (trap 'rm -rf \"$tmp\" \"$HOME\"' -> 'rm -rf \"$tmp\"'). Verified at b210a75. Working tree clean.",
+  "cleanup": [
+    "removed /tmp/ulw-verify-wave1-1791301824281 (scratch repo copy, repo2, validator.sh, hash, notepad)",
+    "background sessions bash_1..bash_18 all exited; none left running"
+  ]
+}

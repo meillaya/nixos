@@ -1,0 +1,70 @@
+== harness run against scratch copy /tmp/qa-t15-copy (repo untouched) ==
+== C1 syntax ==
+PASS  C1 bash -n exits 0
+== C2 happy dry-run (operator path) ==
+PASS  C2 exits 0
+PASS  C2 prints the password-staging step
+PASS  C2 transport carries --extra-files <stage>
+PASS  C2 prints NO secret (no 'password for')
+PASS  C2 prints NO plaintext password hash
+PASS  C2 stage path parsed
+PASS  C2 stage is cleaned on exit
+== C3 --install-only dry-run ==
+PASS  C3 exits 0
+PASS  C3 prints NO staging step
+PASS  C3 skips enroll/fold
+== C4 sources the shared helper ==
+PASS  C4 sources bin/_install-staging.sh
+PASS  C4 no duplicated hash regex in host-install.sh
+== C5 stub failing mkpasswd dies before nixos-anywhere ==
+PASS  C5 exits non-zero
+PASS  C5 dies before the install plan (no 'nh os build')
+PASS  C5 reports the mkpasswd failure
+== C6 --stage-identity with a missing SRC dies ==
+PASS  C6 exits non-zero
+PASS  C6 names the missing identity
+PASS  C6 dies before the install plan
+== C7 fresh stage per run ==
+PASS  C7 two runs use distinct stages
+== C8 --stage-identity stages the key when present ==
+PASS  C8 exits 0
+PASS  C8 plans the identity
+PASS  C8 forwards the chown pair
+PASS  C8 no secret in output
+== C9 wave-1 transport/marker intact ==
+PASS  C9 marker write precedes the nixos-anywhere call
+PASS  C9 --chown still forwarded
+PASS  C9 path untouched outside host-install.sh (dry-run works with user --extra-files/--chown)
+== C10 no plaintext password anywhere under the stage base ==
+PASS  C10 stage base holds no 'password for' leftovers
+
+== RESULT pass=all fail=0 ==
+
+== D1 non-dry operator run (transport stubbed; /run is a tmpfs) ==
+warning: --skip-fold: host key is NOT folded into secrets/remembrance-keys.yaml; it stays at /tmp/nix-shell.tHvAMN/host-install.2602396/remembrance.host-key and must be stored by the caller
+password for mei: <redacted>
+pre-flight build gate passed for remembrance
+install completed for remembrance
+stage verify: skipped (--skip-verify)
+rc=0
+PASS  D1 exits 0
+PASS  D1 prints the password exactly once (1)
+PASS  D1 password is 24 alnum chars
+-- nix invocation --
+run github:nix-community/nixos-anywhere -- --flake .#remembrance --target-host root@1.2.3.4 --extra-files /dev/shm/nixos-install-staging.DYO99vZ4
+PASS  D1 nixos-anywhere received --extra-files <stage>
+PASS  D1 flake/target forwarded
+PASS  D1 attempt marker written
+== RESULT pass=all fail=0 ==
+
+== FINAL ====================================================================
+commit: eca7ddc6c26f883924fc5722c55c16c699ffc6b4 feat(install): mint and stage the password on the operator path
+git show --stat HEAD: bin/host-install.sh | 122 ++++ (1 file changed, 120 insertions(+), 2 deletions(-))
+bash -n bin/host-install.sh: exit 0
+tests (worktree): dendritic-architecture=exit0 dendritic-apps=exit0 dendritic-boundaries=exit0 dendritic-shells=exit0 package-policy=exit0 bootstrap-password-mutations=exit0
+cleanup receipts:
+  - rm -rf /tmp/qa-t15-copy /tmp/qa-t15*.sh -> "NO_QA_TMP_LEFT"
+  - stage dirs: "NO_STAGE_LEFT" (/dev/shm,nixos-install-staging.* ; /run/user/0/...)
+  - /run/autoinstall-done: absent on the host (marker was written inside a private mount namespace)
+  - INCIDENT (corrected): an earlier e2e harness ran the REAL non-dry operator path in the worktree, and the stubbed scp emitted empty artifacts that stage_fold copied over config/hosts/intake/remembrance.json and remembrance.intake.json (truncated to 0 bytes). Restored with `git checkout --` (3936/4988 bytes verified), and the harness was re-run only against a scratch copy. Repo state after cleanup: only bin/host-install.sh was modified.
+================================================================================

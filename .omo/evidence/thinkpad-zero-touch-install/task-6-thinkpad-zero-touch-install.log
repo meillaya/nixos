@@ -1,0 +1,102 @@
+# task 6 evidence: app stages the password and forwards the transport
+# date: 2026-10-06T12:21:19-04:00  worktree: /home/mei/nixos-wt/thinkpad-zero-touch-install-wave2  HEAD: b210a75cc930bd130ed1fba965ab2f932f4a32b8
+
+## git status (only my file may be modified)
+ M apps/x86_64-linux/install
+ M bin/host-install.sh
+
+## bash -n apps/x86_64-linux/install
+bash -n: OK (rc=0)
+
+## password-for grep count (must be exactly 1, in the sourced helper)
+apps/x86_64-linux/install:0
+bin/_install-staging.sh:1
+
+## ./apps/x86_64-linux/install --dry-run
+install: detected host antagony from DMI product "ThinkPad P52"
+install plan (host: antagony, target: root@127.0.0.1)
+  1. work tree   cp -a /home/mei/nixos-wt/thinkpad-zero-touch-install-wave2/. -> /root/nixos-install (reused if it already holds a flake)
+  2. enrollment  python3 -m scripts.hardware.auto_enroll --host antagony --base <machine record> --trust <generated> --out <workdir>/.install-staging
+  3. commit      config/hosts/intake/antagony.json + .intake.json
+  4. host key    bin/nix-config-host-key-enroll <host-key> antagony   (--skip-fold: kept local, --save required)
+  5. staging     tmpfs stage per run (removed on exit): var/lib/nixos-bootstrap/<user>-password.hash (0700 dir, 0600, yescrypt)
+                 transport: --extra-files <stage> --chown home/mei/.config 1000:100
+                 the plaintext password is printed once and never written to disk
+  6. install     <workdir>/bin/host-install.sh --host antagony --target-host 127.0.0.1 --install-only --yes --skip-verify --extra-files <stage> --chown home/mei/.config 1000:100
+                 (refused unless / is a live tmpfs/overlay root, or --allow-mounted-root)
+
+## dry-run acceptance greps
+PRESENT: --extra-files
+PRESENT: --chown home/mei/.config 1000:100
+PRESENT: --install-only
+PRESENT: auto_enroll
+OK: dry-run prints no 'password for' line
+
+## dry-run with unresolvable identity -> placeholder pair
+                 transport: --extra-files <stage> --chown home/<user>/.config <uid>:<gid>
+  6. install     <workdir>/bin/host-install.sh --host antagony --target-host 127.0.0.1 --install-only --yes --skip-verify --extra-files <stage> --chown home/<user>/.config <uid>:<gid>
+
+## bash tests/dendritic-apps.sh
+dendritic-apps=PASS
+dendritic-apps rc=0
+
+## QA harness: real app flow (stubbed hw probing), real staging helper
+### happy run (installs nothing: host-install.sh shim records argv)
+=== mode=happy EUID=0 tmpfs=tmpfs ===
+install: reusing work tree /tmp/ulw-t6-qa/workdir
+install: enrollment artifacts saved to /tmp/ulw-t6-qa/save
+install: --skip-fold: host key kept at /tmp/ulw-t6-qa/workdir/.install-staging/antagony.host-key
+install: enrollment artifacts saved to /tmp/ulw-t6-qa/save
+/tmp/ulw-t6-qa/run/nixos-install-staging.b3sFJWKF
+password for mei: VNAcpB9k3nemkgXsT0xRyjVs
+install: installing antagony on this machine; --yes was given and the install erases the enrolled disk
+=== exit=0 ===
+SENTINEL: HOST-INSTALL-CALLED --host antagony --target-host 127.0.0.1 --install-only --yes --skip-verify --extra-files /tmp/ulw-t6-qa/run/nixos-install-staging.b3sFJWKF --chown home/mei/.config 1000:100
+stage=/tmp/ulw-t6-qa/run/nixos-install-staging.b3sFJWKF
+700 root:root /tmp/ulw-t6-qa/run/nixos-install-staging.b3sFJWKF
+755 root:root /tmp/ulw-t6-qa/run/nixos-install-staging.b3sFJWKF/var
+755 root:root /tmp/ulw-t6-qa/run/nixos-install-staging.b3sFJWKF/var/lib
+700 root:root /tmp/ulw-t6-qa/run/nixos-install-staging.b3sFJWKF/var/lib/nixos-bootstrap
+600 root:root /tmp/ulw-t6-qa/run/nixos-install-staging.b3sFJWKF/var/lib/nixos-bootstrap/mei-password.hash
+--- staged hash ---
+$y$j9T$ed521f2b7868a545$f2e077ce3774f3a0909af70b4eb66931e7b5439f157
+=== stage dirs under XDG_RUNTIME_DIR ===
+=== leftover stage dirs (must be 0: trap cleaned) ===
+0
+
+### failing-mkpasswd run (must exit nonzero before host-install.sh)
+=== mode=failmk EUID=0 tmpfs=tmpfs ===
+install: reusing work tree /tmp/ulw-t6-qa/workdir
+install: enrollment artifacts saved to /tmp/ulw-t6-qa/save
+install: --skip-fold: host key kept at /tmp/ulw-t6-qa/workdir/.install-staging/antagony.host-key
+install: enrollment artifacts saved to /tmp/ulw-t6-qa/save
+/tmp/ulw-t6-qa/run/nixos-install-staging.5iHpZjdQ
+mkpasswd: stubbed failure
+install-staging: mkpasswd failed to hash the password
+=== exit=1 ===
+SENTINEL: absent (host-install.sh was NOT invoked)
+=== stage dirs under XDG_RUNTIME_DIR ===
+=== leftover stage dirs (must be 0: trap cleaned) ===
+0
+
+### stale_state: two happy runs -> fresh stage dir + regenerated hash
+/tmp/ulw-t6-qa/run/nixos-install-staging.lblo1B49
+password for mei: LHkHBMEpSUYFhKSchznN8DDG
+SENTINEL: HOST-INSTALL-CALLED --host antagony --target-host 127.0.0.1 --install-only --yes --skip-verify --extra-files /tmp/ulw-t6-qa/run/nixos-install-staging.lblo1B49 --chown home/mei/.config 1000:100
+stage=/tmp/ulw-t6-qa/run/nixos-install-staging.lblo1B49
+700 root:root /tmp/ulw-t6-qa/run/nixos-install-staging.lblo1B49
+755 root:root /tmp/ulw-t6-qa/run/nixos-install-staging.lblo1B49/var
+755 root:root /tmp/ulw-t6-qa/run/nixos-install-staging.lblo1B49/var/lib
+700 root:root /tmp/ulw-t6-qa/run/nixos-install-staging.lblo1B49/var/lib/nixos-bootstrap
+600 root:root /tmp/ulw-t6-qa/run/nixos-install-staging.lblo1B49/var/lib/nixos-bootstrap/mei-password.hash
+--- run2 ---
+/tmp/ulw-t6-qa/run/nixos-install-staging.2aXOAUqD
+password for mei: mMVDgunfNGk66RWky87UaonL
+SENTINEL: HOST-INSTALL-CALLED --host antagony --target-host 127.0.0.1 --install-only --yes --skip-verify --extra-files /tmp/ulw-t6-qa/run/nixos-install-staging.2aXOAUqD --chown home/mei/.config 1000:100
+stage=/tmp/ulw-t6-qa/run/nixos-install-staging.2aXOAUqD
+700 root:root /tmp/ulw-t6-qa/run/nixos-install-staging.2aXOAUqD
+755 root:root /tmp/ulw-t6-qa/run/nixos-install-staging.2aXOAUqD/var
+755 root:root /tmp/ulw-t6-qa/run/nixos-install-staging.2aXOAUqD/var/lib
+700 root:root /tmp/ulw-t6-qa/run/nixos-install-staging.2aXOAUqD/var/lib/nixos-bootstrap
+600 root:root /tmp/ulw-t6-qa/run/nixos-install-staging.2aXOAUqD/var/lib/nixos-bootstrap/mei-password.hash
+cleanup: rm -rf /tmp/ulw-t6-qa (harness+fakebin+workdir+sentinels); no servers/tmux/browsers/ports; stage tmpfs mounts gone with their userns

@@ -1,0 +1,158 @@
+
+===== E0. the port this QA needs must be free (shared workstation)
+port 18091 free
+
+===== E1. sizes (uncompressed from podman; compressed via gzip -6 = the pull weight)
+uncompressed_bytes=1372684998
+compressed_gzip6_bytes=445920568
+992M	/nix
+517M	/opt/omo
+2609
+node absent (expected: bun-only)
+1.4.2
+HAProxy version 3.3.11-e6dcdf2a4 2026/06/26 - https://haproxy.org/
+ttyd version 1.7.7
+git version 2.54.0
+ripgrep 15.1.0
+jq-1.8.2
+
+===== E2. boot under 1 GB with a named volume, M0_PASSWORD set
+booting....... ready after 8s
+
+===== boot log (the operator's console)
+[m0] seeded flake registry pin (nixpkgs -> 2efa67fd26b6df417c33e4603185c701f260dd83)
+[m0] WARNING: no model credentials found (checked OPENROUTER/ANTHROPIC/OPENAI/DEEPSEEK/GEMINI/XAI_API_KEY and $HOME/.omo/agent/auth.json)
+[m0] WARNING: the surface will start; the agent cannot call a model until you add one
+[m0] nix      nix (Nix) 2.34.8
+[m0] omo      omo 5.1.22 (engine: senpi 2026.10.10-5)
+[m0] runtime  bun (/nix/var/nix/profiles/m0/bin/bun) 1.4.2
+[m0] store    992M image layer; profiles: m0 (tools) + default (nix)
+[m0] nixpkgs  2efa67fd26b6df417c33e4603185c701f260dd83
+[m0] variant  server, health proxy, public port 8080
+[m0] agent: omo app-server on 127.0.0.1:3080 (ws-token auth)
+[m0] WARNING: agent not listening yet on 3080; waiting up to 60s
+app-server websocket token: /home/agent/.omo/agent/app-server/ws-token
+senpi app-server listening on ws://127.0.0.1:3080
+readyz http://127.0.0.1:3080/readyz
+token /home/agent/.omo/agent/app-server/ws-token
+[m0] proxy will inject the agent's ws-token as Bearer auth for the server variant
+[m0] proxy: HAProxy on 0.0.0.0:8080, /healthz -> proxy backend
+[NOTICE]   (83) : Initializing new worker (85)
+[NOTICE]   (83) : Loading success.
+192.168.2.206:39456 [07/Oct/2026:15:19:59.831] fe_public be_health/agent 0/0/0/3/3 200 151 - - ---- 1/1/0/0/0 0/0 "GET /healthz HTTP/1.1"
+
+===== E3. /healthz unauthenticated (the only open surface) = expect 200
+HTTP/1.1 200 OK
+content-type: text/plain; charset=utf-8
+date: Wed, 07 Oct 2026 15:19:59 GMT
+keep-alive: timeout=5
+transfer-encoding: chunked
+
+ok
+RESULT: PASS healthz=200
+
+===== E4. anonymous request = expect 401 + WWW-Authenticate
+HTTP/1.1 401 Unauthorized
+content-length: 112
+cache-control: no-cache
+content-type: text/html
+www-authenticate: Basic realm="m0"
+
+<html><body><h1>401 Unauthorized</h1>
+You need a valid user and password to access this content.
+</body></html>
+RESULT: PASS anonymous=401
+
+===== E5. wrong password = expect 401
+RESULT: PASS wrong-password=401
+
+===== E6. authenticated request = expect it to REACH THE AGENT (400 or 403), not a proxy 401
+HTTP/1.1 400 Bad Request
+content-type: text/plain; charset=utf-8
+date: Wed, 07 Oct 2026 15:19:59 GMT
+keep-alive: timeout=5
+transfer-encoding: chunked
+
+websocket upgrade required
+RESULT: PASS authenticated=400 (reached the agent)
+
+===== E7b. WebSocket upgrade, the server variant's whole point (curl handshake)
+-- direct to the agent WITH the token (control): expect 101
+curl: (28) Operation timed out after 5001 milliseconds with 0 bytes received
+HTTP/1.1 101 Switching Protocols
+-- direct WITHOUT the token: expect 401
+   HTTP/1.1 401 Unauthorized
+RESULT: PASS agent-fails-closed=401
+-- through the proxy with ONLY the operator password: expect 101 (the proxy injects the bearer token)
+   curl: (28) Operation timed out after 5001 milliseconds with 0 bytes received
+RESULT: FAIL ws-upgrade-through-proxy: curl: (28) Operation timed out after 5001 milliseconds with 0 bytes received (403 = the bearer token never reached the agent)
+
+===== E7. the agent's own health endpoint, direct on loopback (what /healthz proxies to)
+ok
+
+  HTTP/1.1 400 Bad Request
+  content-type: text/plain; charset=utf-8
+  Date: Wed, 07 Oct 2026 15:20:10 GMT
+
+===== E8. idle RSS (3 samples 5s apart)
+279.7MB / 1.074GB cpu=17.29%
+276.3MB / 1.074GB cpu=13.50%
+273.4MB / 1.074GB cpu=11.05%
+
+===== E9. runtime installs through the real surface (m0-nixpkg inside the container)
+2efa67fd26b6df417c33e4603185c701f260dd83
+-- hello 2.10 (a 2022 build):
+[m0-nixpkg] store-path index: github:fzakaria/nixpkgs-multiverse#fast.versions.hello."2.10".out
+[m0-nixpkg] installed hello@2.10 (output out) from the store-path index
+
+real	0m6.904s
+user	0m2.814s
+sys	0m0.152s
+hello (GNU Hello) 2.10
+
+Copyright (C) 2014 Free Software Foundation, Inc.
+License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.
+-- jq 1.6 (the bin-output case):
+[m0-nixpkg] store-path index: github:fzakaria/nixpkgs-multiverse#fast.versions.jq."1.6".out
+[m0-nixpkg] installed jq@1.6 (output out) from the store-path index
+
+real	0m1.997s
+user	0m0.643s
+sys	0m0.048s
+jq-1.8.2
+-- the registry-pinned plain path:
+unpacking 'github:NixOS/nixpkgs/2efa67fd26b6df417c33e4603185c701f260dd83' into the Git cache...
+
+real	0m48.289s
+user	0m32.740s
+sys	0m6.689s
+ripgrep 15.1.0
+hello@2.10
+jq@1.6
+-- profile:
+Name:               [1mhello[0m
+Store paths:        /nix/store/nndmy96lswhxc4xp49n950i1905qlfpy-hello-2.10
+
+Name:               [1mjq[0m
+Store paths:        /nix/store/ia2dz4xzffscw2h59kl3mscbhyy80nw4-jq-1.6
+
+===== E10. REDEPLOY: new container, SAME volume -> store installs are gone, replay must bring them back
+-- immediately after boot (replay runs in the background):
+hello not on PATH yet (expected)
+-- replay lines in the log:
+[m0] replaying 2 recorded install(s) in the background (M0_REPLAY=0 disables)
+[m0] replay: m0-nixpkg add hello@2.10
+[m0] replay: m0-nixpkg add jq@1.6
+-- after the replay settles:
+hello (GNU Hello) 2.10
+
+Copyright (C) 2014 Free Software Foundation, Inc.
+License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.
+
+===== E11. the Free-tier floor: the same install under 512 MB
+idle under 512m: 275.9MB / 536.9MB
+[m0-nixpkg] store-path index: github:fzakaria/nixpkgs-multiverse#fast.versions.hello."2.10".out
