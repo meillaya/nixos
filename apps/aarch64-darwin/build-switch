@@ -4,17 +4,20 @@ GREEN='\033[1;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m'
 
-SYSTEM_TYPE="aarch64-darwin"
-FLAKE_SYSTEM="darwinConfigurations.${SYSTEM_TYPE}.system"
+# The darwin output is keyed by host name, never by system (see
+# modules/entities/hosts.nix); read the host from the flake so a rename cannot
+# leave this script switching a non-existent attribute.
+HOST="$(nix --extra-experimental-features 'nix-command flakes' eval --raw --no-warn-dirty \
+  '.#darwinConfigurations' --apply 'x: builtins.head (builtins.attrNames x)')"
 
 export NIXPKGS_ALLOW_UNFREE=1
 
 echo "${YELLOW}Starting build...${NC}"
-nix --extra-experimental-features 'nix-command flakes' build ".#$FLAKE_SYSTEM" "$@"
+nix --extra-experimental-features 'nix-command flakes' build ".#darwinConfigurations.${HOST}.system" "$@"
 
 echo "${YELLOW}Switching to new generation...${NC}"
 # See https://github.com/nix-darwin/nix-darwin/issues/1457 on why we need sudo
-sudo ./result/sw/bin/darwin-rebuild switch --flake ".#${SYSTEM_TYPE}" "$@"
+sudo ./result/sw/bin/darwin-rebuild switch --flake ".#${HOST}" "$@"
 
 echo "${YELLOW}Cleaning up...${NC}"
 unlink ./result

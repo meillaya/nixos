@@ -74,6 +74,17 @@ for app in build build-switch clean
 do
   test -x "$root/apps/aarch64-darwin/$app"
 done
+
+# The flake names configurations by host, never by system: a script that asks
+# for `darwinConfigurations.aarch64-darwin` or `nixosConfigurations.x86_64-linux`
+# requests an attribute Den never creates and dies before the build starts.
+if grep -E '(nixosConfigurations|darwinConfigurations)\.(x86_64|aarch64)-(linux|darwin)' \
+  "$root/apps/x86_64-linux/build" "$root/apps/x86_64-linux/build-switch" \
+  "$root/apps/aarch64-darwin/build" "$root/apps/aarch64-darwin/build-switch"
+then
+  printf >&2 'app scripts must name a host, not a system-named configuration\n'
+  exit 1
+fi
 test ! -e "$root/apps/x86_64-darwin"
 
 app_systems=$(nix eval --impure --json --expr \

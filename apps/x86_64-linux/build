@@ -23,7 +23,8 @@ while (( $# > 0 )); do
 Usage: build [--host HOST] [nix build arguments...]
 
 Builds the selected NixOS toplevel without switching, changing boot entries,
-or deleting generations. Defaults to the current Linux architecture target.
+or deleting generations. Defaults to the remembrance host, the same default as
+build-switch.
 EOF
       exit 0
       ;;
@@ -35,13 +36,7 @@ EOF
 done
 
 if [[ -z "$host" ]]; then
-  case "$(uname -m)" in
-    x86_64) host="x86_64-linux" ;;
-    *)
-      echo "build: unsupported architecture: $(uname -m)" >&2
-      exit 1
-      ;;
-  esac
+  host="remembrance"
 fi
 
 exec nix build ".#nixosConfigurations.${host}.config.system.build.toplevel" \
