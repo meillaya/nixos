@@ -20,9 +20,10 @@ import os
 import re
 import subprocess
 from pathlib import Path
-from typing import Final
+from typing import Final, TypedDict, cast
 
 from scripts.hardware.primitives import ContractError, JsonObject
+from scripts.support.canonical_json import JsonValue
 
 # Capability keys must exactly match the collector's CAPABILITY_KEYS.
 _CAPABILITY_KEYS: Final = (
@@ -65,6 +66,20 @@ _NOT_REQUIRED_PCI_CLASSES: Final = {"06:00:00", "06:04:00"}
 _CLASS_ETHERNET: Final = "02:00:00"
 _CLASS_WIFI: Final = "02:80:00"
 _CLASS_GPU: Final = "03:00:00"
+
+
+class _NetworkRow(TypedDict):
+    capability: str
+    controllerClass: str
+    expectedDriver: str
+    firmwareExpectation: JsonObject
+
+
+class _FirmwareRow(TypedDict):
+    logicalId: str
+    pciClass: str
+    expectedDriver: str
+    firmwareExpectation: JsonObject
 
 
 def _run(argv: list[str]) -> str:
@@ -122,7 +137,7 @@ def _storage_expected(disk_by_id: str) -> JsonObject:
 
 def _is_candidate_block(name: str) -> bool:
     # Whole internal block devices only. Skip loop/ram/zram/dm/sr/fd/md and any
-    # device attached over USB — that covers the installer media the ISO booted
+    # device attached over USB, which covers the installer media the ISO booted
     # from and external USB drives, leaving internal NVMe/SATA/SCSI as targets.
     if name.startswith(("loop", "ram", "zram", "dm-", "sr", "fd", "md")):
         return False
@@ -228,7 +243,7 @@ def _gpu_identity_digest(address: str) -> str:
     return _sha256(f"pci:{vendor}:{pci_device}")
 
 
-def _network_rows_and_caps(pci: list[tuple[str, str, str]]) -> tuple[list[JsonObject], list[str]]:
+def _network_rows_and_caps(pci: list[tuple[str, str, str]]) -> tuple[list[_NetworkRow], list[str]]:
     ethernet: list[tuple[str, str, str]] = []
     wifi: list[tuple[str, str, str]] = []
     for address, pci_class, _ in pci:
@@ -238,7 +253,7 @@ def _network_rows_and_caps(pci: list[tuple[str, str, str]]) -> tuple[list[JsonOb
         elif pci_class == _CLASS_WIFI and driver in {"iwlwifi", "iwlwifi-pcie"}:
             wifi.append((address, pci_class, driver))
 
-    rows: list[JsonObject] = []
+    rows: list[_NetworkRow] = []
     caps: list[str] = []
 
     # Only one network.ethernet row is allowed; if more than one controller is
@@ -329,7 +344,7 @@ def _capability_values(
     present.update(network_caps)
     if remote:
         present.add("install.remote")
-    values: dict[str, JsonObject] = {}
+    values: dict[str, JsonValue] = {}
     for key in _CAPABILITY_KEYS:
         if key in present:
             values[key] = {"state": "present"}
@@ -389,7 +404,8 @@ def probe_fixture(base: JsonObject, trust: JsonObject, disk_by_id: str | None = 
     preferring the disk already bound in `base` when it is still present.
     """
     if disk_by_id is None:
-        preferred = base.get("storage", {}).get("diskById")
+        storage_section = base.get("storage")
+        preferred = storage_section.get("diskById") if isinstance(storage_section, dict) else None
         disk_by_id = discover_target_disk(preferred if isinstance(preferred, str) else None)
     vendor = _cpu_vendor()
     secure_boot = _secure_boot()
@@ -399,18 +415,19 @@ def probe_fixture(base: JsonObject, trust: JsonObject, disk_by_id: str | None = 
     network_rows, network_caps = _network_rows_and_caps(pci)
 
     gpu_present = _has_pci_class(pci, _CLASS_GPU)
-    gpu = None
+    gpu: JsonObject | None = None
+    gpu_driver: str | None = None
     if gpu_present:
-        driver = "amdgpu"
+        gpu_driver = "amdgpu"
         renderer = None
         for address, pci_class, _ in pci:
             if pci_class == _CLASS_GPU:
-                driver = _driver_for(address) or "amdgpu"
+                gpu_driver = _driver_for(address) or "amdgpu"
                 renderer = _gpu_renderer_digest() or _gpu_identity_digest(address)
                 break
         if renderer is None:
             raise ContractError("probe: GPU present but neither renderer nor PCI identity is readable")
-        gpu = {"expectedDriver": driver, "expectedRendererDigest": renderer}
+        gpu = {"expectedDriver": gpu_driver, "expectedRendererDigest": renderer}
 
     audio = _has_audio()
     bluetooth = _has_bluetooth()
@@ -421,7 +438,7 @@ def probe_fixture(base: JsonObject, trust: JsonObject, disk_by_id: str | None = 
     remote = False
 
     # Firmware inventory: network controllers + GPU + host bridge (+ NVMe).
-    firmware: list[JsonObject] = []
+    firmware: list[_FirmwareRow] = []
     for row in network_rows:
         logical_id = row["capability"].split(".", 1)[1]
         firmware.append(
@@ -432,12 +449,12 @@ def probe_fixture(base: JsonObject, trust: JsonObject, disk_by_id: str | None = 
                 "firmwareExpectation": {"state": "driver-bound-no-load-failure"},
             }
         )
-    if gpu_present:
+    if gpu_driver is not None:
         firmware.append(
             {
                 "logicalId": "display",
                 "pciClass": _CLASS_GPU,
-                "expectedDriver": gpu["expectedDriver"],
+                "expectedDriver": gpu_driver,
                 "firmwareExpectation": {"state": "driver-bound-no-load-failure"},
             }
         )
@@ -475,12 +492,12 @@ def probe_fixture(base: JsonObject, trust: JsonObject, disk_by_id: str | None = 
             "descriptor": {"diskById": disk_by_id, "expected": storage_expected},
         },
         "trust": trust,
-        "firmware": firmware,
+        "firmware": cast(JsonValue, firmware),
         "gpu": gpu,
         "network": {
             "policy": "networkmanager",
-            "capabilities": network_caps,
-            "rows": network_rows,
+            "capabilities": cast(JsonValue, network_caps),
+            "rows": cast(JsonValue, network_rows),
             "remoteInstall": remote,
             "fallback": {"localConsole": True, "reconnect": True},
         },
