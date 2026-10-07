@@ -1,13 +1,13 @@
 # WSL via the existing standalone Linux Home Manager path
 
-Verified against official Determinate documentation on **Friday, July 17, 2026**.
+Verified against official Determinate documentation on Friday, July 17, 2026.
 
 ## Repo stance
 
-- WSL is supported here as an **existing Linux install**.
-- Do **not** add a dedicated `wsl` flake output, host class, or release path.
+- WSL is supported here as an existing Linux install.
+- Do not add a dedicated `wsl` flake output, host class, or release path.
 - Use the existing `standalone-linux` Home Manager output for `x86_64-linux`.
-- Install **Determinate Nix** inside the WSL distro before using this repo.
+- Install Determinate Nix inside the WSL distro before using this repo.
 
 This keeps WSL on the same non-NixOS Linux surface as Arch or other standalone machines, which is the intended repo model.
 
@@ -21,8 +21,8 @@ The current repo workflow assumes the standalone Linux path from `README.md`:
 
 That matches current official Determinate guidance that:
 
-- Determinate is a supported path for **Windows Subsystem for Linux (WSL)** as well as Linux generally.
-- Existing upstream Nix installs on Linux, **including WSL**, should migrate using Determinate's migration flow before switching.
+- Determinate is a supported path for Windows Subsystem for Linux (WSL) as well as Linux generally.
+- Existing upstream Nix installs on Linux, WSL included, should migrate using Determinate's migration flow before switching.
 - Determinate manages `/etc/nix/nix.conf`; if extra Nix config is needed, put it in `/etc/nix/nix.custom.conf` instead of editing the generated file.
 
 ## Recommended WSL bootstrap

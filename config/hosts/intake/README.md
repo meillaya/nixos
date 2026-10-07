@@ -3,9 +3,9 @@
 Reviewed hardware enrollments live here. Each enrolled host contributes two
 canonical documents emitted by the hardware-intake pipeline:
 
-- `<host>.json` — the reviewed machine declaration (the single source of truth
+- `<host>.json`: the reviewed machine declaration (the single source of truth
   that `modules/entities/_machine-authority/model.nix` imports for the host).
-- `<host>.intake.json` — the RFC-6902 patch document that transitions the
+- `<host>.intake.json`: the RFC-6902 patch document that transitions the
   previous record to the new one, with digest binding + reviewer + appliedAt.
 
 `bin/nix-config-hardware-intake` accepts only a canonical JSON declaration and a
@@ -26,7 +26,7 @@ serial hashes, firmware/GPU/network inventory (active ethernet is selected when
 several controllers are present), power daemon, audio/bluetooth/ddc presence,
 and the derived capability set.
 
-The target disk is auto-discovered on the machine (internal whole device only —
+The target disk is auto-discovered on the machine (internal whole device only,
 USB-attached media and external drives are excluded), preferring the disk
 already bound in the base declaration when it is still present. On a machine
 with several equivalent internal disks, pass `--disk` to pin the exact
@@ -34,9 +34,9 @@ whole-device basename.
 
 Not auto-detectable (attended): the two SSH operator keys (install-authorizer +
 permanent-login), the two age recipients, and the sops ciphertexts. They are
-read from `/root/enroll/trust.json`; without them the enrollment **fails
-closed** and writes nothing. The host's own identity key (`finalHostPublicKey`)
-is **generated fresh on each install** — its private key is written to
+read from `/root/enroll/trust.json`; without them the enrollment fails
+closed and writes nothing. The host's own identity key (`finalHostPublicKey`)
+is generated fresh on each install; its private key is written to
 `/root/enroll/<host>.host-key` and the public key carried into the artifact, so
 the host key rotates on reinstall.
 

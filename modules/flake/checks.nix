@@ -108,10 +108,20 @@
         bash source/tests/zix.sh
         touch "$out"
       '';
+
+      prose = pkgs.runCommand "prose" {
+        nativeBuildInputs = [ pkgs.bash pkgs.python3 ];
+        src = inputs.self;
+      } ''
+        cp -R "$src" source
+        chmod -R u+w source
+        bash source/tests/prose.sh
+        touch "$out"
+      '';
     } // lib.optionalAttrs (system == "x86_64-linux") {
       # Gate-inertness VM (plan todo 14): boots the ISO's extended config
       # (`flake.isoConfig.antagony`, the very config `flake.iso` builds from)
-      # as a QEMU test machine in one run with both variants — a plain boot
+      # as a QEMU test machine in one run with both variants: a plain boot
       # (the unit must stay inactive) and a test-only `nixos.autoinstall=1`
       # boot (the unit runs, refuses safely, and the rescue target takes
       # over). The ISO hosts are x86_64-linux only, so the check exists only

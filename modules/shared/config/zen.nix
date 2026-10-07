@@ -1,4 +1,4 @@
-# Shared declarative Zen Browser configuration — managed profile "meillaya"
+# Shared declarative Zen Browser configuration: managed profile "meillaya"
 # pointing at ~/.config/zen/8lze40dp.Default Profile (the original browser data).
 #
 # This reproduces the REAL spaces, pinned tabs, and settings across machines via

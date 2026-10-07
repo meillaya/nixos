@@ -159,7 +159,7 @@ in
       if test -f /usr/share/cachyos-fish-config/cachyos-config.fish
         source /usr/share/cachyos-fish-config/cachyos-config.fish
         # CachyOS fish config defines `function fish_greeting; fastfetch; end`,
-        # which auto-runs at every interactive fish start — on top of the
+        # which auto-runs at every interactive fish start, on top of the
         # HM-managed auto-run above. Override it to silence the duplicate.
         function fish_greeting; end
       end

@@ -1,4 +1,4 @@
-# Custom Packages
+# Custom packages
 
 Derivations for tools not (yet) in nixpkgs. Each file is a self-contained
 package expression that gets imported into the relevant package list.
@@ -9,14 +9,14 @@ package expression that gets imported into the relevant package list.
 - The tool is in nixpkgs but you need a newer version than the current pin
 - The tool is not in nixpkgs at all
 
-**Prefer `pkgs.<name>` from nixpkgs first.** Only add a custom derivation
+Prefer `pkgs.<name>` from nixpkgs first. Only add a custom derivation
 when nixpkgs doesn't have it or the version lag matters.
 
 ## How to add a tool
 
 1. Copy `_template.nix` → `<tool-name>.nix`
 2. Fill in `pname`, `version`, `src.url`, and `hash`
-3. Get the real hash — use a fake one first and nix will report it:
+3. Get the real hash. Use a fake one first and nix will report it:
    ```
    hash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
    ```

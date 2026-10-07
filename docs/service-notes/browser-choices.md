@@ -1,12 +1,12 @@
 # Declarative browser choices on standalone Linux
 
-This repo now declares:
+This repo declares:
 
 - `brave`
 
 ## Not yet declared from locked nixpkgs
 
-The following requested browser packages were **not present** in the repo's
+The following requested browser packages were not present in the repo's
 currently locked nixpkgs input during migration:
 
 - `zen-browser`

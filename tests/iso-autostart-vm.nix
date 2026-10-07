@@ -1,9 +1,9 @@
-# tests/iso-autostart-vm.nix — the gate-inertness VM (plan todo 14; the
+# tests/iso-autostart-vm.nix: the gate-inertness VM (plan todo 14; the
 # repo's first `pkgs.testers.runNixOSTest`).
 #
 # Boots the SAME extended configuration that `flake.isoConfig.<host>` exposes
 # (the base host config plus the ISO-only enrollment / installer-marker /
-# btrfs-support / autoinstall modules) as a QEMU test machine — both variants
+# btrfs-support / autoinstall modules) as a QEMU test machine, both variants
 # in ONE test run:
 #
 #   plainBoot  default kernel params: the opt-in gate must keep
@@ -27,7 +27,7 @@
 # 282ms CPU / 7.1K outgoing IP before the eval gave up). On real hardware the
 # unit's `after network-online.target` supplies that network and the app
 # proceeds to the host-match check. This test therefore pins the reachable
-# observable — the app starts and emits its own diagnostic — which fails
+# observable: the app starts and emits its own diagnostic, which fails
 # whenever the unit PATH regresses (a 127 leaves neither line). The gate
 # itself is still what this test proves: a plain boot activates nothing.
 #

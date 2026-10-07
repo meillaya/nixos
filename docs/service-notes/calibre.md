@@ -1,6 +1,6 @@
 # Calibre declarative and runtime boundaries
 
-This repo now manages the following Calibre preference files:
+This repo manages the following Calibre preference files:
 
 - `~/.config/calibre/gui.json`
 - `~/.config/calibre/tweaks.json`
@@ -65,7 +65,7 @@ same-filesystem exchange.
 
 This documentation records a repository contract, not a live validation.
 Provider, physical-machine, native-platform, runtime-installation, and media
-gates remain **NOT VERIFIED**.
+gates remain not verified.
 
 Public sanitized examples remain reference material only:
 

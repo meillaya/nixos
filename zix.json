@@ -9,6 +9,7 @@
       ["bash", "tests/dendritic-apps.sh"],
       ["bash", "tests/dendritic-shells.sh"],
       ["bash", "tests/package-policy.sh"],
+      ["bash", "tests/prose.sh"],
       ["nix-instantiate", "--eval", "--strict", "--expr", "import ./tests/dendritic-config-eval.nix {}"]
     ]
   },

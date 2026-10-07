@@ -15,7 +15,7 @@ what each tool is and what it was verified to do.
 
 ## Act on
 
-### nixpkgs-multiverse — any version of any package, from one flake input
+### nixpkgs-multiverse: any version of any package, from one flake input
 
 - Index at review time: 314,472 package versions across 32,350 attributes from
   1,562 revisions (2012-07-05 .. 2026-10-01). The flake declares no nixpkgs
@@ -34,10 +34,10 @@ what each tool is and what it was verified to do.
   home-manager module exists (`multiverse.pins.<attr> = "<version>"`) if
   version pinning ever becomes policy; not a core flake input today.
 
-### nix-auto-follow — follows hygiene
+### nix-auto-follow: follows hygiene
 
 - Ran `nix run github:fzakaria/nix-auto-follow -- -c` against this flake.lock
-  on 2026-10-02. Result: one dedupe opportunity — `deploy-rs` and `helium`
+  on 2026-10-02. Result: one dedupe opportunity, `deploy-rs` and `helium`
   each carry their own `flake-compat` node (`flake-compat` / `flake-compat_2`).
 - To unify: add a top-level `flake-compat.url = "github:edolstra/flake-compat"`
   input and chain `follows` through both consumers, then re-lock; or accept
@@ -47,7 +47,7 @@ what each tool is and what it was verified to do.
 
 ## Trial (no config change yet)
 
-### rewindvm — deterministic KVM VMs for flaky builds and tests
+### rewindvm: deterministic KVM VMs for flaky builds and tests
 
 - Records a run (Nix build, test suite, any command) inside a KVM VM whose
   execution is a pure function of its inputs; scrub, replay, and fork a run
@@ -59,7 +59,7 @@ what each tool is and what it was verified to do.
 - Candidate for chasing flaky tests (e.g. malina) and odd `nix flake check`
   failures.
 
-### omnibin — every binary nixpkgs ever shipped, on PATH (FUSE)
+### omnibin: every binary nixpkgs ever shipped, on PATH (FUSE)
 
 - 51,469 binaries (884,918 name@version forms) on x86_64-linux; a lazy FUSE
   view over /nix/store; nothing is fetched until a file is read.
@@ -69,7 +69,7 @@ what each tool is and what it was verified to do.
 - Strongest fit is agent sandboxes that must not guess their toolchain
   (m0-coding / Modal image work); not for the daily driver.
 
-### wrap-buddy — prebuilt ELF binaries on NixOS
+### wrap-buddy: prebuilt ELF binaries on NixOS
 
 - Mic92's tool; the fzakaria post is the explainer. Patches the entry point
   with a stub loader instead of rewriting ELF headers, for binaries where

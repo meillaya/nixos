@@ -1,11 +1,11 @@
 # Tailscale + Kavita boundary notes
 
-This repo now declares the **packages** for:
+This repo declares the packages for:
 
 - `tailscale`
 - `calibre`
 
-and tracks a **Kavita appsettings template** at:
+and tracks a Kavita appsettings template at:
 
 - `modules/standalone-linux/templates/kavita-appsettings.example.json`
 
@@ -23,7 +23,7 @@ data that should not be versioned in the public repo, including:
 ## Current machine facts captured during migration
 
 - `tailscale status` works on `entropyos`
-- current machine had **no active `tailscale serve` config**
+- current machine had no active `tailscale serve` config
 - current Kavita runtime settings were preserved into the template except for
   secret fields
 
@@ -53,12 +53,10 @@ file. The manual runtime destination is:
 
 ## Why this is a boundary
 
-This repo is currently using **standalone Home Manager on non-NixOS Linux**.
-That is excellent for user-space packages and dotfiles, but it does not own the
+This repo currently uses standalone Home Manager on non-NixOS Linux.
+That covers user-space packages and dotfiles, but it does not own the
 system service lifecycle for things like `tailscaled` or a long-running Kavita
 service in the same way a future NixOS host would.
 
-So the current repo boundary is:
-
-- declarative package presence: **yes**
-- declarative secret/runtime service state: **not yet**
+So the current repo boundary is: packages are declarative, secret and runtime service
+state are not.

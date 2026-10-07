@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Operator-side NixOS install orchestrator (skeleton).
-# Plan: .omo/plans/install-on-main.md — todo 1: argument parser + safety guards.
+# Plan: .omo/plans/install-on-main.md, todo 1: argument parser + safety guards.
 # Stage bodies land in later todos; each stub exits 70 until implemented.
 set -euo pipefail
 

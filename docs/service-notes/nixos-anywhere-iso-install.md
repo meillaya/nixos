@@ -4,10 +4,10 @@ Installation is ISO-first: you build a per-host installer ISO from the flake,
 boot it on the target machine, and install the flake from there. Two entry
 points drive it:
 
-- **On the target, one command** — `nix run github:meillaya/nixos#install`
+- **On the target, one command**: `nix run github:meillaya/nixos#install`
   probes the machine's hardware, writes the reviewed enrollment, and installs.
-  No second machine, no manual SSH setup.
-- **From an operator machine over SSH** — `bin/host-install.sh --target-host <ip> --yes`,
+  This needs neither a second machine nor manual SSH setup.
+- **From an operator machine over SSH**: `bin/host-install.sh --target-host <ip> --yes`,
   or the manual `nixos-anywhere` invocation below.
 
 Both drive the same reviewed enrollment pipeline, and because the target is
@@ -41,10 +41,10 @@ lib.mkForce true`) to keep the installer bootable.
 
 Boot the ISO on the target machine. A Proxmox VM works well:
 
-- Firmware: **OVMF (UEFI)** — the enrolled boot policy is
+- Firmware: OVMF (UEFI). The enrolled boot policy is
   `boot.state = "uefi"` with `secureBoot = false` and
   `configurationLimit = 10`.
-- RAM: **at least 4 GB** — the installer runs entirely in RAM, and
+- RAM: at least 4 GB. The installer runs entirely in RAM, and
   `nixos-anywhere` will not `kexec` into a separate image, so the
   installer's own memory footprint is the only constraint.
 - Disk: attach the target disk as a whole device (never a partition).
@@ -56,7 +56,7 @@ Boot the ISO on the target machine. A Proxmox VM works well:
 The built ISO sets `VARIANT_ID=installer` in `/etc/os-release` (NixOS
 23.05+). When `nixos-anywhere` connects to the target, it checks
 `/etc/os-release` for that identifier. If the installer is detected, it
-does **not** `kexec` into its own image — it installs directly from the
+does not `kexec` into its own image; it installs directly from the
 already-booted installer environment. This is what makes the flow work
 on targets with limited RAM or no `kexec` support, and what makes the
 one-command self-install work at all: there the orchestrator runs on the
@@ -161,9 +161,9 @@ ThinkPad. No real disk is written by that check.
 The upstream minimal installer (`nixos-minimal-*.iso` from nixos.org) also
 works for the one-command app path: it runs sshd with `PermitRootLogin = "yes"`,
 has a tmpfs root, sets `VARIANT_ID=installer` itself, brings NetworkManager,
-and carries Nix with a nixpkgs copy. Differences to keep in mind:
+and carries Nix with a nixpkgs copy. Differences:
 
-- Keep `--extra-experimental-features 'nix-command flakes'` — flakes are not
+- Keep `--extra-experimental-features 'nix-command flakes'`: flakes are not
   enabled on it by default.
 - It has no `hardware-enroll` oneshot and no baked-in base declaration, so
   only the flake app works; `bin/host-install.sh` needs the per-host ISO. It also
@@ -212,7 +212,7 @@ time: the one-command app probes the machine, generates the trust fixture
 from the fleet record (`scripts/hardware/gen_trust.py` falls back to the
 fleet's operator facts until the host has its own record), and writes
 `config/hosts/intake/<host>.json` into its work tree. `model.nix` loads
-that file as soon as it exists — for `antagony` the inline pending record
+that file as soon as it exists. For `antagony`, the inline pending record
 is only the build-time base before the first enrollment.
 
 ## Day 2: deploy-rs

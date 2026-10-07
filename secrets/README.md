@@ -6,7 +6,7 @@ fetching a private GitHub secrets repository during evaluation.
 
 Tracked, committed, sops/age-encrypted:
 
-- `github-ssh.yaml` — the authoritative GitHub SSH keypair, field
+- `github-ssh.yaml`: the authoritative GitHub SSH keypair, field
   `github-ssh-private-key`. Installed on every host at `~/.ssh/id_github` (and at
   `~/.ssh/id_ed25519` when that path is still free) by
   `home.activation.installGithubSshKey` in `modules/aspects/users/mei.nix`. See
@@ -14,7 +14,7 @@ Tracked, committed, sops/age-encrypted:
 
 Untracked by design, never commit:
 
-- `remembrance-keys.yaml` — per-host private keys produced by enrollment.
+- `remembrance-keys.yaml`: per-host private keys produced by enrollment.
   `scripts/hardware/gen_trust.py` reads it and fails closed when it is missing.
 
 Recipients live in `../.sops.yaml`: `&admin` and `&recovery` (standalone age
@@ -24,6 +24,6 @@ GitHub key with `ssh-to-age`, which is what NixOS hosts get from
 `sops.age.sshKeyPaths = ~/.ssh/id_ed25519`).
 
 Decrypting requires an age identity on the machine: `$SOPS_AGE_KEY_FILE`, else
-`~/.config/sops/age/keys.txt`. Encryption needs no identity at all — the
-recipients in `.sops.yaml` are public — so a fresh clone can add secrets but not
+`~/.config/sops/age/keys.txt`. Encryption needs no identity: the
+recipients in `.sops.yaml` are public, so a fresh clone can add secrets but not
 read them.

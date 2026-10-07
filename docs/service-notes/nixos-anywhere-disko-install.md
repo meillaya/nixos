@@ -3,7 +3,7 @@
 > **Status:** `remembrance` carries a reviewed hardware enrollment
 > (`config/hosts/intake/remembrance.json`); `antagony` is enrolled at install
 > time by the one-command installer. A committed enrollment record is data, not
-> authorization to erase a machine — the destructive gates below still apply.
+> authorization to erase a machine; the destructive gates below still apply.
 
 The Task 7 slice defines a fail-closed boundary for a future attended Disko
 install. It does not by itself provide a production disk writer; the shipped
@@ -27,7 +27,7 @@ an operator machine `bin/host-install.sh --target-host <ip> --yes` / a manual
   `physical-install-requires-attended-run`; that rejection is fixture-scoped.
   The live pipeline never writes a disk on its own either: `bin/host-install.sh`
   and the `install` app gate the destructive stage behind `--yes` (re-checked
-  inside the stage), a reviewed enrollment record, and — in the app — a check
+  inside the stage), a reviewed enrollment record, and, in the app, a check
   that `/` is a live, RAM-backed root.
 - The tool-sandbox record under `config/install/` is fixture data. Its zero NAR
   hashes are not release evidence and cannot authorize a real executable.
@@ -65,7 +65,7 @@ evidence.
 ## Future attended procedure
 
 Do not run an install until a reviewed enrollment in the current machine model
-binds all exact host and device facts — or let the one-command installer produce
+binds all exact host and device facts, or let the one-command installer produce
 exactly that enrollment from the live hardware before its gate. At that point the
 supported entry point is the ISO-first flow: boot `.#iso.<host>` on the target
 and use the `install` app or `nixos-anywhere` from the operator side. The

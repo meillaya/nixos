@@ -2,7 +2,7 @@
 
 ## Zen
 
-This repo now integrates Zen declaratively via the community Nix flake:
+This repo integrates Zen declaratively through the community Nix flake:
 
 - `github:0xc000022070/zen-browser-flake`
 

@@ -111,7 +111,7 @@ with pkgs;
   rustc
   cargo
   rust-analyzer
-  # Java 21 LTS — keep as the profile's only JDK: the Android projects' Gradle
+  # Java 21 LTS, kept as the profile's only JDK: the Android projects' Gradle
   # daemon JVM criteria require "Java 21" and a second JDK would collide on
   # bin/java. For a newer JDK use a per-project `nix shell nixpkgs#openjdk25`.
   openjdk

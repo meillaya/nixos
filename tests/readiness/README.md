@@ -13,4 +13,4 @@ tests/readiness/run-task.sh 15 negative
 
 Pass a case ID as the third argument to run one selector. Task 23 covers only
 portable journal behavior. External evidence gates are absent; Darwin-native
-status is **NOT VERIFIED**.
+status is not verified.

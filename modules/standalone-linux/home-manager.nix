@@ -49,7 +49,7 @@ in
       TERM = "xterm-256color";
       QT_QPA_PLATFORMTHEME = "qt5ct";
       GTK_THEME = "adw-gtk3-dark";
-      # Java 21 (LTS) — matches the Gradle daemon JVM criteria used by the
+      # Java 21 (LTS), matching the Gradle daemon JVM criteria used by the
       # Android projects. Do not bump: JDK 25/26 would not satisfy a
       # "Compatible with Java 21" toolchain criterion and would collide with
       # this JDK on bin/java in the same profile.

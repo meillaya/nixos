@@ -53,5 +53,5 @@ another flake input, or a separate dedicated repo.
 The Darwin machine now exposes a real `build-switch` app (a `sudo darwin-rebuild
 switch`), so repository verification is no longer build-only. App bundle
 appearance under `/Applications/Nix Apps`, migration away from Homebrew, and
-native activation remain **NOT VERIFIED** on the first switch. Build before
+native activation remain not verified on the first switch. Build before
 switching, and roll back with `sudo darwin-rebuild rollback`.

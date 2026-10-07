@@ -8,7 +8,7 @@ bin/host-install.sh --target-host <ip> --yes
 
 This note is the practical walkthrough: what to prepare, what to run, and
 the handful of things that are easy to miss. The trust boundary (four
-enrollments, reviewed machine record) is unchanged — see
+enrollments, reviewed machine record) is unchanged. See
 [`nixos-anywhere-iso-install.md`](./nixos-anywhere-iso-install.md) for the
 manual procedure this wraps.
 
@@ -51,11 +51,11 @@ target and a second machine holding the repo.
 
 ## 0. Before anything: back up two secrets
 
-These are **not in the repo** and a fresh clone cannot work without them:
+These are not in the repo and a fresh clone cannot work without them:
 
-- `~/.config/sops/age/keys.txt` (+ `recovery.txt`) — the age private keys.
+- `~/.config/sops/age/keys.txt` (+ `recovery.txt`): the age private keys.
   Without one, no sops secret is ever decryptable again.
-- `secrets/remembrance-keys.yaml` — the local sops store holding the
+- `secrets/remembrance-keys.yaml`: the local sops store holding the
   permanent-login and host private keys (gitignored by design).
 
 Copy both to an external disk. The operator flow fails closed without them:
@@ -65,9 +65,9 @@ permanent-login key, and the fold stage needs it to re-encrypt the host key.
 `gen_trust.py` falls back to the fleet record's operator facts; it then
 requires `--skip-fold --save` instead of the fold.)
 
-The authoritative GitHub SSH key is **no longer** in that list: it is escrowed
+The authoritative GitHub SSH key is no longer in that list: it is escrowed
 in the tracked store `secrets/github-ssh.yaml` and installed at `~/.ssh/id_github`
-by home-manager activation on the first `home-switch`/`build-switch` — provided
+by home-manager activation on the first `home-switch`/`build-switch`, provided
 the new machine has an age identity (see
 [`github-ssh-key.md`](./github-ssh-key.md)).
 
@@ -79,7 +79,7 @@ From the repo, at the commit you want to install:
 nix build .#iso.<host>
 ```
 
-The per-host ISO is **not** the upstream minimal image — it is NixOS's own ISO
+The per-host ISO is not the upstream minimal image; it is NixOS's own ISO
 builder run over the host's configuration at the flake's pinned nixpkgs, with
 the `hardware-enroll` oneshot and the enrollment base declaration baked in,
 plus `VARIANT_ID=installer` so `nixos-anywhere` skips kexec. Flash it:
@@ -98,7 +98,7 @@ sudo dd if=result/iso/*.iso of=/dev/sdX bs=4M status=progress oflag=sync
 ## 3. SSH access to the installer
 
 The ISO enables sshd. Root accepts the key listed in
-`modules/nixos/system.nix` (`keys`) — that must be **your** key, since it
+`modules/nixos/system.nix` (`keys`). That must be your key, since it
 is also the SSH trust anchor of the installed system and of the
 post-install verification step.
 
@@ -112,7 +112,7 @@ ssh/scp prompt you.
 
 ## 4. Prepare the operator machine
 
-On the machine holding the repo (a second machine, or the target itself —
+On the machine holding the repo (a second machine, or the target itself;
 see the single-machine note below):
 
 ```bash
@@ -142,7 +142,7 @@ bin/host-install.sh --target-host <ip> --yes --chown home/mei/.config 1000:100  
 bin/host-install.sh --target-host <ip> --yes --stage-identity ~/.config/sops/age/keys.txt
 ```
 
-With `--yes`, the stages run in order — enroll (upload trust fixture,
+With `--yes`, the stages run in order: enroll (upload trust fixture,
 trigger `hardware-enroll`, pull the artifacts back), fold (commit the
 refreshed enrollment + re-encrypted host key), `nh os build` gate, then
 `nixos-anywhere` partitions the target disk and installs, and after the
@@ -168,7 +168,7 @@ are excluded).
 - The install minted `mei`'s password and printed it once to the console (the
   journal too); use it for the first login. It is never written to disk in
   readable form, so copy it off the screen before the install reboots.
-- The enrollment commit is local — push it: `git push origin main`. In the app
+- The enrollment commit is local; push it: `git push origin main`. In the app
   flow the commit lives in the RAM work tree (`/root/nixos-install`), so copy it
   out first with `--save DIR` (or run the app from a persistent `--workdir` and
   commit/push from there) before the machine reboots.
@@ -176,15 +176,15 @@ are excluded).
 
 ## If something fails
 
-- **Enrollment artifacts missing** — the oneshot masks failures with
+- **Enrollment artifacts missing**: the oneshot masks failures with
   `|| true`; check `journalctl -u hardware-enroll` on the target.
-- **`nh: command not found`** — step 4 was skipped.
-- **`gen_trust` fails** — the age key or `secrets/remembrance-keys.yaml`
+- **`nh: command not found`**: step 4 was skipped.
+- **`gen_trust` fails**: the age key or `secrets/remembrance-keys.yaml`
   was not restored, and (for a re-run) the host record diverges from the
   fleet record's operator facts.
-- **SSH auth denied** — the target's key is not yours: fix `keys` in
+- **SSH auth denied**: the target's key is not yours; fix `keys` in
   `system.nix` (step 3).
-- **The app refuses with "`/` is a `btrfs` filesystem"** — the install stage
+- **The app refuses with "`/` is a `btrfs` filesystem"**: the install stage
   only runs from a live environment so the enrolled disk can be erased safely;
   boot the ISO (or pass `--allow-mounted-root` when the target disk is not the
   running root).
@@ -199,7 +199,7 @@ are excluded).
 ## Single-machine variant
 
 No second machine? Use the flake app: `nix run github:meillaya/nixos#install`
-inside the ISO environment does exactly this variant — it copies the repo to a
+inside the ISO environment does exactly this variant; it copies the repo to a
 work tree, sets up root SSH to itself, probes the hardware, enrolls, and runs
 the build gate plus `nixos-anywhere` against `127.0.0.1`.
 

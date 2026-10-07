@@ -13,7 +13,7 @@ stdenvNoCC.mkDerivation {
 
   # nix's fetchzip unpacks this zip as `Contents/` at the source root (the
   # OmniWM.app wrapper dir is an artifact of how system unzip/bsdtar read the
-  # archive — nix's extraction is authoritative for the build). Anchor on
+  # archive; nix's extraction is authoritative for the build). Anchor on
   # $src rather than relying on the installPhase cwd.
   installPhase = ''
     mkdir -p $out/Applications/OmniWM.app

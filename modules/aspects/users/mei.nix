@@ -107,7 +107,7 @@ in
       # instead of a hand-copied key. `id_github` is the identity the shared SSH
       # config tries first for github.com; `id_ed25519` is the path
       # `sops.age.sshKeyPaths` and the enrollment tooling already expect, so it
-      # is filled in only when it does not exist — an existing per-machine key is
+      # is filled in only when it does not exist; an existing per-machine key is
       # never overwritten, because it may be that machine's age identity.
       #
       # Decrypting needs an age identity: `$SOPS_AGE_KEY_FILE`, else

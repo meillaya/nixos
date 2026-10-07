@@ -5,10 +5,10 @@
 # the deploy topology without running any deployment.
 #
 # Hosts:
-#   remembrance — NixOS x86_64-linux (this PC)
-#   antagony    — NixOS x86_64-linux (ThinkPad P52)
-#   entropy     — nix-darwin aarch64-darwin (Mac mini)
-#   massive     — standalone-linux Home-Manager (CachyOS)
+#   remembrance: NixOS x86_64-linux (this PC)
+#   antagony   : NixOS x86_64-linux (ThinkPad P52)
+#   entropy    : nix-darwin aarch64-darwin (Mac mini)
+#   massive    : standalone-linux Home-Manager (CachyOS)
 { inputs, lib, ... }:
 let
   inherit (inputs) self deploy-rs;

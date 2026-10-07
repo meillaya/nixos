@@ -64,7 +64,7 @@ shared policy -> OS platform -> role -> hardware profile
   attached to the active Den entity. They never re-import a literal global
   machine ID, so projection cannot drift from the selected entity.
 - A disabled device or capability enrollment means that no enrollment-specific
-  option projection is added. It does **not** globally force baseline services
+  option projection is added. It does not globally force baseline services
   off; upstream feature modules retain ownership of their baseline defaults.
 - Storage aspects select one hardware profile and assert the current `none`
   profile; they add no Disko or destructive storage behavior.
@@ -146,7 +146,7 @@ and `home-news` remain available on both Linux systems.
 The Apple Silicon machine exposes the same `build-switch`, `clean`, `update`,
 `build`, and `search-pkgs` apps, where `build-switch` runs
 `sudo darwin-rebuild switch`; native Darwin build, activation, rollback, and
-TCC checks remain **NOT VERIFIED** until the first real switch. Credential
+TCC checks remain not verified until the first real switch. Credential
 scripts accept only the typed identity supplied by an authorized wrapper, never
 ambient `$USER`.
 

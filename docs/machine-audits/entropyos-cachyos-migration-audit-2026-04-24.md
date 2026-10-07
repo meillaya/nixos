@@ -22,12 +22,12 @@ This is intended to guide gradual migration, not a one-shot rewrite.
 
 ### Package manager counts
 
-- `pacman -Qqe`: **297** explicitly installed packages
-- `pacman -Qqm`: **17** foreign/AUR packages
-- Flatpak apps: **0**
-- npm globals: **3**
-- cargo installs: **3**
-- pipx apps: **1**
+- `pacman -Qqe`: 297 explicitly installed packages
+- `pacman -Qqm`: 17 foreign/AUR packages
+- Flatpak apps: 0
+- npm globals: 3
+- cargo installs: 3
+- pipx apps: 1
 
 ### Current non-pacman user package managers
 
@@ -373,7 +373,7 @@ Good place for:
 - `alacritty` config
 - imported dotfiles from current home directory
 
-## Appendix A: currently installed gaming-sensitive packages (all installed, not just explicit)
+## Appendix A: currently installed gaming-sensitive packages (all installed, including implicit ones)
 
 ```text
 gamescope
