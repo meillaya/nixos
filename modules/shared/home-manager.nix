@@ -69,19 +69,17 @@ in
         . /nix/var/nix/profiles/default/etc/profile.d/nix.sh
       fi
 
-      export PATH=$HOME/.pnpm-packages/bin:$HOME/.pnpm-packages:$PATH
       export PATH=$HOME/.npm-packages/bin:$HOME/bin:$PATH
       export PATH=$HOME/.local/bin:$PATH
 
-      export ALTERNATE_EDITOR=""
-      export EDITOR="emacsclient -t"
-      export VISUAL="emacsclient -c -a emacs"
+      export EDITOR="micro"
+      export VISUAL="zeditor"
 
       [[ -f "$HOME/.local/bin/env" ]] && . "$HOME/.local/bin/env"
       [[ -f "$HOME/.ghcup/env" ]] && . "$HOME/.ghcup/env"
 
       e() {
-          emacsclient -t "$@"
+          micro "$@"
       }
 
       shell() {
@@ -117,7 +115,7 @@ in
     };
     functions = {
       e.body = ''
-        emacsclient -t $argv
+        micro $argv
       '';
       shell.body = ''
         nix-shell '<nixpkgs>' -A $argv[1]
@@ -164,15 +162,13 @@ in
         function fish_greeting; end
       end
 
-      fish_add_path --prepend $HOME/.pnpm-packages/bin $HOME/.pnpm-packages
       fish_add_path --prepend $HOME/.npm-packages/bin $HOME/bin
       fish_add_path --prepend $HOME/.local/bin
 
       test -r "$HOME/.opam/opam-init/init.fish" && source "$HOME/.opam/opam-init/init.fish" > /dev/null 2> /dev/null; or true
 
-      set -gx ALTERNATE_EDITOR ""
-      set -gx EDITOR "emacsclient -t"
-      set -gx VISUAL "emacsclient -c -a emacs"
+      set -gx EDITOR "micro"
+      set -gx VISUAL "zeditor"
 
       if status is-interactive; and test -t 1; and test "$TERM" != dumb; and not set -q __HM_FASTFETCH_INIT_DONE; and command -q fastfetch
         # Keep this guard shell-local rather than exported. `exec fish` inherits
@@ -279,13 +275,20 @@ in
         fi
 
         # Define variables for directories
-        export PATH=$HOME/.pnpm-packages/bin:$HOME/.pnpm-packages:$PATH
         export PATH=$HOME/.npm-packages/bin:$HOME/bin:$PATH
         export PATH=$HOME/.local/bin:$PATH
 
         [[ -f "$HOME/.local/bin/env" ]] && . "$HOME/.local/bin/env"
         [[ -f "$HOME/.ghcup/env" ]] && . "$HOME/.ghcup/env"
         [[ -f /usr/share/cachyos-zsh-config/cachyos-config.zsh ]] && source /usr/share/cachyos-zsh-config/cachyos-config.zsh
+
+        # Node comes from fnm (official prebuilt releases) rather than nixpkgs:
+        # source-built Node breaks @deepseek-ai/dsh's native require-builtin
+        # addon. See modules/shared/packages.nix. One-time: `fnm install 22 &&
+        # fnm default 22`; after that `node` resolves to a DSH-compatible build.
+        if command -v fnm >/dev/null 2>&1; then
+          eval "$(fnm env --use-on-cd --shell zsh)"
+        fi
 
         # OMX/tmux launches source ~/.zshrc from non-interactive shells to recover
         # PATH. Stop here before interactive-only plugin/history/setopt setup.
@@ -303,13 +306,13 @@ in
         # Ripgrep alias
         alias search=rg -p --glob '!node_modules/*'  $@
 
-        # Emacs is my editor
-        export ALTERNATE_EDITOR=""
-        export EDITOR="emacsclient -t"
-        export VISUAL="emacsclient -c -a emacs"
+        # micro for the terminal, Zed for GUI launches. The Zed CLI is
+        # `zeditor`, not `zed`: nixpkgs' zed-editor ships only that name.
+        export EDITOR="micro"
+        export VISUAL="zeditor"
 
         e() {
-            emacsclient -t "$@"
+            micro "$@"
         }
 
         # nix shortcuts

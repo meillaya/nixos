@@ -44,8 +44,21 @@ with pkgs;
   noto-fonts-color-emoji
   meslo-lgs-nf
 
-  # Node.js development tools
-  nodejs_24
+  # Node.js development tools.
+  # Deliberately NOT nodejs_22/nodejs_24: nixpkgs builds Node from source on
+  # aarch64-darwin, and every source-built Node (verified in-store: 22.23.3,
+  # 24.16.0, 24.20.0) breaks @deepseek-ai/dsh. Its node-addon-require-builtin
+  # addon pattern-matches Node's compiled internal `requireBuiltin` getter and
+  # fails with `Unsupported/no-getter`, aborting host preparation at boot.
+  # Only official prebuilt builds match, so use fnm for Node instead:
+  #   fnm install 22 && fnm default 22
+  fnm
+
+  # pnpm is required by `dsh plugin`, which spawns a bare `pnpm` from PATH.
+  # Pinned to the 11.x line deliberately: the desktop app bundles pnpm 11.7.0,
+  # while nixpkgs' bare `pnpm` is 12.x, whose lockfile the app's pnpm 11 may
+  # not read. 11.27.0 is the closest match available in this nixpkgs pin.
+  pnpm_11
 
   # Text and terminal utilities
   htop
