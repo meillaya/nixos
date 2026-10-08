@@ -15,15 +15,15 @@ modules/
 │   ├── hardware/   # vendor + capability routing, projection-only
 │   ├── storage/    # per-host disko/profile selection
 │   ├── named-hosts/# per-host identity projection (remembrance, antagony, entropy)
-│   ├── hosts/      # compatibility aggregates (nixos-workstation, standalone-linux)
+│   ├── hosts/      # compatibility aggregates (nixos-workstation, darwin-workstation, massive)
 │   ├── users/      # mei.nix - the user entity + cross-platform HM payload
 │   └── shared-policy/
-├── flake/          # the 9 flake-parts modules (see below)
+├── flake/          # the 10 flake-parts modules (see below)
 ├── nixos/          # low-level NixOS/HM modules - imported by aspects, never by flake.nix
 ├── darwin/         # low-level nix-darwin modules
 ├── shared/         # cross-platform HM payload for the mei user
-├── linux/          # Linux HM payload shared by NixOS and standalone-linux
-└── standalone-linux/  # the standalone Home Manager home
+├── linux/          # Linux HM payload shared by NixOS and massive
+└── standalone-linux/  # the standalone host's Home Manager home and system-manager layer
 ```
 
 ## HOW COMPOSITION WORKS
@@ -82,6 +82,7 @@ named host -> storage -> hardware routing -> role -> platform -> feature aspects
 | `flake/outputs.nix` | `configurationEvaluationPaths` evaluation inventory |
 | `flake/iso-images.nix` | `flake.iso.<host>`; each ISO carries the `hardware-enroll` oneshot |
 | `flake/deploy-rs.nix` | `flake.deploy.nodes` for the four hosts + deployChecks in `flake.checks` |
+| `flake/system-manager.nix` | `flake.systemConfigs.massive`: the standalone host's hostname and systemd units, applied with numtide/system-manager |
 
 ## MACHINE AUTHORITY
 `_machine-authority/` is the trust boundary, not a data bag:
@@ -107,7 +108,7 @@ that is what keeps a disabled machine buildable but not activatable.
 ## HOTSPOTS
 | File | Lines | Why it matters |
 |------|-------|----------------|
-| `linux/home-manager.nix` | ~790 | the whole desktop payload; every Linux host and standalone-linux |
+| `linux/home-manager.nix` | ~790 | the whole desktop payload; every Linux host and massive |
 | `entities/_machine-authority/validators.nix` | ~610 | edit here and every machine record is re-checked |
 | `shared/home-manager.nix` | ~605 | cross-platform user config; affects all four hosts |
 | `flake/apps.nix` | ~485 | all app surfaces incl. `update` and `home-switch` |

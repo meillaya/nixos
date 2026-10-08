@@ -36,7 +36,7 @@ assert darwinArm.target == "darwinConfigurations.entropy";
     };
   };
   den.homes = {
-    x86_64-linux.standalone-linux = {
+    x86_64-linux.massive = {
       machine = laptop;
       userName = laptop.identity.name;
       homeDirectory = laptop.identity.home;

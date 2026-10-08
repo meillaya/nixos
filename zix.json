@@ -16,8 +16,8 @@
   "companion_inputs": {
     "multiverse": "github:fzakaria/nixpkgs-multiverse"
   },
-  "default_switch": "standalone-linux",
-  "description": "Den dendritic Nix config: NixOS workstations, nix-darwin, standalone CachyOS Home Manager",
+  "default_switch": "massive",
+  "description": "Den dendritic Nix config: NixOS workstations, nix-darwin, standalone CachyOS Home Manager with a system-manager layer",
   "managed": {
     "manifest": "zix/managed/manifest.json",
     "packages_file": "zix/managed/packages.nix",
@@ -54,7 +54,7 @@
     "antagony": ["nix", "run", ".#build-switch", "--"],
     "entropy": ["nix", "run", ".#build-switch", "--"],
     "remembrance": ["nix", "run", ".#build-switch", "--"],
-    "standalone-linux": ["nix", "run", ".#home-switch", "--"]
+    "massive": ["nix", "run", ".#home-switch", "--"]
   },
   "system": "x86_64-linux",
   "targets": {

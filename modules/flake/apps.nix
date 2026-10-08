@@ -124,7 +124,7 @@ EOF
   mkHomeSwitchApp = system:
     let
       pkgs = nixpkgs.legacyPackages.${system};
-      defaultTarget = "standalone-linux";
+      defaultTarget = "massive";
     in {
       type = "app";
       program = "${(pkgs.writeShellScriptBin "home-switch" ''
@@ -149,13 +149,13 @@ EOF
 Usage: nix run .#home-switch -- [--target HOME] [home-manager args...]
 
 Defaults:
-  x86_64-linux -> standalone-linux
+  x86_64-linux -> massive
   backup extension -> hm-backup-<timestamp>
 
 Examples:
   nix run .#home-switch
   nix run .#home-switch -- --dry-run
-  nix run .#home-switch -- --target standalone-linux --dry-run
+  nix run .#home-switch -- --target massive --dry-run
   nix run .#home-switch -- --backup-ext my-backup --dry-run
 EOF
               exit 0
@@ -223,7 +223,7 @@ EOF
   mkHomeNewsApp = system:
     let
       pkgs = nixpkgs.legacyPackages.${system};
-      defaultTarget = "standalone-linux";
+      defaultTarget = "massive";
     in {
       type = "app";
       program = "${(pkgs.writeShellScriptBin "home-news" ''
@@ -243,7 +243,7 @@ EOF
 Usage: nix run .#home-news -- [--target HOME] [extra home-manager news args...]
 
 Defaults:
-  x86_64-linux -> standalone-linux
+  x86_64-linux -> massive
 
 Examples:
   nix run .#home-news

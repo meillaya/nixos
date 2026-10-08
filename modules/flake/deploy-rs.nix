@@ -8,7 +8,8 @@
 #   remembrance: NixOS x86_64-linux (this PC)
 #   antagony   : NixOS x86_64-linux (ThinkPad P52)
 #   entropy    : nix-darwin aarch64-darwin (Mac mini)
-#   massive    : standalone-linux Home-Manager (CachyOS)
+#   massive    : standalone Home-Manager host (CachyOS); Home Manager owns the
+#                user payload and system-manager owns hostname and services
 { inputs, lib, ... }:
 let
   inherit (inputs) self deploy-rs;
@@ -46,7 +47,7 @@ in
     hostname = "massive";
     profiles.home = {
       user = "mei";
-      path = deploy-rs.lib.x86_64-linux.activate.home-manager self.homeConfigurations.standalone-linux;
+      path = deploy-rs.lib.x86_64-linux.activate.home-manager self.homeConfigurations.massive;
     };
   };
   # deployChecks: `nix flake check` validates the deploy topology (schema +

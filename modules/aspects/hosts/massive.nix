@@ -1,8 +1,8 @@
 { den, inputs, ... }:
 {
-  den.aspects.standalone-linux-aarch64.includes = [ den.aspects.standalone-linux ];
+  den.aspects.massive-aarch64.includes = [ den.aspects.massive ];
 
-  den.aspects.standalone-linux =
+  den.aspects.massive =
     { home, ... }:
     {
       includes = [

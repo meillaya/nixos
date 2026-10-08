@@ -64,7 +64,6 @@ with pkgs;
   ptyxis
   qbittorrent
   remmina
-  tailscale
   virt-manager
   vesktop
   vlc

@@ -64,6 +64,12 @@
       url = "github:serokell/deploy-rs";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    # System-level declarative configuration for the standalone (non-NixOS)
+    # host, which Home Manager cannot reach. See modules/flake/system-manager.nix.
+    system-manager = {
+      url = "github:numtide/system-manager";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
 
     multiverse.url = "github:fzakaria/nixpkgs-multiverse";
   };

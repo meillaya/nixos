@@ -18,7 +18,7 @@ let
     directory before editing it.
 
     - Hosts: `remembrance` and `antagony` (NixOS), `entropy` (macOS),
-      `standalone-linux` (Home Manager on CachyOS).
+      `massive` (Home Manager plus system-manager on CachyOS).
     - Behavior belongs in an aspect under `modules/aspects/`. Entities carry
       identity and data only.
     - Never call `nixosSystem`, `darwinSystem`, or `homeManagerConfiguration`

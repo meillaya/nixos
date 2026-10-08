@@ -44,7 +44,7 @@ Do not test this policy with a live Home Manager switch or a service restart.
 Use evaluation and dry-run surfaces only:
 
 ```bash
-nix eval --raw .#homeConfigurations.standalone-linux.activationPackage.drvPath
+nix eval --raw .#homeConfigurations.massive.activationPackage.drvPath
 nix-instantiate --eval --strict --expr \
   'import ./tests/dendritic-config-eval.nix {}'
 bash tests/dendritic-architecture.sh

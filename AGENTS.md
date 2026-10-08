@@ -118,7 +118,7 @@ nixos/
 ```bash
 nix run .#build                # dry-run toplevel build
 nix run .#build-switch         # build + activate (delegates to nh os switch)
-nix run .#home-switch          # standalone Linux Home Manager switch (default target standalone-linux)
+nix run .#home-switch          # standalone Linux Home Manager switch (default target massive)
 nix run .#update               # flake inputs + local source pins
 nix run .#clean                # delete system generations older than 7 days
 zix doctor                     # zix: packages, pins, sandboxes, VMs; on PATH
@@ -148,7 +148,8 @@ nix-instantiate --eval --strict --expr 'import ./tests/dendritic-config-eval.nix
 - Files that must be git-tracked to evaluate: `secrets/github-ssh.yaml` is referenced as
   a path literal, and flake evaluation only sees tracked files.
 - Four host codenames exist: `remembrance` and `antagony` (NixOS), `entropy` (macOS) and
-  `standalone-linux`, deployed as home-manager under hostname `massive` (`modules/flake/deploy-rs.nix`).
+  `massive` (standalone Linux, Home Manager plus a system-manager layer at
+  `systemConfigs.massive` that owns the hostname and tailscaled).
 - Only `remembrance` is enrolled; its record is the committed intake artifact. `antagony` and
   `entropy` carry inline pending records with boot/storage/capabilities disabled.
 - Unfree pins in `config/package-exceptions.json` are version-exact; on nixpkgs drift the first

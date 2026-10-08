@@ -126,7 +126,21 @@ let
 in
 assert builtins.attrNames flake.nixosConfigurations == [ "antagony" "remembrance" ];
 assert builtins.attrNames (flake.darwinConfigurations or { }) == [ "entropy" ];
-assert builtins.attrNames (flake.homeConfigurations or { }) == [ "standalone-linux" ];
+assert builtins.attrNames (flake.homeConfigurations or { }) == [ "massive" ];
+# The standalone host's system layer is the only system-manager output, and it
+# owns exactly the hostname and the tailscaled unit.
+assert builtins.attrNames (flake.systemConfigs or { }) == [ "massive" ];
+# CachyOS is not on system-manager's tested list, so the layer has to opt out of
+# the os-release assertion it would otherwise fail at activation.
+assert !flake.systemConfigs.massive.config.system-manager.preActivationAssertions.osVersion.enable;
+assert hasInfix "/bin/hostnamectl set-hostname massive"
+  flake.systemConfigs.massive.config.systemd.services.set-hostname.serviceConfig.ExecStart;
+assert builtins.elem "d /var/lib/tailscale 0700 root root -"
+  flake.systemConfigs.massive.config.systemd.tmpfiles.rules;
+assert builtins.elem "d /run/tailscale 0755 root root -"
+  flake.systemConfigs.massive.config.systemd.tmpfiles.rules;
+assert hasInfix "/bin/tailscaled --state=/var/lib/tailscale/tailscaled.state --socket=/run/tailscale/tailscaled.sock"
+  flake.systemConfigs.massive.config.systemd.services.tailscaled.serviceConfig.ExecStart;
 assert flake.configurationEvaluationPaths == [
   "nixosConfigurations.remembrance"
   "darwinConfigurations.entropy"

@@ -1,8 +1,8 @@
 # nixos
 
 One flake for four machines: two NixOS workstations (`remembrance`, `antagony`),
-one macOS host (`entropy`), and one standalone Linux Home Manager host
-(`standalone-linux`). Every host comes from the same Den aspect tree and the
+one macOS host (`entropy`), and one standalone Linux host (`massive`, Home
+Manager plus system-manager). Every host comes from the same Den aspect tree and the
 same machine-authority schema, so a capability is declared once and inherited
 where it belongs.
 

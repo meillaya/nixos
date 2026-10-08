@@ -66,7 +66,8 @@ Den exclusively creates `nixosConfigurations`, `darwinConfigurations`, and
 
 - `remembrance` and `antagony` (`x86_64-linux`) NixOS machines;
 - the `entropy` (`aarch64-darwin`) macOS machine;
-- the `standalone-linux` (x86_64-linux) Home Manager output; and
+- the `massive` (x86_64-linux) Home Manager output, plus a `systemConfigs.massive`
+  system layer that owns the hostname and the tailscaled service; and
 - the `mei` user on each managed host.
 
 Intel Darwin is retired; `x86_64-darwin` is neither an evaluation system nor a
@@ -111,9 +112,10 @@ shared policy -> OS platform -> role -> hardware profile
   entities select their same-named host aspect directly.
 
 The generic `nixos-workstation` and `darwin-workstation` aspects remain aliases
-for callers, not entity-selected aggregates. `standalone-linux` remains a
-separate Home Manager aggregate combining the shared `mei` home with current
-upstream Noctalia behavior.
+for callers, not entity-selected aggregates. `massive` remains a separate Home
+Manager aggregate combining the shared `mei` home with current upstream Noctalia
+behavior, and it is the one host whose system level comes from
+`system-manager` rather than NixOS or nix-darwin.
 
 Leaf aspects under `modules/aspects/features/` own one coherent capability.
 The `mei` aspect under `modules/aspects/users/` owns cross-platform user and

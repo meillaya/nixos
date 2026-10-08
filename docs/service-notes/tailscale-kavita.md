@@ -1,9 +1,9 @@
 # Tailscale + Kavita boundary notes
 
-This repo declares the packages for:
+This repo owns:
 
-- `tailscale`
-- `calibre`
+- `tailscaled` as a system service, through `systemConfigs.massive` (see below)
+- `calibre` as a Home Manager package
 
 and tracks a Kavita appsettings template at:
 
@@ -53,10 +53,10 @@ file. The manual runtime destination is:
 
 ## Why this is a boundary
 
-This repo currently uses standalone Home Manager on non-NixOS Linux.
-That covers user-space packages and dotfiles, but it does not own the
-system service lifecycle for things like `tailscaled` or a long-running Kavita
-service in the same way a future NixOS host would.
+Home Manager on non-NixOS Linux covers user-space packages and dotfiles only.
+System-level state on the standalone host comes from `system-manager` instead:
+`systemConfigs.massive`, built from `modules/standalone-linux/system.nix`, owns
+the hostname and the `tailscaled` unit, and nothing else.
 
-So the current repo boundary is: packages are declarative, secret and runtime service
-state are not.
+So the current repo boundary is: user space and one small, explicit system layer
+are declarative; secrets and runtime service state are not.

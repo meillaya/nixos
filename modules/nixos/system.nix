@@ -107,6 +107,11 @@ in
     # Let's be able to SSH into this machine
     openssh.enable = true;
 
+    # Tailscale: the NixOS module adds pkgs.tailscale and runs tailscaled as a
+    # system service, so the shared Home Manager list leaves the package out.
+    # Joining a tailnet stays a one-time `sudo tailscale up`.
+    tailscale.enable = true;
+
     # Sync state between machines
     syncthing = {
       enable = true;

@@ -6,7 +6,7 @@ Verified against official Determinate documentation on Friday, July 17, 2026.
 
 - WSL is supported here as an existing Linux install.
 - Do not add a dedicated `wsl` flake output, host class, or release path.
-- Use the existing `standalone-linux` Home Manager output for `x86_64-linux`.
+- Use the existing `massive` Home Manager output for `x86_64-linux`.
 - Install Determinate Nix inside the WSL distro before using this repo.
 
 This keeps WSL on the same non-NixOS Linux surface as Arch or other standalone machines, which is the intended repo model.
@@ -37,8 +37,8 @@ nix run .#home-switch
 Notes:
 
 - Run the repo from the Linux side of the distro. The standalone outputs explicitly manage `mei` at `/home/mei`; shell `USER`/`HOME` values do not change that identity.
-- `nix run .#home-switch` auto-selects `standalone-linux` on `x86_64-linux`.
-- After first switch, continue with `home-manager switch --flake .#standalone-linux` on `x86_64-linux`.
+- `nix run .#home-switch` auto-selects `massive` on `x86_64-linux`.
+- After first switch, continue with `home-manager switch --flake .#massive` on `x86_64-linux`.
 
 ## If the distro already has upstream Nix
 
