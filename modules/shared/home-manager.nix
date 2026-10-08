@@ -585,6 +585,23 @@ in
             "/Users/${user}/.ssh/id_ed25519"
           ];
       };
+      # The fleet nodes answer to their tailnet names, but a bare MagicDNS
+      # label does not resolve through the Nix openssh on a non-NixOS host: the
+      # Nix build cannot use the stub resolver's tailnet search domain, while
+      # the distribution's openssh can. Spelling the MagicDNS name out makes
+      # `ssh entropy` behave the same on every host in the fleet.
+      "entropy" = {
+        HostName = "entropy.tailf8e61e.ts.net";
+        User = user;
+      };
+      "remembrance" = {
+        HostName = "remembrance.tailf8e61e.ts.net";
+        User = user;
+      };
+      "antagony" = {
+        HostName = "antagony.tailf8e61e.ts.net";
+        User = user;
+      };
     };
   };
 
