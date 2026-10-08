@@ -57,14 +57,19 @@
         turnDisplayOffOnPowerAdapterWhenInactive = "For 2 hours";
       };
       network = {
-        # The firewall is off on this machine. Declared as it is rather than
-        # as it ought to be, so the next rebuild does not silently change it.
+        # The firewall is off on this machine, which is how it was found. The
+        # options block stops short of blockAllIncomingConnections, because
+        # declaring it emits `socketfilterfw --setblockall`, and on macOS 27
+        # that call turns the firewall back on after `--setglobalstate off` has
+        # already run. The ALF log shows it as "AFSetBlockAll() setting block
+        # state to: 2" followed by "turning firewall on", so the two entries
+        # cannot both hold. Left unmanaged, block all stays at its own default
+        # and still reads as off.
         firewall = {
           firewall = false;
           options = {
             automaticallyAllowBuiltInSoftwareToReceiveIncomingConnections = true;
             automaticallyAllowDownloadedSignedSoftwareToReceiveIncomingConnections = true;
-            blockAllIncomingConnections = false;
             enableStealthMode = false;
           };
         };
