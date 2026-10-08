@@ -108,18 +108,18 @@ EOF
         search_ref "stable" "$stable_ref"
       '')}/bin/search-pkgs";
     };
-  # zix: config/package/sandbox manager (tools/zix). The wrapper bakes in the
-  # *code* only - the target repository is discovered at runtime from the
-  # caller's cwd (or --repo), so the tool edits the working tree, never a
-  # read-only store copy of it.
+  # zix: config/package/sandbox manager (tools/zix). This app is the same
+  # derivation the hosts install and the tools/zix flake exposes, so all three
+  # entry points run identical code. The target repository is discovered at
+  # runtime from the caller's cwd (or --repo), so the tool edits the working
+  # tree and never a read-only store copy of it.
   mkZixApp = system:
     let
       pkgs = nixpkgs.legacyPackages.${system};
+      zix = pkgs.callPackage "${self}/tools/zix/package.nix" { };
     in {
       type = "app";
-      program = "${(pkgs.writeShellScriptBin "zix" ''
-        exec ${pkgs.python3}/bin/python3 ${self}/tools/zix/cli.py "$@"
-      '')}/bin/zix";
+      program = "${zix}/bin/zix";
     };
   mkHomeSwitchApp = system:
     let

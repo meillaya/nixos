@@ -1,8 +1,9 @@
-"""zix - config and profile manager for a dendritic Nix configuration.
+"""zix - config and profile manager for Nix configurations.
 
-Entry point: `python3 tools/zix/cli.py --help` (or `nix run .#zix -- --help`
-from the repo). Everything repo-specific comes from the nearest zix.json, so
-the same tool works against other configurations once they ship a manifest.
+Entry point: `zix --help`, or `python3 tools/zix/cli.py --help` from a
+checkout, or `nix run github:<owner>/<repo>?dir=tools/zix -- --help`. Every
+repository-specific detail comes from the nearest zix.json, so one binary
+serves any configuration that ships a manifest.
 """
 
 import argparse
@@ -26,24 +27,25 @@ examples:
   zix doctor                             environment and repo sanity
   zix get ripgrep                        install a package into the user profile now
   zix get hello@2.10                     an exact nixpkgs version, no repo needed
-  zix pkg add ripgrep                    add to the zix-managed set (all hosts)
-  zix pkg add kitty --target linux       add to the curated Linux list
-  zix pkg add jq@1.7.1                   pin exact version via nixpkgs-multiverse
-  zix pkg rm jq                          remove everywhere (pin included)
-  zix pkg update --apply                 move pins to the latest versions
-  zix pkg versions python3               every version nixpkgs ever shipped
-  zix pkg where htop                     locate a declaration
+  zix add ripgrep                        add to the zix-managed set (all hosts)
+  zix add kitty --target linux           add to a curated list named in zix.json
+  zix add jq@1.7.1                       pin an exact version via nixpkgs-multiverse
+  zix rm jq                              remove everywhere (pin included)
+  zix unpin jq                           follow nixpkgs again
+  zix list                               managed packages and pins
+  zix where htop                         locate a declaration
+  zix search ripgrep                     search nixpkgs (stable and unstable)
   zix flakes list sops                   search the omniflake index
-  zix flakes run nh -- --version         run a flake without adding an input
   zix sandbox run --agent claude         disposable agent sandbox (omnibin image)
-  zix vm check github:me/f#checks.x86_64-linux.default
   zix follows check                      dedupe audit via nix-auto-follow
   zix check                              run the repo's check suite
-  zix switch                             apply (standalone-linux by default)
+  zix switch [HOST]                      apply (default host comes from zix.json)
+
+`zix pkg <verb>` is the long form of every package verb above and keeps working.
 
 global flags:
   --dry-run prints intended file edits and skips state-changing commands.
-  --repo points at another configuration that ships a zix.json.
+  --repo points at a configuration that ships a zix.json.
 """
 
 
@@ -65,6 +67,63 @@ def _strip(seq):
     if seq and seq[0] == "--":
         seq = seq[1:]
     return seq
+
+
+def _register_package_verbs(parent, skip=frozenset()):
+    """Register the package verbs on `parent`.
+
+    Both `zix pkg <verb>` and the bare `zix <verb>` aliases come from here, so
+    the two surfaces cannot drift apart. `skip` names the verbs the caller
+    already owns; the top level keeps `update` for the flake-input refresh.
+    """
+
+    def span(name, help_text):
+        if name in skip:
+            return None
+        return parent.add_parser(name, help=help_text)
+
+    add = span("add", "add a package, optionally pinned to a version")
+    if add is not None:
+        add.add_argument("specs", nargs="+", metavar="NAME[@VERSION]")
+        add.add_argument("--target", help="a target named in zix.json "
+                         "(default: the manifest's default_target)")
+        add.add_argument("--skip-check", action="store_true",
+                         help="skip the multiverse version-existence check")
+        add.add_argument("--no-verify", action="store_true",
+                         help="skip the post-pin evaluation check")
+
+    rm = span("rm", "remove a package from every declaration")
+    if rm is not None:
+        rm.add_argument("names", nargs="+")
+        rm.add_argument("--target", help="restrict removal to one target")
+        rm.add_argument("--all", action="store_true",
+                        help="remove from every target without asking")
+
+    unpin = span("unpin", "stop pinning; follow nixpkgs again")
+    if unpin is not None:
+        unpin.add_argument("names", nargs="+")
+
+    span("list", "list managed packages and pins")
+    span("ls", "alias of list")
+
+    where = span("where", "locate a declaration")
+    if where is not None:
+        where.add_argument("name")
+
+    search = span("search", "search nixpkgs (stable+unstable)")
+    if search is not None:
+        search.add_argument("query")
+        search.add_argument("--limit", type=int, default=15)
+
+    versions = span("versions", "version history via multiverse")
+    if versions is not None:
+        versions.add_argument("name")
+
+    update = span("update", "report / move pins to latest")
+    if update is not None:
+        update.add_argument("names", nargs="*")
+        update.add_argument("--apply", action="store_true")
+        update.add_argument("--no-verify", action="store_true")
 
 
 def build_parser():
@@ -130,33 +189,11 @@ def build_parser():
 
     pkg = sub.add_parser("pkg", help="add / remove / pin packages")
     pkg_sub = pkg.add_subparsers(dest="pkg_cmd", metavar="SUBCOMMAND")
-    pkg_add = pkg_sub.add_parser("add", help="add a package, optionally pinned to a version")
-    pkg_add.add_argument("specs", nargs="+", metavar="NAME[@VERSION]")
-    pkg_add.add_argument("--target", help="managed | shared | linux | nixos | "
-                         "standalone | darwin")
-    pkg_add.add_argument("--skip-check", action="store_true",
-                         help="skip the multiverse version-existence check")
-    pkg_add.add_argument("--no-verify", action="store_true",
-                         help="skip the post-pin evaluation check")
-    pkg_rm = pkg_sub.add_parser("rm", help="remove a package from every declaration")
-    pkg_rm.add_argument("names", nargs="+")
-    pkg_rm.add_argument("--target", help="restrict removal to one target")
-    pkg_rm.add_argument("--all", action="store_true",
-                        help="remove from every target without asking")
-    pkg_unpin = pkg_sub.add_parser("unpin", help="stop pinning; follow nixpkgs again")
-    pkg_unpin.add_argument("names", nargs="+")
-    pkg_sub.add_parser("list", help="list managed packages and pins")
-    pkg_where = pkg_sub.add_parser("where", help="locate a declaration")
-    pkg_where.add_argument("name")
-    pkg_search = pkg_sub.add_parser("search", help="search nixpkgs (stable+unstable)")
-    pkg_search.add_argument("query")
-    pkg_search.add_argument("--limit", type=int, default=15)
-    pkg_versions = pkg_sub.add_parser("versions", help="version history via multiverse")
-    pkg_versions.add_argument("name")
-    pkg_update = pkg_sub.add_parser("update", help="report / move pins to latest")
-    pkg_update.add_argument("names", nargs="*")
-    pkg_update.add_argument("--apply", action="store_true")
-    pkg_update.add_argument("--no-verify", action="store_true")
+    _register_package_verbs(pkg_sub)
+
+    # Bare aliases: `zix add` is `zix pkg add`. The top-level `update` stays the
+    # flake-input refresh, so the package verb of that name is skipped here.
+    _register_package_verbs(sub, skip=frozenset({"update"}))
 
     grail = sub.add_parser("grail", help="version ranges over nixpkgs history (passthrough)")
     grail.add_argument("args", nargs=argparse.REMAINDER)
@@ -224,10 +261,20 @@ HANDLERS = {
     "pkg.rm": cmd_pkg.cmd_rm,
     "pkg.unpin": cmd_pkg.cmd_unpin,
     "pkg.list": cmd_pkg.cmd_list,
+    "pkg.ls": cmd_pkg.cmd_list,
     "pkg.where": cmd_pkg.cmd_where,
     "pkg.search": cmd_pkg.cmd_search,
     "pkg.versions": cmd_pkg.cmd_versions,
     "pkg.update": cmd_pkg.cmd_update,
+    # Bare aliases for the package verbs, from _register_package_verbs.
+    "add": cmd_pkg.cmd_add,
+    "rm": cmd_pkg.cmd_rm,
+    "unpin": cmd_pkg.cmd_unpin,
+    "list": cmd_pkg.cmd_list,
+    "ls": cmd_pkg.cmd_list,
+    "where": cmd_pkg.cmd_where,
+    "search": cmd_pkg.cmd_search,
+    "versions": cmd_pkg.cmd_versions,
     "sandbox.run": cmd_sandbox.cmd_run,
     "sandbox.ls": cmd_sandbox.cmd_ls,
     "sandbox.exec": cmd_sandbox.cmd_exec,

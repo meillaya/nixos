@@ -10,10 +10,11 @@
 
 Two files are generated from it on every change:
 
-* ``zix/managed/packages.nix`` - the package list imported by
-  ``modules/shared/packages.nix`` (so managed entries reach every host).
-* ``zix/managed/pins.json`` - read directly by the pin overlay in
-  ``lib/nixpkgs.nix`` (via ``inputs.multiverse.lib.pinOverlay``).
+* ``zix/managed/packages.nix`` - a package list for the repository's own
+  package sets (this config imports it from ``modules/shared/packages.nix``,
+  so managed entries reach every host).
+* ``zix/managed/pins.json`` - read by whatever applies the pins; here that is
+  the pin overlay in ``lib/nixpkgs.nix`` (``inputs.multiverse.lib.pinOverlay``).
 """
 
 import json

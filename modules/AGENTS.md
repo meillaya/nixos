@@ -77,7 +77,7 @@ named host -> storage -> hardware routing -> role -> platform -> feature aspects
 | `flake/systems.nix` | the two evaluation systems (x86_64-linux, aarch64-darwin) |
 | `flake/apps.nix` | per-system `apps`, wrapping the committed `apps/<system>/<name>` scripts |
 | `flake/checks.nix` | per-system checks running `tests/*.sh` in a sandbox |
-| `flake/packages.nix` | `packages` - empty today; packages flow through `lib/nixpkgs.nix` |
+| `flake/packages.nix` | per-system `packages`: `zix`, built from `tools/zix/package.nix`; host package sets still flow through `lib/nixpkgs.nix` |
 | `flake/dev-shells.nix` | the single default devShell |
 | `flake/outputs.nix` | `configurationEvaluationPaths` evaluation inventory |
 | `flake/iso-images.nix` | `flake.iso.<host>`; each ISO carries the `hardware-enroll` oneshot |

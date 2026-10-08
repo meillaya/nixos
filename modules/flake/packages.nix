@@ -8,6 +8,8 @@ in
       pkgs = mkConfiguredPkgs system;
     in
     {
-      packages = { };
+      packages = {
+        zix = pkgs.callPackage ../../tools/zix/package.nix { };
+      };
     };
 }

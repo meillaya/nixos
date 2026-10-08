@@ -424,6 +424,30 @@ class CliTests(unittest.TestCase):
         self.assertIn("only declared by hand", proc.stdout)
         self.assertEqual(before, tree_snapshot(fixture.root))
 
+    def test_bare_verbs_alias_the_pkg_surface(self):
+        fixture = self.fixture
+        proc = fixture.cli("add", "cowsay")
+        self.assertIn("cowsay", proc.stdout)
+        self.assertEqual([p["name"] for p in fixture.manifest()["packages"]],
+                         ["cowsay"])
+        self.assertIn("  cowsay\n",
+                      (fixture.root / "zix/managed/packages.nix").read_text())
+        self.assertIn("already declared", fixture.cli("add", "cowsay").stdout)
+        self.assertIn("managed", fixture.cli("where", "cowsay").stdout)
+        for verb in ("list", "ls"):
+            self.assertIn("cowsay", fixture.cli(verb).stdout)
+        fixture.cli("rm", "cowsay")
+        self.assertEqual(fixture.manifest()["packages"], [])
+        self.assertIn("nothing to remove", fixture.cli("rm", "cowsay").stdout)
+
+    def test_bare_update_stays_the_repo_refresh(self):
+        """`zix update` refreshes inputs; `zix pkg update` moves pins."""
+        top = self.fixture.cli("update", "--help").stdout
+        self.assertIn("extra", top)
+        self.assertNotIn("--apply", top)
+        nested = self.fixture.cli("pkg", "update", "--help").stdout
+        self.assertIn("--apply", nested)
+
     def test_doctor_survives_minimal_environment(self):
         proc = self.fixture.cli("doctor", expect=None)
         self.assertIn(proc.returncode, (0, 1))

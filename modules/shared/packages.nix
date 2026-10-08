@@ -150,5 +150,10 @@ with pkgs;
   docker-compose
 ]
 
-# zix-managed packages (`nix run .#zix -- pkg add|rm`; see tools/zix/README.md)
+# zix itself, built from tools/zix. That tree is also its own flake, so the CLI
+# runs without this repository:
+#   nix run github:meillaya/nixos?dir=tools/zix -- --help
+++ [ (pkgs.callPackage ../../tools/zix/package.nix { }) ]
+
+# zix-managed packages (`zix add|rm`; see tools/zix/README.md)
 ++ (import ../../zix/managed/packages.nix { inherit pkgs; })

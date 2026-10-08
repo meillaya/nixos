@@ -27,7 +27,7 @@ nixos/
 ├── bin/                 # operator entry points (install, enrollment, cachix)
 ├── scripts/hardware/    # the enrollment/intake pipeline behind bin/
 ├── pkgs/                # repo-local derivations
-├── tools/zix/           # zix: config/package/sandbox manager (`nix run .#zix`)
+├── tools/zix/           # zix: standalone CLI (own flake); every host installs it
 ├── zix.json             # zix manifest: package targets, tools, switches
 ├── zix/managed/         # zix-generated package set + version pins (manifest is canonical)
 ├── config/              # intake declarations + install/package schemas
@@ -41,8 +41,8 @@ nixos/
 | Add or change a host | `modules/entities/hosts.nix` + a named-host aspect | identity/data in the entity, behavior in the aspect |
 | Add a capability | `modules/aspects/features/<name>.nix` | then select it through the chain below |
 | Change the composed chain | `modules/aspects/{platforms,roles,hardware,storage}/` | inward-only, one direction |
-| Add / remove / pin a package | `nix run .#zix -- pkg ...` | tools/zix/README.md; curated lists still live in `modules/*/packages.nix` |
-| Sandbox or VM work | `nix run .#zix -- sandbox\|vm ...` | omnibin image / rewindvm passthrough |
+| Add / remove / pin a package | `zix add ...` (long form `zix pkg add`; `nix run .#zix` also works) | tools/zix/README.md; curated lists still live in `modules/*/packages.nix` |
+| Sandbox or VM work | `zix sandbox\|vm ...` | omnibin image / rewindvm passthrough |
 | Change zix behaviour | `zix.json` | targets, tools, switches, checks |
 | Allow an unfree package | `config/package-exceptions.json` | time-boxed 90-day entry; consumed by `lib/nixpkgs.nix` |
 | Flake outputs / apps | `modules/flake/` + `apps/<system>/` | flake-parts `perSystem`, never Den entities |
@@ -72,7 +72,9 @@ nixos/
   `den.aspects.<peer>`, select by name, never by string.
 - `zix` owns package-list edits: entries live between `# BEGIN zix` / `# END zix`
   markers or in the generated `zix/managed/` set, with
-  `zix/managed/manifest.json` as the single source of truth.
+  `zix/managed/manifest.json` as the single source of truth. The CLI is its own
+  flake under `tools/zix/` and every host installs that derivation, so `zix add`
+  works from any directory; `nix run .#zix` remains the checkout path.
 - Repo-local packages go through `pkgs.callPackage` from an existing package list.
 - `secrets/*` is ignored except the three tracked files; the untracked ones are by design.
 - `.gitattributes` marks every non-`.nix` path non-linguist-detectable, so GitHub
@@ -91,7 +93,7 @@ nixos/
 - A host-class module must not request Den's `user` argument (Den silently suppresses that route).
 - No `den.batteries.user-shell "nushell"`; Nushell is configured explicitly.
 - Never hand-edit `zix/managed/*` or the inside of a `# BEGIN zix` block: both are
-  generated - use `nix run .#zix` so the manifest and the files stay in sync.
+  generated - use `zix add` / `zix rm` so the manifest and the files stay in sync.
 - No second Niri session authority: Noctalia alone owns bar, notifications, lock, wallpaper.
 - No `spawn-at-startup "noctalia"` in the Niri config.
 - The retired desktop stack must not come back: polybar, dunst, rofi, waybar, mako, picom,
@@ -119,8 +121,8 @@ nix run .#build-switch         # build + activate (delegates to nh os switch)
 nix run .#home-switch          # standalone Linux Home Manager switch (default target standalone-linux)
 nix run .#update               # flake inputs + local source pins
 nix run .#clean                # delete system generations older than 7 days
-nix run .#zix -- doctor        # zix: packages, pins, sandboxes, VMs (see
-nix run .#zix -- --help        # tools/zix/README.md for the full command set)
+zix doctor                     # zix: packages, pins, sandboxes, VMs; on PATH
+zix --help                     # after a switch (tools/zix/README.md)
 nix build .#iso.<host>         # per-host installer ISO (install prerequisite
                                # unless the installer URI is given explicitly)
 
