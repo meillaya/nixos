@@ -20,7 +20,7 @@ switch commands.
 
 | what | where | notes |
 | ---- | ----- | ----- |
-| CLI | `tools/zix/` (`nix run .#zix`) | Python 3 stdlib only; flake app from `modules/flake/apps.nix` |
+| CLI | `tools/zix/` (installed as `zix`; `nix run .#zix`) | Python 3 stdlib only; own flake + package, built by `modules/flake/packages.nix` |
 | manifest | `zix.json` | targets, tools, switches, checks, sandbox defaults |
 | managed state | `zix/managed/` | `manifest.json` canonical; `packages.nix` + `pins.json` generated |
 | managed packages | imported by `modules/shared/packages.nix` | reaches every host |
@@ -39,12 +39,12 @@ switch commands.
   removed: the pin overlay is the mechanism.
 - **The manifest is canonical, generated files are disposable.**
   `zix/managed/manifest.json` records managed packages and pins; the two
-  generated files are rewritten from it on every change, so hand edits are
-  always recoverable by `nix run .#zix -- pkg list` (which rewrites).
+  generated files are rewritten from it by every managed change (`zix add`,
+  `zix rm`, `zix unpin`), so a hand edit there is undone by the next one.
 - **Marker blocks, not format guessing.** Editing arbitrary Nix lists by
   parsing them is fragile; a marker block is an explicit, reviewable
   contract. Removal of whole lines is safe even *outside* the markers
-  (`zix pkg rm`), because only `name`-alone-on-a-line matches.
+  (`zix rm`), because only `name`-alone-on-a-line matches.
 - **Fail closed.** Every mutation snapshots first and restores on any failure
   (parse check, lock, verification mismatch). Pin operations verify by
   evaluating `pkgs.<attr>.version` through the real policy and roll back on
@@ -108,3 +108,27 @@ no_pins=true - exact versions go through `zix get`). Verified there:
 `nix flake check` clean, `nix build .#zix`, `doctor` all ok, add/rm round trip
 on `modules/packages.nix`, and `zix get hello@2.10` installing GNU Hello 2.10
 from an empty directory.
+
+
+## Update (2026-10-08): zix becomes its own program
+
+The CLI no longer runs from a wrapper over this checkout. It is built by
+`tools/zix/package.nix`, which ships code only and records no repository path,
+and `tools/zix/flake.nix` exposes that same derivation as `packages.default`
+and `apps.default`. It therefore runs without this repository:
+
+    nix run github:meillaya/nixos?dir=tools/zix -- --help
+
+Every host installs it through `modules/shared/packages.nix`, so `zix` is on
+PATH after a switch, and `nix run .#zix` points at the same derivation rather
+than a second implementation.
+
+The package verbs gained bare aliases: `zix add` is `zix pkg add`. One
+registration function produces both, so the surfaces cannot drift. `update`
+stays the flake-input refresh at the top level while `zix pkg update` moves
+pins.
+
+The marker text written into package lists changed with it: the line is now
+`# BEGIN zix: entries managed by `zix add` / `zix rm``. Matching uses the stable
+`# BEGIN zix:` prefix, so a block written by an earlier release is still found
+and never duplicated; a test covers that.

@@ -27,7 +27,7 @@ let
   unfreeNameVersionKeyFor = pkg: "${packageName pkg}:${packageVersion pkg}";
   zixPins = builtins.fromJSON (builtins.readFile ../zix/managed/pins.json);
   # The emacs overlay always; the multiverse pin overlay when pins exist
-  # (`nix run .#zix -- pkg add NAME@VERSION`). Pinning here rather than in a
+  # (`zix add NAME@VERSION`). Pinning here rather than in a
   # module is deliberate: every host's package set comes from mkPkgs, and
   # this layer survives home-manager's useGlobalPkgs = true (which discards
   # per-HM nixpkgs definitions).

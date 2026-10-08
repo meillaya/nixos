@@ -52,6 +52,6 @@ procedure, the trust gate, and the operator-side variant are in the notes below.
 nix flake check --all-systems --no-build
 ```
 
-`nix run .#zix -- check` runs the same suite. The `tests/bootstrap-password-*`
+`zix check` runs the same suite. The `tests/bootstrap-password-*`
 scripts bind-mount `/var/lib` and `/etc/shadow`, so run them only for an install
 or a password change.

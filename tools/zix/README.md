@@ -196,6 +196,9 @@ manifest above). Manifest keys that shape multi-repo behaviour:
 - `where`/`rm` see hand declarations anywhere in a repo (`pkgs.<name>`) and
   refuse to edit them; whole-line removal elsewhere in a target file still
   applies as documented.
+- Nothing rewrites `zix/managed/*` from the manifest without changing the
+  manifest, so a hand edit to a generated file survives until the next managed
+  change.
 - `sandbox`/`vm` are local-only (podman/docker, /dev/kvm) and cannot run on
   platforms without /dev/fuse or privileged containers (e.g. Railway).
 - Global flags must precede the subcommand (F3 in the review); not yet fixed.

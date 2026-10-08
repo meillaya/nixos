@@ -28,7 +28,7 @@ let
     - Never hardcode `mei`, `/home/mei`, or `/Users/mei` in an active module.
       Read `host.machine.identity`.
     - `zix` owns package-list edits. Never hand-edit `zix/managed/*` or the
-      inside of a `# BEGIN zix` block; run `nix run .#zix -- pkg ...`.
+      inside of a `# BEGIN zix` block; run `zix add` / `zix rm`.
 
     ## Environment
 

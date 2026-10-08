@@ -41,7 +41,7 @@ nix-instantiate --eval --strict --expr 'import ./tests/dendritic-config-eval.nix
 | Adding/removing a flake app | `dendritic-apps.sh` + `dendritic-config-eval.nix` (`apps.x86_64-linux` set) |
 | Weakening a machine/identity type | `dendritic-architecture.sh` |
 | Adding `specialArgs` or a `runCommand` in production modules | `dendritic-boundaries.sh`, `package-policy.sh` |
-| Hand-editing zix-managed files or marker blocks | `tests/zix.sh` (dry-run smoke) + `nix run .#zix -- doctor` |
+| Hand-editing zix-managed files or marker blocks | `tests/zix.sh` (dry-run smoke) + `zix doctor` |
 | Hardcoding `mei` / `/home/mei` in an active module | `dendritic-boundaries.sh` |
 | Reintroducing polybar/dunst/rofi/waybar/mako/picom/bspwm/etc. | `dendritic-boundaries.sh`, `dendritic-config-eval.nix` |
 | Touching an unfree package | `package-policy.sh` + `config/package-exceptions.json` |
