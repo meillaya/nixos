@@ -195,6 +195,20 @@ class NixeditTests(unittest.TestCase):
         self.assertFalse(added_again)
         self.assertEqual(text, again)
 
+    def test_block_written_by_an_older_zix_is_reused(self):
+        """The marker text changed once; old blocks must still be found."""
+        old_begin = ("# BEGIN zix: entries managed by "
+                     "`nix run .#zix -- pkg ...` - do not edit by hand")
+        text = ("{ pkgs }:\nwith pkgs;\n[\n  htop\n]\n\n++ [\n  %s\n  %s\n]\n"
+                % (old_begin, nixedit.MARK_END))
+        once, added = nixedit.insert_token(text, "cowsay")
+        self.assertTrue(added)
+        self.assertEqual(once.count("# BEGIN zix"), 1)
+        self.assertIn("  cowsay\n", once)
+        twice, removed = nixedit.remove_token(once, "cowsay")
+        self.assertEqual(removed, 1)
+        self.assertNotIn("cowsay", twice)
+
     def test_remove_only_matches_whole_lines(self):
         text = "{ pkgs }:\nwith pkgs;\n[\n  htop\n  htopx\n  pkgs.htop\n]\n"
         new, count = nixedit.remove_token(text, "htop")

@@ -22,14 +22,25 @@ import re
 
 from .util import ZixError
 
-MARK_BEGIN = "# BEGIN zix: entries managed by `nix run .#zix -- pkg ...` - do not edit by hand"
+MARK_BEGIN = "# BEGIN zix: entries managed by `zix add` / `zix rm` - do not edit by hand"
 MARK_END = "# END zix"
+
+# Earlier releases wrote a longer invocation into the same line. Match the
+# stable prefix so a block from an older zix is still found, and never gets a
+# second block appended beside it.
+_BEGIN_RE = re.compile(r"^\s*# BEGIN zix:")
+_END_RE = re.compile(r"^\s*# END zix\s*$")
+
+
+def marker_line_numbers(text, pattern):
+    """0-based line numbers whose whole line is a marker for ``pattern``."""
+    return [i for i, line in enumerate(text.split("\n")) if pattern.match(line)]
 
 
 # -- package list files ------------------------------------------------------
 
 def ensure_markers(text):
-    if MARK_BEGIN in text and MARK_END in text:
+    if marker_line_numbers(text, _BEGIN_RE) and marker_line_numbers(text, _END_RE):
         return text
     if not text.endswith("\n"):
         text += "\n"
@@ -46,8 +57,8 @@ def insert_token(text, token):
     """Insert ``token`` into the marker block. Returns (text, added)."""
     text = ensure_markers(text)
     lines = text.split("\n")
-    begin = lines.index("  " + MARK_BEGIN)
-    end = lines.index("  " + MARK_END)
+    begin = marker_line_numbers(text, _BEGIN_RE)[0]
+    end = marker_line_numbers(text, _END_RE)[0]
     for line in lines[begin + 1:end]:
         if line.strip() in (token, "pkgs." + token):
             return text, False
