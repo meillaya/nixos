@@ -4,7 +4,20 @@ let
   identity = host.machine.identity;
   user = identity.name;
   home = identity.home;
+  # The installer and root trust anchor. Its private half is on no reachable
+  # machine, so it cannot authenticate anything by itself, but it stays exactly
+  # as it is: config/hosts/intake/*.json and scripts/hardware/gen_trust.py
+  # verify against it, so changing it means re-enrolling a host rather than
+  # editing a list. See docs/service-notes/github-ssh-key.md.
   keys = [ "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPoWsO0x+p0FKVKOrfHPc0xeZuOZyMapMt8LxPbWHtb5" ];
+
+  # The identity home-manager installs on every host at ~/.ssh/id_github, and at
+  # ~/.ssh/id_ed25519 when that path is free. That is the key a machine actually
+  # presents, so interactive login has to accept it or every host-to-host SSH
+  # falls back to a password.
+  loginKeys =
+    keys
+    ++ [ "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOML7rbzZQUicy279UWUYh/7bPEr8OyUqk16kDgStJn+ mei@nixos-thinkpad-machine0" ];
 in
 {
   # Use the systemd-boot EFI boot loader.
@@ -179,9 +192,12 @@ in
         "i2c"
         "video"
       ];
-      openssh.authorizedKeys.keys = keys;
+      openssh.authorizedKeys.keys = loginKeys;
     };
 
+    # Root keeps only the installer anchor. The ISO hands root that one key and
+    # the install flow verifies against it, so widening root here would widen
+    # the enrollment trust anchor as a side effect.
     root = {
       openssh.authorizedKeys.keys = keys;
     };
