@@ -5,4 +5,5 @@
 { pkgs }:
 with pkgs;
 [
+  caddy
 ]

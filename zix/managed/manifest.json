@@ -1,5 +1,11 @@
 {
-  "packages": [],
+  "packages": [
+    {
+      "added": "2026-10-07",
+      "name": "caddy",
+      "target": "managed"
+    }
+  ],
   "pins": {
     "raycast": {
       "added": "2026-10-07",
