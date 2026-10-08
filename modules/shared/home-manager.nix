@@ -4,6 +4,16 @@ let
     user = config.home.username or "mei";
     gitName = "Meillaya";
     gitEmail = "nathanagbomed@proton.me";
+
+    # The identity home-manager installs on every host at ~/.ssh/id_github, and
+    # at ~/.ssh/id_ed25519 when that path is free. Offering it to the fleet is
+    # what makes host-to-host SSH work: every host authorizes this key for
+    # login, and no host holds the older installer anchor it replaced.
+    sshDir = if pkgs.stdenv.hostPlatform.isLinux then "/home/${user}/.ssh" else "/Users/${user}/.ssh";
+    sshIdentity = [
+      "${sshDir}/id_github"
+      "${sshDir}/id_ed25519"
+    ];
 in
 {
   # Shared shell configuration
@@ -576,31 +586,44 @@ in
       };
       "github.com" = {
         IdentitiesOnly = true;
-        IdentityFile =
-          if pkgs.stdenv.hostPlatform.isLinux then [
-            "/home/${user}/.ssh/id_github"
-            "/home/${user}/.ssh/id_ed25519"
-          ] else [
-            "/Users/${user}/.ssh/id_github"
-            "/Users/${user}/.ssh/id_ed25519"
-          ];
+        IdentityFile = sshIdentity;
       };
       # The fleet nodes answer to their tailnet names, but a bare MagicDNS
-      # label does not resolve through the Nix openssh on a non-NixOS host: the
-      # Nix build cannot use the stub resolver's tailnet search domain, while
-      # the distribution's openssh can. Spelling the MagicDNS name out makes
-      # `ssh entropy` behave the same on every host in the fleet.
+      # label does not resolve through the Nix openssh build on a non-NixOS
+      # host: the Nix build cannot use the stub resolver's tailnet search
+      # domain, while the distribution's openssh can. Spelling the MagicDNS
+      # name out makes `ssh entropy` behave the same on every host in the fleet.
+      #
+      # Each node also pins the shared Git identity. It is the one key every
+      # host holds and the one key every host authorizes for login, so without
+      # this a host presents its own machine key and gets a password prompt.
       "entropy" = {
         HostName = "entropy.tailf8e61e.ts.net";
         User = user;
+        IdentitiesOnly = true;
+        IdentityFile = sshIdentity;
       };
       "remembrance" = {
         HostName = "remembrance.tailf8e61e.ts.net";
         User = user;
+        IdentitiesOnly = true;
+        IdentityFile = sshIdentity;
       };
+      # The ThinkPad is still nixos-thinkpad on the tailnet. Installing NixOS
+      # renames the node to antagony, so antagony is a forward reference that
+      # starts resolving after that install, while nixos-thinkpad is what
+      # answers today. Both reach the same machine once the rename lands.
       "antagony" = {
         HostName = "antagony.tailf8e61e.ts.net";
         User = user;
+        IdentitiesOnly = true;
+        IdentityFile = sshIdentity;
+      };
+      "nixos-thinkpad" = {
+        HostName = "nixos-thinkpad.tailf8e61e.ts.net";
+        User = user;
+        IdentitiesOnly = true;
+        IdentityFile = sshIdentity;
       };
     };
   };
