@@ -73,10 +73,17 @@
         desktopAndStageManager = {
           clickWallpaperToRevealDesktop = "Only in Stage Manager";
         };
+        # These five cover every key system.defaults.dock was writing: autohide,
+        # show-recents, launchanim, orientation, and tilesize. show-recents had
+        # two authors until this change, since showSuggestedAndRecentAppsInDock
+        # is the same plist key that system.defaults.dock.show-recents wrote.
         dock = {
+          automaticallyHideAndShowTheDock = {
+            enabled = true;
+          };
+          animateOpeningApplications = true;
+          dockPositionOnScreen = "Bottom";
           showSuggestedAndRecentAppsInDock = false;
-          # com.apple.dock tilesize, which nix-darwin used to write from
-          # system.defaults.dock.tilesize.
           size = 48;
         };
         hotCorners = {

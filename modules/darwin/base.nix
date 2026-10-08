@@ -117,24 +117,20 @@ in
     stateVersion = 5;
 
     defaults = {
-      # Five preferences that nix-darwin and nix-plist-manager can both write
-      # are declared once, through nix-plist-manager, in
-      # modules/darwin/mac-settings-{user,system}.nix: AppleShowAllExtensions,
-      # KeyRepeat, InitialKeyRepeat, com.apple.sound.beep.volume, and
-      # com.apple.dock tilesize. Declaring them here as well would give each
-      # key two authors whose order decides the result.
+      # Nine preferences moved out of this block because nix-plist-manager
+      # writes the same plist keys, and a key with two authors is decided by
+      # activation order: AppleShowAllExtensions, KeyRepeat, InitialKeyRepeat,
+      # com.apple.sound.beep.volume, and the Dock's autohide, show-recents,
+      # launchanim, orientation, and tilesize.
+      #
+      # Four more below are dual-writable and have only this one author today:
+      # com.apple.mouse.tapBehavior, com.apple.sound.beep.feedback, and the
+      # trackpad's Clicking and TrackpadThreeFingerDrag.
       NSGlobalDomain = {
         ApplePressAndHoldEnabled = false;
 
         "com.apple.mouse.tapBehavior" = 1;
         "com.apple.sound.beep.feedback" = 0;
-      };
-
-      dock = {
-        autohide = false;
-        show-recents = false;
-        launchanim = true;
-        orientation = "bottom";
       };
 
       finder = {
