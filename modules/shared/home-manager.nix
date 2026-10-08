@@ -609,10 +609,11 @@ in
         IdentitiesOnly = true;
         IdentityFile = sshIdentity;
       };
-      # The ThinkPad is still nixos-thinkpad on the tailnet. Installing NixOS
-      # renames the node to antagony, so antagony is a forward reference that
-      # starts resolving after that install, while nixos-thinkpad is what
-      # answers today. Both reach the same machine once the rename lands.
+      # A tailnet node name is fixed when the machine joins, not derived from
+      # its hostname: this laptop answers to nixos-thinkpad while its hostname
+      # is massive. Installing NixOS as antagony therefore does not rename the
+      # node, so antagony stays a forward reference until the node is renamed
+      # in the Tailscale admin console. nixos-thinkpad answers today.
       "antagony" = {
         HostName = "antagony.tailf8e61e.ts.net";
         User = user;
