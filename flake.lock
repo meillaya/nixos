@@ -397,6 +397,26 @@
         "type": "github"
       }
     },
+    "nix-plist-manager": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1790802830,
+        "narHash": "sha256-Fy48l/RWmjXLiMoJ4iIv4u5AvDVZO2JjE6ovorprzKs=",
+        "owner": "sushydev",
+        "repo": "nix-plist-manager",
+        "rev": "4ef635b8b2f4c88929ea7d1a8a941acbab5de719",
+        "type": "github"
+      },
+      "original": {
+        "owner": "sushydev",
+        "repo": "nix-plist-manager",
+        "type": "github"
+      }
+    },
     "nixpkgs": {
       "locked": {
         "lastModified": 1790185690,
@@ -498,6 +518,7 @@
         "import-tree": "import-tree",
         "multiverse": "multiverse",
         "nh": "nh",
+        "nix-plist-manager": "nix-plist-manager",
         "nixpkgs": "nixpkgs",
         "noctalia": "noctalia",
         "preservation": "preservation",

@@ -117,18 +117,16 @@ in
     stateVersion = 5;
 
     defaults = {
+      # Five preferences that nix-darwin and nix-plist-manager can both write
+      # are declared once, through nix-plist-manager, in
+      # modules/darwin/mac-settings-{user,system}.nix: AppleShowAllExtensions,
+      # KeyRepeat, InitialKeyRepeat, com.apple.sound.beep.volume, and
+      # com.apple.dock tilesize. Declaring them here as well would give each
+      # key two authors whose order decides the result.
       NSGlobalDomain = {
-        AppleShowAllExtensions = true;
         ApplePressAndHoldEnabled = false;
 
-        # 120, 90, 60, 30, 12, 6, 2
-        KeyRepeat = 2;
-
-        # 120, 94, 68, 35, 25, 15
-        InitialKeyRepeat = 15;
-
         "com.apple.mouse.tapBehavior" = 1;
-        "com.apple.sound.beep.volume" = 0.0;
         "com.apple.sound.beep.feedback" = 0;
       };
 
@@ -137,7 +135,6 @@ in
         show-recents = false;
         launchanim = true;
         orientation = "bottom";
-        tilesize = 48;
       };
 
       finder = {

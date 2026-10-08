@@ -49,6 +49,10 @@
       url = "github:nix-community/nh";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    nix-plist-manager = {
+      url = "github:sushydev/nix-plist-manager";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     preservation.url = "github:nix-community/preservation";
     den.url = "github:denful/den/1614f6f8ed435c5bb257408bf91fd662f9aac43e";
     flake-parts = {
