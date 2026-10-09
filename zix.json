@@ -90,7 +90,7 @@
   },
   "tools": {
     "auto_follow": {
-      "command": ["nix", "run", "github:fzakaria/nix-auto-follow", "--"]
+      "command": ["nix", "run", "github:fzakaria/nix-auto-follow", "--", "-I", "noctalia"]
     },
     "grail": {
       "command": ["nix", "run", "github:fzakaria/grail", "--"]

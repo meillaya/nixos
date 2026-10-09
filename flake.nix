@@ -34,16 +34,25 @@
     helium = {
       url = "github:AlvaroParker/helium-nix";
       inputs.nixpkgs.follows = "nixpkgs";
+      inputs.flake-compat.follows = "flake-compat";
     };
     noctalia = {
       # Track the latest Noctalia commit that upstream has already cached.
       # Keep this input independent from our nixpkgs pin so Noctalia's
-      # Cachix artifacts remain usable.
+      # Cachix artifacts remain usable. zix passes `-I noctalia` to auto-follow
+      # for the same reason, or the next `zix follows fix` would fold this input
+      # onto our pin.
       url = "github:noctalia-dev/noctalia/cachix";
     };
+    # stylix pins nix-systems/default at the future-26.11 branch while every
+    # other input takes the default branch, which left a second systems node in
+    # the lock. A root input gives stylix something to follow so the dedupe gate
+    # is satisfied; both branches carry the systems this fleet builds.
+    systems.url = "github:nix-systems/default";
     stylix = {
       url = "github:danth/stylix";
       inputs.nixpkgs.follows = "nixpkgs";
+      inputs.systems.follows = "systems";
     };
     nh = {
       url = "github:nix-community/nh";
@@ -60,9 +69,14 @@
       inputs.nixpkgs-lib.follows = "nixpkgs";
     };
     import-tree.url = "github:vic/import-tree";
+    # deploy-rs and helium each carry their own flake-compat input, which left
+    # two nodes in the lock. auto-follow can only point a consumer at a root
+    # input, so the dedupe needs flake-compat declared here first.
+    flake-compat.url = "github:edolstra/flake-compat";
     deploy-rs = {
       url = "github:serokell/deploy-rs";
       inputs.nixpkgs.follows = "nixpkgs";
+      inputs.flake-compat.follows = "flake-compat";
     };
     # System-level declarative configuration for the standalone (non-NixOS)
     # host, which Home Manager cannot reach. See modules/flake/system-manager.nix.
