@@ -12,17 +12,18 @@ flake.nix                     repo entry point (flake-parts + Den)
 flake.lock                    locked inputs
 lib/nixpkgs.nix               unfree allowlist policy
 modules/
-  entities/                   hosts + machine authority
-  aspects/
-    features/                 leaf capability aspects (niri, noctalia, ...)
-    platforms/                OS-level chains (linux.nix, darwin.nix)
-    roles/                    workstation
-    hardware/                 vendor + capability routing
-    storage/                  storage policy (disko wiring)
-    named-hosts/              hostname + identity projection
-    hosts/                    host aggregates
-    users/mei.nix             user + Home Manager projection
-    shared-policy/nixpkgs.nix nixpkgs config overlay
+  aspects/                    ONE flat directory: every aspect, the registry, the schema
+    inventory.nix             den.hosts / den.homes - the single entity registry
+    schema.nix                lib.types schemas + Den schema extensions
+    authority.nix             publishes flake.machineAuthority
+    _machine-authority/       model.nix, validators.nix, crypto.nix (private)
+    nixpkgs.nix               nixpkgs config + overlays (shared-policy)
+    linux.nix, darwin.nix     OS baseline chains
+    workstation-*.nix         role aggregators
+    remembrance.nix, ...      one file per host
+    storage-<host>.nix        per-host boot/storage branch
+    <capability>.nix          leaf capability aspects (niri, noctalia, ...)
+    mei.nix                   user + Home Manager projection
   flake/                      flake-parts wiring (dendritic, checks, packages, apps)
   nixos/                      NixOS implementation modules
   darwin/                     nix-darwin implementation modules
@@ -38,6 +39,13 @@ docs/                         architecture, service notes, machine audits
 tools/zix/                    the zix CLI
 ```
 
+`modules/aspects/` is deliberately flat. Which composition layer a file belongs to
+is carried by its name rather than its folder, so `ls modules/aspects/` is the whole
+index and finding a host never means choosing between six candidate folders. The
+trade is that the shared/private distinction is a naming convention rather than a
+directory boundary; `tests/dendritic-architecture.sh` pins the flat shape and the
+`host.machine` rule that keeps every aspect bound to its own entity.
+
 The Darwin tree (`modules/darwin/`) and the standalone Linux tree
 (`modules/standalone-linux/`) both live here. `modules/shared/`,
 `modules/linux/`, the `mei` user aspect, the `noctalia` and `sops` aspects, and
@@ -48,7 +56,10 @@ The Darwin tree (`modules/darwin/`) and the standalone Linux tree
 `flake.nix` intentionally contains only inputs and one `mkFlake` call.
 `import-tree` loads the flake modules under `modules/flake/`:
 
-- `dendritic.nix` loads Den plus the entity/aspect trees.
+- `dendritic.nix` loads Den plus the flat aspect tree (`import-tree ../aspects`).
+  The raw implementation trees (`nixos/`, `darwin/`, `shared/`, `linux/`,
+  `standalone-linux/`) sit outside that root and are reached only by an explicit
+  relative `import`, so a payload module can never be auto-loaded as a flake module.
 - `systems.nix` declares the two supported evaluation systems.
 - `packages.nix`, `apps.nix`, and `dev-shells.nix` own normal flake-parts
   `perSystem` outputs.
@@ -62,7 +73,7 @@ Den exclusively creates `nixosConfigurations`, `darwinConfigurations`, and
 
 ## Entities
 
-`modules/entities/hosts.nix` is the inventory. It declares:
+`modules/aspects/inventory.nix` is the inventory. It declares:
 
 - `remembrance` and `antagony` (`x86_64-linux`) NixOS machines;
 - the `entropy` (`aarch64-darwin`) macOS machine;
@@ -79,11 +90,11 @@ Entity declarations contain only explicit system, machine, identity, hostname,
 and membership data. Strict Den schemas declare every repository extension to
 host, user, home, aspect, and flake entities. Host and home machine attachments
 structurally type identity, target, system, role, boot, storage, capabilities,
-and remote-install authority before aspect projection. `machine-authority.nix`
+and remote-install authority before aspect projection. `authority.nix`
 exposes the closed, validated authority used by the inventory. Put behavior in
-an aspect, never in the registry. The public x86 output name remains
-architecture-oriented for compatibility, while its literal machine identity is
-`nixos-laptop`. The standalone home carries explicit machine, username, and home
+an aspect, never in the registry. Each host's literal machine identity is its own
+hostname (`remembrance`, `antagony`, `entropy`), validated by
+`_machine-authority/validators.nix`. The standalone home carries explicit machine, username, and home
 directory data and never consults evaluator environment variables.
 
 ## Aspects and ownership
@@ -95,30 +106,38 @@ shared policy -> OS platform -> role -> hardware profile
               -> storage profile -> named host
 ```
 
-- `shared-policy` owns common Nixpkgs config and overlays.
-- `linux-platform` and `darwin-platform` select only their OS-specific baseline,
+- `nixpkgs.nix` (`shared-policy`) owns common Nixpkgs config and overlays.
+- `linux.nix` and `darwin.nix` select only their OS-specific baseline,
   secrets, and Home Manager integration.
-- Role aspects add workstation, qualifier, or evaluation session policy.
-- Hardware aspects select one role and project `host.machine`, the authority
-  attached to the active Den entity. They never re-import a literal global
-  machine ID, so projection cannot drift from the selected entity.
-- A disabled device or capability enrollment means that no enrollment-specific
-  option projection is added. It does not globally force baseline services
-  off; upstream feature modules retain ownership of their baseline defaults.
-- Storage aspects select one hardware profile and assert the current `none`
-  profile; they add no Disko or destructive storage behavior.
-- Literal named-host aspects own hostname, location, and OS account projection.
-  The compatibility `x86_64-linux` aspect selects `nixos-laptop`; all other
-  entities select their same-named host aspect directly.
+- Role aspects (`workstation-linux.nix`, `workstation-darwin.nix`) add
+  workstation session policy.
+- The boot/storage branch (`storage-<host>.nix`, `enrolled-x86*.nix`,
+  `pending-x86-workstation.nix`) selects one hardware profile and asserts the
+  current `none` profile; it adds no Disko or destructive storage behavior.
+- `<host>.nix` owns hostname, location, and OS account projection, asserting the
+  machine target/system/role before `mkForce`ing them from `host.machine`.
 
-The generic `nixos-workstation` and `darwin-workstation` aspects remain aliases
-for callers, not entity-selected aggregates. `massive` remains a separate Home
-Manager aggregate combining the shared `mei` home with current upstream Noctalia
-behavior, and it is the one host whose system level comes from
-`system-manager` rather than NixOS or nix-darwin.
+Every host-attached aspect projects `host.machine`, the authority attached to
+the active Den entity. None re-imports a literal global machine ID, so projection
+cannot drift from the selected entity; `tests/dendritic-architecture.sh` enforces
+that no aspect imports `_machine-authority` and calls `authority.getMachine`.
 
-Leaf aspects under `modules/aspects/features/` own one coherent capability.
-The `mei` aspect under `modules/aspects/users/` owns cross-platform user and
+Den selects an entity's aspect by the entity's own name (`lookupAspect`), so the
+aspects keyed on a system or a generic role name (`x86_64-linux`,
+`nixos-workstation`, `darwin-workstation`, `massive-aarch64`,
+`qualifier-role-linux`, `evaluation-role-linux`) were never reachable and have
+been removed. `massive` remains a Home Manager aggregate combining the shared
+`mei` home with upstream Noctalia behaviour, and it is the one host whose system
+level comes from `system-manager` rather than NixOS or nix-darwin.
+
+A disabled device or capability enrollment means that no enrollment-specific
+option projection is added. It does not globally force baseline services off;
+upstream feature modules retain ownership of their baseline defaults.
+
+Leaf aspects (`modules/aspects/<capability>.nix`, e.g. `niri.nix`, `sops.nix`) own
+one coherent capability. A capability only one host needs may live inline in that
+host's file instead, so the tree never grows a shared file for a single consumer.
+The `mei` aspect (`modules/aspects/mei.nix`) owns cross-platform user and
 Home Manager behavior. Home Manager content must remain on a user aspect or be
 delivered explicitly with `provides.to-users` for a genuinely host-selected
 payload. A host-class module must not request Den's `user` argument; current Den
@@ -200,8 +219,9 @@ journalctl --user -u noctalia.service -b --no-pager
 
 ## Adding configuration
 
-1. Add a leaf aspect when the behavior is a reusable capability.
-2. Select it through platform, role, hardware, storage, and named-host layers.
+1. Add a leaf aspect (`modules/aspects/<name>.nix`) when the behavior is a reusable
+   capability.
+2. Select it through the platform, role, storage, and host layers.
 3. Attach only identity/data to an entity; aspect selection is name-driven.
 4. Put cross-platform personal programs/files on `den.aspects.mei.homeManager`.
 5. Keep packages/apps/dev shells in flake-parts, not Den entities.

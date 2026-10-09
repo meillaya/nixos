@@ -180,7 +180,7 @@ in
 
 
   # Container engines are rootless-only; see
-  # modules/aspects/features/rootless-containers.nix (rootless docker user
+  # modules/aspects/rootless-containers.nix (rootless docker user
   # daemon + rootless podman user socket, no rootful daemon or docker group).
 
   # It's me, it's you, it's everyone
@@ -188,7 +188,7 @@ in
     ${user} = {
       extraGroups = [
         # No "docker": rootless containers never need root-equivalent socket
-        # access (see modules/aspects/features/rootless-containers.nix).
+        # access (see modules/aspects/rootless-containers.nix).
         "i2c"
         "video"
       ];

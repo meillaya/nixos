@@ -16,7 +16,7 @@ home-manager activation.
 The age form is `ssh-to-age < ~/.ssh/id_github.pub`; it is recorded in
 `.sops.yaml` as the `&github` recipient, and it is the identity NixOS hosts
 derive from `~/.ssh/id_ed25519` (`sops.age.sshKeyPaths` in
-`modules/aspects/features/sops.nix`), so a host can decrypt the store with the
+`modules/aspects/sops.nix`), so a host can decrypt the store with the
 same key it uses for GitHub.
 
 Check the live registration with `ssh -T git@github.com`; it must answer

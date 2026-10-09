@@ -22,6 +22,6 @@
         '');
       };
     };
-    provides.to-users.homeManager = import ../../darwin/user-home.nix;
+    provides.to-users.homeManager = import ../darwin/user-home.nix;
   };
 }

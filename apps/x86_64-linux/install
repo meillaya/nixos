@@ -173,7 +173,7 @@ resolve_identity() {
     raw=$(cat "$staging/base.json") || raw=""
   elif [[ -n "$host" ]]; then
     raw=$(timeout 900 nix eval --impure --json --expr \
-      "(import ${flake_root}/modules/entities/_machine-authority/model.nix).getMachine \"${host}\"" 2>/dev/null) || raw=""
+      "(import ${flake_root}/modules/aspects/_machine-authority/model.nix).getMachine \"${host}\"" 2>/dev/null) || raw=""
   fi
   [[ -n "$raw" ]] || return 0
   identity=$(printf '%s' "$raw" | python3 -c \
@@ -308,7 +308,7 @@ enroll() {
   # The base is the flake's current machine record: the inline pending
   # declaration until the first enrollment, the committed record afterwards.
   nix eval --impure --json --expr \
-    "(import ${workdir}/modules/entities/_machine-authority/model.nix).getMachine \"${host}\"" \
+    "(import ${workdir}/modules/aspects/_machine-authority/model.nix).getMachine \"${host}\"" \
     > "$staging/base.raw.json" || die "cannot read the machine record for ${host}"
   PYTHONPATH="$workdir" python3 - "$staging/base.raw.json" "$staging/base.json" <<'PY'
 import json

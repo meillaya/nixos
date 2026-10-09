@@ -5,6 +5,6 @@
       useUserPackages = true;
       backupFileExtension = "before-home-manager";
     };
-    provides.to-users.homeManager = import ../../nixos/home-manager.nix;
+    provides.to-users.homeManager = import ../nixos/home-manager.nix;
   };
 }

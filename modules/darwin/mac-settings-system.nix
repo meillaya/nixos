@@ -4,7 +4,7 @@
 #
 # Three captured entries are deliberately absent:
 #
-#   - general.dateAndTime.timeZone. modules/aspects/named-hosts/entropy.nix
+#   - general.dateAndTime.timeZone. modules/aspects/entropy.nix
 #     already forces time.timeZone from the machine record, and a second
 #     writer for the same fact is how the two drift apart.
 #   - general.sharing.fileSharingOptions.sharedFolders. Its only key is this

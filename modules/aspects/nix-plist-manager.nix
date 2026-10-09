@@ -11,7 +11,7 @@
 
       programs.nix-plist-manager = {
         enable = true;
-        options = import ../../darwin/mac-settings-system.nix;
+        options = import ../darwin/mac-settings-system.nix;
       };
     };
 
@@ -23,7 +23,7 @@
 
       programs.nix-plist-manager = {
         enable = true;
-        options = import ../../darwin/mac-settings-user.nix;
+        options = import ../darwin/mac-settings-user.nix;
       };
     };
   };

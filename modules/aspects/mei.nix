@@ -54,14 +54,14 @@ in
       # fragment, never from profile-folder copying.
       imports = [
         inputs.zen-browser.homeModules.beta
-        (import ../../shared/config/zen.nix)
+        (import ../shared/config/zen.nix)
       ];
       home.packages = [
         # Herdr agent multiplexer; nixpkgs currently provides the latest release.
         pkgs.herdr
       ];
       gtk.gtk4.theme = config.gtk.theme;
-      home.file = import ../../shared/files.nix { inherit config pkgs lib; };
+      home.file = import ../shared/files.nix { inherit config pkgs lib; };
 
       # `programs.git.signing` (in shared/home-manager.nix) points at
       # ~/.ssh/git_signing_ed25519.pub and sets commit.gpgsign = true, but nothing
@@ -117,7 +117,7 @@ in
       # evaluation only sees tracked files, and this is a path literal.
       home.activation.installGithubSshKey =
         lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-          store=${../../../secrets/github-ssh.yaml}
+          store=${../../secrets/github-ssh.yaml}
           identity="''${SOPS_AGE_KEY_FILE:-${config.home.homeDirectory}/.config/sops/age/keys.txt}"
           sshdir="${config.home.homeDirectory}/.ssh"
           key="$sshdir/id_github"
@@ -154,7 +154,7 @@ in
             rm -f "$tmp" "$pub"
           fi
         '';
-      programs = (import ../../shared/home-manager.nix { inherit config pkgs lib; }) // {
+      programs = (import ../shared/home-manager.nix { inherit config pkgs lib; }) // {
         nushell = {
           enable = true;
           settings = {

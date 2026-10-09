@@ -4,7 +4,7 @@ Reviewed hardware enrollments live here. Each enrolled host contributes two
 canonical documents emitted by the hardware-intake pipeline:
 
 - `<host>.json`: the reviewed machine declaration (the single source of truth
-  that `modules/entities/_machine-authority/model.nix` imports for the host).
+  that `modules/aspects/_machine-authority/model.nix` imports for the host).
 - `<host>.intake.json`: the RFC-6902 patch document that transitions the
   previous record to the new one, with digest binding + reviewer + appliedAt.
 

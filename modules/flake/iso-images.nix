@@ -29,7 +29,7 @@
 # would kexec out from under its own orchestrating process.
 { inputs, lib, config, ... }:
 let
-  authority = import ../entities/_machine-authority/model.nix;
+  authority = import ../aspects/_machine-authority/model.nix;
   isoHosts = [ "remembrance" "antagony" ];
 
   isoConfigFor = host:

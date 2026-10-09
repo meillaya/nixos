@@ -8,7 +8,7 @@
         supported = system == "x86_64-linux";
         # Font-wrapped Helium lives in pkgs/helium.nix (package-policy keeps
         # inline derivation recipes out of production modules).
-        helium = pkgs.callPackage ../../../pkgs/helium.nix {
+        helium = pkgs.callPackage ../../pkgs/helium.nix {
           helium = inputs.helium.packages.${system}.default;
         };
       in
@@ -27,7 +27,7 @@
       let
         system = pkgs.stdenv.hostPlatform.system;
         supported = system == "x86_64-linux";
-        helium = pkgs.callPackage ../../../pkgs/helium.nix {
+        helium = pkgs.callPackage ../../pkgs/helium.nix {
           helium = inputs.helium.packages.${system}.default;
         };
       in

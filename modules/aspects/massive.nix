@@ -1,7 +1,5 @@
 { den, inputs, ... }:
 {
-  den.aspects.massive-aarch64.includes = [ den.aspects.massive ];
-
   den.aspects.massive =
     { home, ... }:
     {
@@ -11,7 +9,7 @@
         den.aspects.noctalia
         den.aspects.desktop-media
       ];
-      homeManager = import ../../standalone-linux/home-manager.nix {
+      homeManager = import ../standalone-linux/home-manager.nix {
         inherit inputs;
         inherit (home) userName homeDirectory;
       };

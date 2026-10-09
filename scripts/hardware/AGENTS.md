@@ -33,7 +33,7 @@ hardware/
 
 ## INVARIANTS
 - Two documents per host: `<host>.json` (the declaration, the single source of truth that
-  `modules/entities/_machine-authority/model.nix` imports) and `<host>.intake.json` (the
+  `modules/aspects/_machine-authority/model.nix` imports) and `<host>.intake.json` (the
   digest-bound patch with reviewer and appliedAt).
 - Identity, target, system, role, and platform expectations are immutable across an intake
   patch. Only location/display/boot/storage/trust/hardware-inventory roots may change.
