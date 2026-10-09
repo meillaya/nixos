@@ -1,9 +1,8 @@
 # NixOS implementation modules
 
 These are low-level NixOS and Home Manager modules owned by capability aspects.
-Machine inventory and composition live in `modules/entities/` and
-`modules/aspects/`; do not import this directory recursively or construct hosts
-in `flake.nix`.
+Machine inventory and composition live in `modules/aspects/`; do not import this
+directory recursively or construct hosts in `flake.nix`.
 
 ## Layout
 
@@ -21,7 +20,7 @@ bootstrap-password.nix  First-install external password verifier
 
 ## Adding a host
 
-1. Add the entity to `modules/entities/hosts.nix`:
+1. Add the entity to `modules/aspects/inventory.nix`:
 
    ```nix
    den.hosts.x86_64-linux.hostname = {

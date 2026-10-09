@@ -9,7 +9,7 @@ Tracked, committed, sops/age-encrypted:
 - `github-ssh.yaml`: the authoritative GitHub SSH keypair, field
   `github-ssh-private-key`. Installed on every host at `~/.ssh/id_github` (and at
   `~/.ssh/id_ed25519` when that path is still free) by
-  `home.activation.installGithubSshKey` in `modules/aspects/users/mei.nix`. See
+  `home.activation.installGithubSshKey` in `modules/aspects/mei.nix`. See
   [../docs/service-notes/github-ssh-key.md](../docs/service-notes/github-ssh-key.md).
 
 Untracked by design, never commit:

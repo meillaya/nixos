@@ -14,8 +14,10 @@ sharing the same `mei` user aspect and machine-authority schema.
 nixos/
 ├── flake.nix            # inputs only + one mkFlake call; import-tree ./modules
 ├── modules/
-│   ├── entities/        # the inventory: den.hosts / den.homes, machine authority
-│   ├── aspects/         # the only place behavior lives (platforms/roles/hardware/storage/named-hosts/users/features)
+│   ├── aspects/         # FLAT: every aspect + the inventory + the machine authority
+│   │                    # inventory.nix schema.nix authority.nix _machine-authority/
+│   │                    # <host>.nix platform-*.nix role-*.nix feature-*.nix
+│   │                    # storage-<host>.nix mei.nix nixpkgs.nix
 │   ├── flake/           # flake-parts outputs per system
 │   ├── nixos/           # low-level NixOS + HM modules owned by aspects
 │   ├── shared/          # cross-platform HM payload for the mei user
@@ -38,9 +40,11 @@ nixos/
 ## WHERE TO LOOK
 | Task | Location | Notes |
 |------|----------|-------|
-| Add or change a host | `modules/entities/hosts.nix` + a named-host aspect | identity/data in the entity, behavior in the aspect |
-| Add a capability | `modules/aspects/features/<name>.nix` | then select it through the chain below |
-| Change the composed chain | `modules/aspects/{platforms,roles,hardware,storage}/` | inward-only, one direction |
+| Add or change a host | `modules/aspects/<host>.nix` + its record in `inventory.nix` | identity/data in the entity, behavior in the aspect |
+| Add a capability | `modules/aspects/<kebab-name>.nix` | one aspect per file; then select it through the chain below |
+| Change the composed chain | `modules/aspects/{linux,darwin}.nix`, `workstation-*.nix` | inward-only, one direction |
+| Change one host's storage or boot | `modules/aspects/storage-<host>.nix` | the enrolled/pending branch lives here |
+| Find what a machine does | `modules/aspects/<host>.nix` then follow `includes` | one file per host, no subfolder hunt |
 | Add / remove / pin a package | `zix add ...` (long form `zix pkg add`; `nix run .#zix` also works) | tools/zix/README.md; curated lists still live in `modules/*/packages.nix` |
 | Sandbox or VM work | `zix sandbox\|vm ...` | omnibin image / rewindvm passthrough |
 | Change zix behaviour | `zix.json` | targets, tools, switches, checks |
@@ -52,11 +56,11 @@ nixos/
 ## CODE MAP
 | Symbol | Type | Location | Refs | Role |
 |--------|------|----------|------|------|
-| `den.hosts` / `den.homes` | entity inventory | `modules/entities/hosts.nix` | Den | the only host/home registry |
-| `getMachine` / `assertValid` | Nix function | `modules/entities/_machine-authority/{model,validators}.nix` | 4 | the closed machine-authority record |
+| `den.hosts` / `den.homes` | entity inventory | `modules/aspects/inventory.nix` | Den | the only host/home registry |
+| `getMachine` / `assertValid` | Nix function | `modules/aspects/_machine-authority/{model,validators}.nix` | 4 | the closed machine-authority record |
 | `mkPkgs` / `config` | Nix attrset | `lib/nixpkgs.nix` | 7 | nixpkgs policy, unfree allowlist, emacs overlay |
-| `den.aspects.mei` | aspect | `modules/aspects/users/mei.nix` | Den | user + cross-platform HM payload |
-| `den.schema.*` | schema extension | `modules/entities/defaults.nix` | Den strict | typed host/user/home/aspect/flake extensions |
+| `den.aspects.mei` | aspect | `modules/aspects/mei.nix` | Den | user + cross-platform HM payload |
+| `den.schema.*` | schema extension | `modules/aspects/schema.nix` | Den strict | typed host/user/home/aspect/flake extensions |
 | `configurationEvaluationPaths` | flake option | `modules/flake/outputs.nix` | 1 test | evaluation inventory, not release authority |
 | `flake.iso.<host>` | flake output | `modules/flake/iso-images.nix` | install | per-host installer ISO carrying `hardware-enroll` |
 | `main` | Python entry | `scripts/hardware/cli.py` | 2 wrappers | `collect` / `create` / `validate` hardware intake |
@@ -85,7 +89,20 @@ nixos/
 
 ## ANTI-PATTERNS (THIS PROJECT)
 - No `nixosSystem` / `darwinSystem` / `homeManagerConfiguration` calls in `flake.nix`. Den owns them.
-- No `specialArgs` / `extraSpecialArgs` anywhere in `flake.nix`, `modules/flake`, `modules/entities`, `modules/aspects`.
+- No `specialArgs` / `extraSpecialArgs` anywhere in `flake.nix`, `modules/flake`, `modules/aspects`.
+- No sub-classification folders under `modules/aspects/`: it is one flat directory, so a
+  new aspect is one file. Reintroducing `features/`, `platforms/`, `roles/`, `hardware/`,
+  `storage/`, `named-hosts/`, `users/`, or `entities/` breaks the discovery rule and
+  `tests/dendritic-architecture.sh` fails on it.
+- No `modules/entities/`: the inventory, schema, and machine authority live in
+  `modules/aspects/`.
+- No aspect may `import` `_machine-authority` or call `authority.getMachine`; machine data
+  reaches an aspect only as `host.machine`. `inventory.nix` and `flake/iso-images.nix` are
+  the only two sanctioned readers, and the architecture test enforces it.
+- No `den.aspects` keyed on a system or a generic role name (`x86_64-linux`,
+  `nixos-workstation`, `darwin-workstation`, `massive-aarch64`, `qualifier-role-linux`,
+  `evaluation-role-linux`): Den selects an entity's aspect by the entity's own name, so
+  those keys are never reached.
 - No `runCommand` / `mkDerivation` in production modules (`lib/`, `modules/*` except `modules/flake/{apps,checks}.nix`).
 - No recursive import of `modules/nixos` and no host construction there.
 - No hardcoded `"mei"` / `/home/mei` / `/Users/mei` in active modules - read `host.machine.identity`.

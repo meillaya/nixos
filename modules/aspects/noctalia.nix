@@ -16,7 +16,7 @@
       # Den projects user/home entity identity into this Home Manager option.
       home = config.home.homeDirectory;
       template = builtins.fromTOML (
-        builtins.readFile ../../standalone-linux/config/noctalia/config.toml
+        builtins.readFile ../standalone-linux/config/noctalia/config.toml
       );
       settings = template // {
         shell = template.shell // {

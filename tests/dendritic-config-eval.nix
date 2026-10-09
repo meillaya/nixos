@@ -8,7 +8,7 @@ let
     homeDirectory = nixos.home-manager.users.mei.home.homeDirectory;
   };
   authority = flake.machineAuthority;
-  validators = import ../modules/entities/_machine-authority/validators.nix;
+  validators = import ../modules/aspects/_machine-authority/validators.nix;
   shellName = shell: shell.pname or shell.name or (builtins.baseNameOf (toString shell));
   expectedLinuxApps = [
     "build" "build-switch" "clean" "home-news" "home-switch" "install" "nh" "search-pkgs" "update" "zix"

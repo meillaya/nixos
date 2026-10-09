@@ -2,6 +2,6 @@
 {
   den.aspects.storage.nixos.imports = [
     inputs.disko.nixosModules.disko
-    ../../nixos/disk-config.nix
+    ../nixos/disk-config.nix
   ];
 }

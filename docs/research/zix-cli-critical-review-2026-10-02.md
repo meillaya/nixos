@@ -21,7 +21,7 @@ section with the appropriate suspicion and the failure section as the load-beari
   independent verified reasons).
 - zix's idea of "where a package is declared" does not cover the whole repo: it sees the
   curated `modules/*/packages.nix` lists and its own managed set, not the aspect files.
-  `herdr` is declared in `modules/aspects/users/mei.nix` and zix reports it as undeclared.
+  `herdr` is declared in `modules/aspects/mei.nix` and zix reports it as undeclared.
 
 ## 1. What zix is
 
@@ -169,7 +169,7 @@ Critical notes on the integrations themselves:
 ## 5. Worked case: "update herdr to the latest version"
 
 The request was a test of zix on a real package. `herdr` (the agent multiplexer,
-https://herdr.dev) is declared as plain `pkgs.herdr` in `modules/aspects/users/mei.nix`.
+https://herdr.dev) is declared as plain `pkgs.herdr` in `modules/aspects/mei.nix`.
 Facts, all verified on 2026-10-02:
 
 - the repo's nixpkgs pin (rev `4975466`, locked 2026-09-23) provides herdr 0.9.1;
@@ -206,7 +206,7 @@ for drift) and zix has neither an "outdated" view nor an upstream-origin path.
   when present, and verifies `<name> --version` rather than `pkgs.<attr>.version`. herdr is
   the natural first case: it is already checked in by `inputs.multiverse`-style machinery.
 - **F2: declaration coverage is narrower than the docs imply.** `zix pkg where herdr`
-  printed `herdr is not declared anywhere zix tracks` while `modules/aspects/users/mei.nix:61`
+  printed `herdr is not declared anywhere zix tracks` while `modules/aspects/mei.nix:61`
   holds `pkgs.herdr`. Consequences: `pkg rm herdr` cannot remove that declaration, and
   `zix --dry-run pkg add herdr` *plans to add it* to the managed set (a duplicate). The
   README's "locate a declaration" over-promises; the tracked targets are package lists only.

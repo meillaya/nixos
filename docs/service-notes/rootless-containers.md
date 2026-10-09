@@ -1,7 +1,7 @@
 # Rootless containers
 
 Docker and Podman run rootless on every host this repo manages. The policy lives
-in `modules/aspects/features/rootless-containers.nix`.
+in `modules/aspects/rootless-containers.nix`.
 
 ## NixOS hosts
 

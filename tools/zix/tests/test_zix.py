@@ -416,12 +416,12 @@ class CliTests(unittest.TestCase):
 
     def test_where_sees_aspect_declarations(self):
         fixture = self.fixture
-        path = fixture.root / "modules/aspects/users/mei.nix"
+        path = fixture.root / "modules/aspects/mei.nix"
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text("{ pkgs, ... }: {\n  home.packages = [ pkgs.herdr ];\n}\n")
         proc = fixture.cli("pkg", "where", "herdr")
         self.assertIn("aspect", proc.stdout)
-        self.assertIn("modules/aspects/users/mei.nix:2", proc.stdout)
+        self.assertIn("modules/aspects/mei.nix:2", proc.stdout)
         before = tree_snapshot(fixture.root)
         proc = fixture.cli("--dry-run", "pkg", "add", "herdr")
         self.assertIn("already declared", proc.stdout)
@@ -429,7 +429,7 @@ class CliTests(unittest.TestCase):
 
     def test_rm_refuses_aspect_declarations(self):
         fixture = self.fixture
-        path = fixture.root / "modules/aspects/users/mei.nix"
+        path = fixture.root / "modules/aspects/mei.nix"
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text("{ pkgs, ... }: {\n  home.packages = [ pkgs.herdr ];\n}\n")
         before = tree_snapshot(fixture.root)

@@ -180,7 +180,7 @@ and carries Nix with a nixpkgs copy. Differences:
 ## The four-enrollment gate
 
 The trust boundary for any physical install is the reviewed machine
-record in `modules/entities/_machine-authority/model.nix`. A host is
+record in `modules/aspects/_machine-authority/model.nix`. A host is
 installable only when all four enrollments are set:
 
 | Field | Enrolled value |

@@ -12,5 +12,5 @@ packages.nix    Darwin package list
 secrets.nix     Darwin sops-nix settings (removed in Phase 1)
 ```
 
-Add machines in `modules/entities/hosts.nix` and attach a thin aggregate aspect;
+Add machines in `modules/aspects/inventory.nix` and attach a thin aggregate aspect;
 do not add `darwinSystem` calls to `flake.nix`.

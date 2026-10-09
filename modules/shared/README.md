@@ -11,6 +11,6 @@ home-manager.nix   Bash, Fish, Zsh, Nushell-adjacent tools, Git, Vim, tmux, etc.
 packages.nix       Cross-platform package list
 ```
 
-Cross-platform user behavior belongs on `modules/aspects/users/mei.nix`.
+Cross-platform user behavior belongs on `modules/aspects/mei.nix`.
 Platform-specific behavior belongs in a feature aspect and may use
 `provides.to-users` only when the host genuinely selects that payload.

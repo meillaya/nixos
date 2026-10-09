@@ -24,7 +24,7 @@ let
     - Never call `nixosSystem`, `darwinSystem`, or `homeManagerConfiguration`
       in `flake.nix`. Den creates those.
     - Never add `specialArgs` or `extraSpecialArgs` in `flake.nix`,
-      `modules/flake`, `modules/entities`, or `modules/aspects`.
+      `modules/flake`, `modules/aspects`, or `modules/aspects`.
     - Never hardcode `mei`, `/home/mei`, or `/Users/mei` in an active module.
       Read `host.machine.identity`.
     - `zix` owns package-list edits. Never hand-edit `zix/managed/*` or the

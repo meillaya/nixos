@@ -1,16 +1,46 @@
 {
   "checks": {
     "full_extra": [
-      ["nix", "flake", "check", "--all-systems", "--no-build"]
+      [
+        "nix",
+        "flake",
+        "check",
+        "--all-systems",
+        "--no-build"
+      ]
     ],
     "quick": [
-      ["bash", "tests/dendritic-architecture.sh"],
-      ["bash", "tests/dendritic-boundaries.sh"],
-      ["bash", "tests/dendritic-apps.sh"],
-      ["bash", "tests/dendritic-shells.sh"],
-      ["bash", "tests/package-policy.sh"],
-      ["bash", "tests/prose.sh"],
-      ["nix-instantiate", "--eval", "--strict", "--expr", "import ./tests/dendritic-config-eval.nix {}"]
+      [
+        "bash",
+        "tests/dendritic-architecture.sh"
+      ],
+      [
+        "bash",
+        "tests/dendritic-boundaries.sh"
+      ],
+      [
+        "bash",
+        "tests/dendritic-apps.sh"
+      ],
+      [
+        "bash",
+        "tests/dendritic-shells.sh"
+      ],
+      [
+        "bash",
+        "tests/package-policy.sh"
+      ],
+      [
+        "bash",
+        "tests/prose.sh"
+      ],
+      [
+        "nix-instantiate",
+        "--eval",
+        "--strict",
+        "--expr",
+        "import ./tests/dendritic-config-eval.nix {}"
+      ]
     ]
   },
   "companion_inputs": {
@@ -28,11 +58,20 @@
   "sandbox": {
     "agent_mounts": {
       "claude": [
-        ["~/.claude", "/root/.claude"]
+        [
+          "~/.claude",
+          "/root/.claude"
+        ]
       ],
       "opencode": [
-        ["~/.config/opencode", "/root/.config/opencode"],
-        ["~/.local/share/opencode", "/root/.local/share/opencode"]
+        [
+          "~/.config/opencode",
+          "/root/.config/opencode"
+        ],
+        [
+          "~/.local/share/opencode",
+          "/root/.local/share/opencode"
+        ]
       ]
     },
     "image": "docker.io/fmzakari/omnibin:latest",
@@ -51,10 +90,30 @@
     "unstable": "github:nixos/nixpkgs/nixos-unstable"
   },
   "switches": {
-    "antagony": ["nix", "run", ".#build-switch", "--"],
-    "entropy": ["nix", "run", ".#build-switch", "--"],
-    "remembrance": ["nix", "run", ".#build-switch", "--"],
-    "massive": ["nix", "run", ".#home-switch", "--"]
+    "antagony": [
+      "nix",
+      "run",
+      ".#build-switch",
+      "--"
+    ],
+    "entropy": [
+      "nix",
+      "run",
+      ".#build-switch",
+      "--"
+    ],
+    "massive": [
+      "nix",
+      "run",
+      ".#home-switch",
+      "--"
+    ],
+    "remembrance": [
+      "nix",
+      "run",
+      ".#build-switch",
+      "--"
+    ]
   },
   "system": "x86_64-linux",
   "targets": {
@@ -90,34 +149,76 @@
   },
   "tools": {
     "auto_follow": {
-      "command": ["nix", "run", "github:fzakaria/nix-auto-follow", "--", "-I", "noctalia"]
+      "command": [
+        "nix",
+        "run",
+        "github:fzakaria/nix-auto-follow",
+        "--",
+        "-I",
+        "noctalia"
+      ]
     },
     "grail": {
-      "command": ["nix", "run", "github:fzakaria/grail", "--"]
+      "command": [
+        "nix",
+        "run",
+        "github:fzakaria/grail",
+        "--"
+      ]
     },
     "multiverse": {
-      "command": ["nix", "run", "github:fzakaria/nixpkgs-multiverse#mvs", "--"],
+      "command": [
+        "nix",
+        "run",
+        "github:fzakaria/nixpkgs-multiverse#mvs",
+        "--"
+      ],
       "flake": "github:fzakaria/nixpkgs-multiverse"
     },
     "omnibin": {
-      "command": ["nix", "run", "github:fzakaria/omnibin", "--"],
+      "command": [
+        "nix",
+        "run",
+        "github:fzakaria/omnibin",
+        "--"
+      ],
       "flake": "github:fzakaria/omnibin"
     },
     "omniflake": {
       "flake": "github:fzakaria/omniflake"
     },
     "rewind": {
-      "command": ["nix", "run", "github:fzakaria/rewindvm", "--"],
+      "command": [
+        "nix",
+        "run",
+        "github:fzakaria/rewindvm",
+        "--"
+      ],
       "flake": "github:fzakaria/rewindvm"
     },
     "wrap_buddy": {
-      "command": ["nix", "run", "github:Mic92/wrap-buddy", "--"],
+      "command": [
+        "nix",
+        "run",
+        "github:Mic92/wrap-buddy",
+        "--"
+      ],
       "flake": "github:Mic92/wrap-buddy"
     }
   },
-  "update_command": ["nix", "run", ".#update", "--"],
+  "update_command": [
+    "nix",
+    "run",
+    ".#update",
+    "--"
+  ],
   "version": 1,
   "vm": {
-    "command": ["nix", "run", "github:fzakaria/rewindvm", "--"]
+    "command": [
+      "nix",
+      "run",
+      "github:fzakaria/rewindvm",
+      "--"
+    ]
   }
 }

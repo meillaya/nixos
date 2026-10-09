@@ -60,7 +60,7 @@ chown_args=()
 stage_identity_src=""
 
 # The installed account, and its numeric ownership on the target. The repo's
-# machine identity fixes the user name (modules/entities/_machine-authority/
+# machine identity fixes the user name (modules/aspects/_machine-authority/
 # model.nix: name = "mei", home = /home/mei); the conventional first account is
 # 1000:100. nixos-anywhere --chown requires the numeric pair.
 install_user="mei"

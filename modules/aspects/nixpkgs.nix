@@ -1,6 +1,6 @@
 { den, inputs, ... }:
 let
-  policy = import ../../../lib/nixpkgs.nix { inherit inputs; };
+  policy = import ../../lib/nixpkgs.nix { inherit inputs; };
   module = {
     nixpkgs = {
       inherit (policy) config overlays;

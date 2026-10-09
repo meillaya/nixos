@@ -33,7 +33,7 @@ switch commands.
 
 - **Pins live in the policy layer, not a module.** Every host's `pkgs` comes
   from `mkPkgs`, including the standalone Home Manager (see
-  `modules/entities/defaults.nix`, `config.pkgs`). An overlay there survives
+  `modules/aspects/schema.nix`, `config.pkgs`). An overlay there survives
   `home-manager.useGlobalPkgs = true`, where per-HM `nixpkgs.*` settings are
   silently discarded. This is also why the old "no overlays" policy was
   removed: the pin overlay is the mechanism.

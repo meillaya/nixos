@@ -8,14 +8,14 @@ ask for.
 ## stylix
 
 `github:danth/stylix`, for declarative system-wide theming. The aspect lives in
-`modules/aspects/features/stylix.nix` and stays behind `stylix.enable = false`
+`modules/aspects/stylix.nix` and stays behind `stylix.enable = false`
 until a host picks a palette and a font in `stylix.targets.<host>.colors` and
 `stylix.targets.<host>.fonts`.
 
 ## nix-direnv
 
 `github:nix-community/nix-direnv`. The aspect in
-`modules/aspects/features/nix-direnv.nix` imports
+`modules/aspects/nix-direnv.nix` imports
 `inputs.nix-direnv.nixosModules.default` and enables `programs.nix-direnv` on
 every NixOS host. It pairs with the `use flake` line in `.envrc`.
 
@@ -28,8 +28,8 @@ and is the day-2 switch tool.
 ## preservation
 
 `github:nix-community/preservation`. The aspect in
-`modules/aspects/features/preservation.nix`, wired in from
-`modules/aspects/platforms/linux.nix`, keeps `/etc/machine-id`, `/etc/ssh`,
+`modules/aspects/preservation.nix`, wired in from
+`modules/aspects/linux.nix`, keeps `/etc/machine-id`, `/etc/ssh`,
 `/var/lib`, `/var/db`, `/var/log`, `/srv`, `/home`, and `/root` from churning
 across rebuilds through bind mounts. NixOS only; Darwin skips it.
 
