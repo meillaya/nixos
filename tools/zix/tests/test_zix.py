@@ -46,6 +46,17 @@ if argv and argv[0] == "eval":
 sys.exit(0)
 """
 
+# `nix search --json <ref> <query>` -> one hit, echoing the ref it was asked
+# about, so a test can assert which flakerefs zix chose without any network.
+NIX_SEARCH_STUB_BODY = """import json
+import sys
+
+argv = sys.argv[1:]
+ref = argv[-2] if len(argv) >= 2 else ""
+print(json.dumps({"legacyPackages.x86_64-linux.demo": {
+    "pname": "demo", "version": "1.0", "description": ref}}))
+"""
+
 MVS_STUB_BODY = """import json
 import sys
 
@@ -502,6 +513,29 @@ class GetTests(unittest.TestCase):
             proc = self._run(tmp, "get")
             self.assertNotEqual(proc.returncode, 0)
             self.assertIn("nothing to get", proc.stdout + proc.stderr)
+
+    def test_search_needs_no_repo(self):
+        """`zix search` must work from $HOME, where the repo is a child not an
+        ancestor, and must still consult both channels rather than degrading to
+        the single bare `nixpkgs` registry ref. Offline: `nix` is stubbed, so
+        the assertion is on the flakerefs zix chose, not on network results."""
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            bin_dir = tmp_path / "bin"
+            bin_dir.mkdir()
+            _write_executable(bin_dir / "nix", stub(NIX_SEARCH_STUB_BODY))
+            env = dict(os.environ)
+            env["PATH"] = "%s%s%s" % (bin_dir, os.pathsep, env.get("PATH", ""))
+            env.pop("ZIX_REPO", None)
+            env["ZIX_SYSTEM_CONFIG"] = str(tmp_path / "no-system-config")
+            proc = subprocess.run(
+                [sys.executable, str(ZIX_DIR / "cli.py"), "search", "ripgrep"],
+                capture_output=True, text=True, cwd=str(tmp_path), env=env)
+            self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+            combined = proc.stdout + proc.stderr
+            self.assertIn("does not need a repository", combined)
+            self.assertIn("nixos-25.11", combined)
+            self.assertIn("nixos-unstable", combined)
 
     def test_other_commands_still_need_a_repo(self):
         with tempfile.TemporaryDirectory() as tmp:

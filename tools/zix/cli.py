@@ -20,7 +20,17 @@ from zixlib.util import UI, ZixError
 VERSION = "0.2.0"
 
 # Commands that work without a zix.json: they touch nothing in a repository.
-REPO_OPTIONAL = {"get"}
+# `search` belongs here because it reads only the optional `search` block for
+# flakerefs, so a bare `zix search` in $HOME must not require the checkout to be
+# an ancestor of the shell's cwd.
+REPO_OPTIONAL = {"get", "search"}
+
+# Channels a repo-less `zix search` consults. Mirrors the `search` block in this
+# repository's zix.json so results do not change with the shell's cwd.
+NO_REPO_SEARCH_REFS = {
+    "stable": "github:nixos/nixpkgs/nixos-25.11",
+    "unstable": "github:nixos/nixpkgs/nixos-unstable",
+}
 
 EPILOG = """\
 examples:
@@ -312,7 +322,12 @@ def main(argv=None):
             if key not in REPO_OPTIONAL or args.repo:
                 raise
             repo = Path.cwd()
-            cfg = Config(repo, {"version": 1})
+            # A repository-less `search` should still look at both channels, the
+            # same as the manifests in this fleet declare. Without this it falls
+            # back to the bare `nixpkgs` registry ref and silently reports
+            # fewer, single-channel results.
+            fallback = {"search": dict(NO_REPO_SEARCH_REFS)} if key.endswith("search") else {}
+            cfg = Config(repo, dict({"version": 1}, **fallback))
             ui.note("no zix.json found upwards; `%s` does not need a repository"
                     % key)
         ctx = Ctx(repo, cfg, ui, Runner(ui, args.dry_run), args.dry_run,
