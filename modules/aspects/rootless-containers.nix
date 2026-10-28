@@ -20,7 +20,7 @@
     nixos =
       { host, config, lib, ... }:
       let
-        user = host.machine.identity.name;
+        user = host.users.mei.identity.name;
       in
       {
         virtualisation.docker.enable = lib.mkForce false;

@@ -24,14 +24,12 @@ Check the live registration with `ssh -T git@github.com`; it must answer
 
 ## What this key is not
 
-`modules/nixos/system.nix` (`keys`) and `config/hosts/intake/*.json`
-(`installAuthorizerPublicKey`) still pin the older entropy key
+`modules/nixos/system.nix` (`keys`) still pins the older entropy key
 (`SHA256:MxQc4nBAjX986U2RURy/pRLXO714pBtz5odlIUuA66Q`, `mei@entropyos-nix`, GitHub
 id 159544603) whose private half is not present on any machine reachable from
-here. That key is the installer/root SSH trust anchor and a reviewed enrollment
-artifact, so it is deliberately untouched: changing it means re-enrolling
-(`bin/nix-config-hardware-intake`, `scripts/hardware/gen_trust.py`), not editing
-a list.
+here. That key is the personal root SSH trust anchor. The distro profile
+removes it with `lib.mkForce` and trusts no key. Changing it means editing this
+list and re-keying the personal hosts.
 
 ## Where the private half lives
 

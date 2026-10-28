@@ -26,7 +26,7 @@ let
     - Never add `specialArgs` or `extraSpecialArgs` in `flake.nix`,
       `modules/flake`, `modules/aspects`, or `modules/aspects`.
     - Never hardcode `mei`, `/home/mei`, or `/Users/mei` in an active module.
-      Read `host.machine.identity`.
+      Read `host.users.mei.identity`.
     - `zix` owns package-list edits. Never hand-edit `zix/managed/*` or the
       inside of a `# BEGIN zix` block; run `zix add` / `zix rm`.
 
@@ -42,8 +42,7 @@ let
       nixpkgs build; if a foreign binary is unavoidable, use `patchelf` or
       `nix run nixpkgs#steam-run -- ./binary`.
     - Python in this repo is stdlib only, with a PEP 723 header. Invoke it as
-      `python3 -B` with `PYTHONPATH=<repo root>`, and import through
-      `scripts.hardware.*` and `scripts.support.*`.
+      `python3 -B`, and keep the installer logic in `scripts/distro`.
 
     ## Before you call it done
 
@@ -53,15 +52,14 @@ let
     - `nix flake check --all-systems --no-build`, or the narrower check you
       touched, such as `nix build .#checks.x86_64-linux.<name>`.
     - `bash tests/prose.sh` after any prose or comment change.
-    - Run the `tests/bootstrap-password-*` scripts only for an install or a
-      password change; they bind-mount `/var/lib` and `/etc/shadow`.
+    - Run `nix build .#checks.x86_64-linux.installer-disk-vm` after touching
+      the installer or the storage labels.
 
     ## Secrets
 
-    `secrets/*` is git-ignored except for the three tracked files. Never commit
-    a private key. Use `bin/nix-config-host-key-enroll` rather than editing
-    `secrets/remembrance-keys.yaml`, and never hand-edit
-    `config/hosts/intake/*.json`.
+    `secrets/*` is git-ignored except for the tracked files. Never commit a
+    private key. The distro trusts no personal SSH key; the personal hosts keep
+    their existing sops recipients.
   '';
 
   # The person's own rules, repunctuated to drop the em dashes this repo bans.
@@ -332,17 +330,16 @@ let
       in between is the policy this client follows before it finally gives up."
       Rewrite: "The client retries three times, one second apart, and then gives
       up."
-    - Missing step. Sloppy: "Run the intake step, reconcile the digests, and the
-      tree will evaluate." Rewrite: "Run `nix run .#intake` to write
-      `config/hosts/intake/<host>.json`, then reconcile the digest against the
-      record. The flake will not evaluate until the two agree."
+    - Missing step. Sloppy: "Run the install step and the disk will work."
+      Rewrite: "Run `sudo nixos-install-tui --disk /dev/nvme0n1`; it writes the
+      `NIXBOOT` and `NIXROOT` labels the installed system mounts."
     - Padding. Sloppy: "In order to be able to make the decision about whether to
       retry, the client needs to have an understanding of the current state of
       the connection." Rewrite: "The client retries only when the connection is
       up."
-    - Commit subject. Sloppy: "fixed the thing with the locks that kept breaking
-      the build sometimes". Rewrite: "Lock intake digests before the flake
-      evaluates".
+    - Commit subject. Sloppy: "fixed the thing with the disk that kept breaking
+      the boot sometimes". Rewrite: "Label the target disk before the first
+      boot".
 
     ### Sources
 

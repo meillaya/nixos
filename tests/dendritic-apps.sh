@@ -17,22 +17,10 @@ python3 -m py_compile "$tmpdir/linux-home-sources.py"
 grep -Fq 'exec ${self}/apps/${system}/${scriptName} "$@"' \
   "$root/modules/flake/apps.nix"
 
-for app in build build-switch clean install
+for app in build build-switch clean
 do
   test -x "$root/apps/x86_64-linux/$app"
 done
-
-# The one-command installer must stay dry-run safe: it prints its plan and
-# touches nothing (no work tree, no trust fixture, no disk). The installer
-# refuses to run off Linux (its own `uname -s` guard in apps/x86_64-linux/
-# install), so the plan is only assertable where it can run at all. The Linux
-# host still exercises this block.
-if [[ "$(uname -s)" == "Linux" ]]; then
-  "$root/apps/x86_64-linux/install" --dry-run > "$tmpdir/install-plan"
-  grep -Fq -- '--install-only' "$tmpdir/install-plan"
-  grep -Fq -- 'auto_enroll' "$tmpdir/install-plan"
-  grep -Fq -- '--extra-files <stage>' "$tmpdir/install-plan"
-fi
 
 for system in x86_64-linux; do
   app_names=$(nix eval --impure --json --expr \
@@ -49,7 +37,6 @@ assert apps == [
     "clean",
     "home-news",
     "home-switch",
-    "install",
     "nh",
     "search-pkgs",
     "update",

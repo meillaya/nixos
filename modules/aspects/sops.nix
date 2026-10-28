@@ -5,14 +5,14 @@
       imports = [
         inputs.sops-nix.nixosModules.default
       ];
-      sops.age.sshKeyPaths = [ "${host.machine.identity.home}/.ssh/id_ed25519" ];
+      sops.age.sshKeyPaths = [ "${host.users.mei.identity.home}/.ssh/id_ed25519" ];
     };
     darwin = {
       imports = [
         inputs.sops-nix.darwinModules.default
       ];
       sops.age.sshKeyPaths = [
-        "${host.machine.identity.home}/.ssh/id_ed25519"
+        "${host.users.mei.identity.home}/.ssh/id_ed25519"
       ];
     };
   };

@@ -1,40 +1,25 @@
 # modules/ - the dendritic graph
 
 ## OVERVIEW
-Every flake output you care about is composed here: Den entities declare machines,
-Den aspects own behavior, and flake-parts owns outputs per system.
+Every output is composed here: Den entities declare hosts and users, Den aspects
+own behavior, and flake-parts owns per-system outputs. There is no machine
+authority and no per-host storage branch.
 
 ## STRUCTURE
 ```
 modules/
-├── aspects/        # FLAT - one file per concern; ALL behavior lives here
-│   ├── inventory.nix          # den.hosts / den.homes - the ONE entity registry
-│   ├── schema.nix             # lib.types + den.schema extensions
-│   ├── authority.nix          # publishes flake.machineAuthority
-│   ├── _machine-authority/    # model.nix, validators.nix, crypto.nix (private)
-│   ├── nixpkgs.nix            # shared-policy: nixpkgs config + overlays
-│   ├── linux.nix, darwin.nix  # OS baseline chains
-│   ├── workstation-*.nix      # role aggregators
-│   ├── <host>.nix             # remembrance, antagony, entropy, massive
-│   ├── storage-<host>.nix     # per-host boot/storage branch
-│   ├── <capability>.nix       # leaf feature aspects (niri, noctalia, sops, ...)
-│   └── mei.nix                # the user entity + cross-platform HM payload
-├── flake/          # the 10 flake-parts modules (see below)
-├── nixos/          # low-level NixOS/HM modules - imported by aspects, never by flake.nix
-├── darwin/         # low-level nix-darwin modules
-├── shared/         # cross-platform HM payload for the mei user
-├── linux/          # Linux HM payload shared by NixOS and massive
-└── standalone-linux/  # the standalone host's Home Manager home and system-manager layer
+├── aspects/        # FLAT: hosts, roles, platforms, features, distro aspects
+├── flake/          # flake-parts outputs, including the live ISO
+├── distro/         # live/installed/ISO/installer NixOS modules
+├── nixos/          # low-level NixOS and Home Manager payload
+├── darwin/         # low-level nix-darwin payload
+├── shared/         # cross-platform Home Manager payload
+├── linux/          # Linux Home Manager payload
+└── standalone-linux/
 ```
 
-There are no sub-classification folders under `aspects/`. Which layer a file belongs to is
-carried by its name: bare `<host>` is a host, `storage-<host>` a storage profile,
-`<capability>` a leaf feature, and `linux`/`darwin`/`workstation-*` the chain. The flat
-directory is what makes `ls modules/aspects/` the whole table of contents, and
-`tests/dendritic-architecture.sh` fails if a sub-folder returns.
-
-## HOW COMPOSITION WORKS
-An aspect is a function keyed by platform class:
+## COMPOSITION
+An aspect is a function of platform class:
 
 ```nix
 { inputs, ... }:
@@ -43,93 +28,62 @@ An aspect is a function keyed by platform class:
 }
 ```
 
-The full chain, inward-only - a layer may include the next, never the reverse:
+The personal chain is inward-only:
 
-```
-named host -> storage -> hardware routing -> role -> platform -> feature aspects
+```text
+named host -> workstation-role -> platform -> feature aspects
 ```
 
-- `den.aspects.<x>.includes = [ ... ]` composes by name; peers are always referenced
-  as `den.aspects.<peer>`, never by string or via `self`.
-- The host argument carries the validated record: use `host.machine.identity`,
-  `host.machine.role`, `host.system`. Do not re-read a literal global machine id.
-- User-level content belongs on `den.aspects.mei.homeManager`, or on a feature with
-  `provides.to-users` when the host genuinely selects that payload.
-- `import-tree ../aspects` in `modules/flake/dendritic.nix` auto-loads every file in
-  the flat `aspects/` directory, so a new aspect needs no registry edit. The raw
-  `nixos/` `darwin/` `shared/` `linux/` `standalone-linux/` trees sit outside that root
-  and are reached only by explicit `import`, so a payload module can never be
-  auto-loaded as a flake module.
+The distro chain is `distro-platform -> distro-role -> live|installed`.
+`modules/distro/*` are raw NixOS modules; they do not take the Den `host`
+argument and use `config.distro.liveUser` instead of a literal identity.
+
+## HOST DATA
+- `inventory.nix` carries `users.<name>.identity` only.
+- Host aspects read `host.users.mei.identity` and `host.hostName`.
+- No `machine`, `boot`, `storage`, `capabilities`, or `remoteInstall` record.
+- No disk ID or UUID. `modules/nixos/storage-labels.nix` mounts `NIXBOOT` and
+  `NIXROOT`; the installer creates them.
 
 ## ADD A HOST
-1. Machine record: committed intake JSON (`config/hosts/intake/<host>.json`) for an
-   enrolled machine, else an inline pending record in `_machine-authority/model.nix`.
-2. Register in `aspects/inventory.nix` under `den.hosts.<system>.<name>` (identity +
-   membership only). This stays a single registry: Den needs one inventory.
-3. Add `aspects/<host>.nix` - the host aspect that asserts the machine
-   target/system/role and `mkForce`s hostname + locale from `host.machine`.
-4. Add `aspects/storage-<host>.nix` for its boot/storage branch, and an ISO entry only if
-   it needs one (`modules/flake/iso-images.nix`, `isoHosts`).
-5. Update expectations: `tests/dendritic-config-eval.nix` asserts the exact
-   `nixosConfigurations` / `darwinConfigurations` / `homeConfigurations` name sets, the
-   per-system `flake.apps` list, and `flake.configurationEvaluationPaths`.
+1. Add the entity in `inventory.nix` with `users.mei.identity`.
+2. Add `aspects/<host>.nix` selecting the role and setting host locale/timezone.
+3. Update the name sets in `tests/dendritic-config-eval.nix`.
+4. Add `storage-labels` if the host installs to a disk.
 
-## ADD A FEATURE ASPECT
-1. `modules/aspects/<kebab-name>.nix`, one aspect, file stem == aspect name.
-2. Give it `nixos` / `darwin` / `homeManager` payloads or `includes`; keep the
-   implementation module in `modules/nixos/`, `modules/darwin/`, `modules/shared/`,
-   `modules/linux/`, or `modules/standalone-linux/`.
-3. Select it from a platform or role aggregator (`aspects/linux.nix`,
-   `aspects/darwin.nix`, `aspects/workstation-*.nix`) - hosts do not select leaf
-   features directly. A capability only one host uses can live inline in that host's
-   file instead; the chain exists to avoid duplicating what several hosts share.
+## ADD A FEATURE
+1. Add one flat `modules/aspects/<kebab-name>.nix`.
+2. Put raw implementation in `modules/nixos`, `modules/darwin`,
+   `modules/shared`, `modules/linux`, `modules/standalone-linux`, or
+   `modules/distro`.
+3. Select it from a platform or role aggregator, not from a host directly.
 
 ## FLAKE WIRING
 | File | Job |
 |------|-----|
-| `flake/dendritic.nix` | the whole graph: imports Den + `den.flakeModules.strict`, then `import-tree ../aspects`; this is what makes a new aspect file live with no registry edit |
-| `flake/systems.nix` | the two evaluation systems (x86_64-linux, aarch64-darwin) |
-| `flake/apps.nix` | per-system `apps`, wrapping the committed `apps/<system>/<name>` scripts |
-| `flake/checks.nix` | per-system checks running `tests/*.sh` in a sandbox |
-| `flake/packages.nix` | per-system `packages`: `zix`, built from `tools/zix/package.nix`; host package sets still flow through `lib/nixpkgs.nix` |
-| `flake/dev-shells.nix` | the single default devShell |
-| `flake/outputs.nix` | `configurationEvaluationPaths` evaluation inventory |
-| `flake/iso-images.nix` | `flake.iso.<host>`; each ISO carries the `hardware-enroll` oneshot |
-| `flake/deploy-rs.nix` | `flake.deploy.nodes` for the four hosts + deployChecks in `flake.checks` |
-| `flake/system-manager.nix` | `flake.systemConfigs.massive`: the standalone host's hostname and systemd units, applied with numtide/system-manager |
-
-## MACHINE AUTHORITY
-`_machine-authority/` is the trust boundary, not a data bag:
-- `model.nix` - the `machines` attrset, `getMachine`, `allowsSystemMutation`; enrolled
-  hosts read the committed intake JSON, so re-enrollment replaces the file and the
-  build-time record follows automatically.
-- `validators.nix` - a closed projection whitelist plus cross-field validation; fields
-  outside `projectionFields` are dropped from the projection and inconsistent
-  identity/platform combinations fail validation.
-- `crypto.nix` - pure-Nix SHA-256 used to verify recorded device digests.
-- `schema.nix` (sibling of this directory) - the `lib.types` schemas for identity,
-  boot, storage, capabilities, and the Den schema extensions for host/home/user/aspect/flake.
-
-`allowsSystemMutation` is true only when boot, storage, or capabilities are enrolled -
-that is what keeps a disabled machine buildable but not activatable.
+| `flake/dendritic.nix` | imports Den strict and `import-tree ../aspects` |
+| `flake/systems.nix` | `x86_64-linux`, `aarch64-darwin` |
+| `flake/apps.nix` | build/switch/update/clean apps |
+| `flake/checks.nix` | per-system checks and the installer VM test |
+| `flake/packages.nix` | `zix` package |
+| `flake/outputs.nix` | evaluation inventory |
+| `flake/iso-images.nix` | `iso.live` and `isoConfig.live` |
+| `flake/deploy-rs.nix` | deploy nodes for the four personal hosts |
+| `flake/system-manager.nix` | `systemConfigs.massive` |
 
 ## CONVENTIONS
-- Directories whose name starts with `_` (`_machine-authority`) are private internals.
-- Identity is never a literal: `host.machine.identity`, `user.identity` are the only sources.
-- Disk targets are `/dev/disk/by-id` basenames, never kernel device paths.
-- Aspect names are kebab-case; class payloads are exactly `nixos`, `darwin`, `homeManager`.
+- Identity comes from `host.users.mei.identity`; never a literal.
+- Raw distro modules use `config.distro.liveUser`.
+- Storage is a label contract, never a disk ID.
+- Aspect names are kebab-case; class payloads are `nixos`, `darwin`,
+  `homeManager`.
 
-## HOTSPOTS
-| File | Lines | Why it matters |
-|------|-------|----------------|
-| `linux/home-manager.nix` | ~790 | the whole desktop payload; every Linux host and massive |
-| `aspects/_machine-authority/validators.nix` | ~610 | edit here and every machine record is re-checked |
-| `shared/home-manager.nix` | ~605 | cross-platform user config; affects all four hosts |
-| `flake/apps.nix` | ~485 | all app surfaces incl. `update` and `home-switch` |
-| `_machine-authority/crypto.nix` | ~340 | pure-Nix hashing; slow to evaluate if misused |
-| `aspects/mei.nix` | ~190 | user identity, HM payload, key activation scripts |
-
-Platform and role aggregators (`linux-platform`, `workstation-role-linux`, `sops`,
-`nixos-base`, `shared-policy`) are the choke points: editing one changes every host.
-`aspects/inventory.nix` is the single entity registry, and `aspects/<host>.nix` is the
-whole story for one machine.
+## ANTI-PATTERNS
+- No `_machine-authority`, intake JSON, enrollment scripts, or
+  `flake.machineAuthority`.
+- No `host.machine`, `diskById`, `storage.profile`, or disko device.
+- No `specialArgs` or `extraSpecialArgs`.
+- No `nixosSystem` in `flake.nix`.
+- No sub-folders under `aspects/`.
+- No second Niri session authority; Noctalia owns bar, notifications, lock, and
+  wallpaper.

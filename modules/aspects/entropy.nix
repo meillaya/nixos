@@ -3,24 +3,17 @@
   den.aspects.entropy =
     { host, ... }:
     let
-      machine = host.machine;
+      identity = host.users.mei.identity;
     in
-    assert machine.target == "darwinConfigurations.${host.name}";
-    assert machine.system == host.system;
-    assert machine.role == "workstation";
     {
-    includes = [
-      den.aspects.entropy-storage
-      den.aspects.entropy-device-capability-routing
-    ];
-
-    darwin =
-      { lib, ... }:
-      {
-        networking.hostName = lib.mkForce machine.hostId;
-        time.timeZone = lib.mkForce machine.location.timeZone;
-        environment.variables.LANG = lib.mkForce machine.location.locale;
-        users.users.${machine.identity.name}.home = lib.mkForce machine.identity.home;
-      };
+      includes = [ den.aspects.workstation-role-darwin ];
+      darwin =
+        { lib, ... }:
+        {
+          networking.hostName = lib.mkForce host.hostName;
+          time.timeZone = lib.mkForce "America/New_York";
+          environment.variables.LANG = lib.mkForce "en_US.UTF-8";
+          users.users.${identity.name}.home = lib.mkForce identity.home;
+        };
     };
 }

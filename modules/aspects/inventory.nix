@@ -1,45 +1,32 @@
 { ... }:
 let
-  authority = import ./_machine-authority/model.nix;
-  machineFor = authority.getMachine;
-
-  laptop = machineFor "remembrance";
-  antagony = machineFor "antagony";
-  darwinArm = machineFor "entropy";
+  linuxIdentity = {
+    name = "mei";
+    home = "/home/mei";
+    uid = 1000;
+    gid = 100;
+  };
+  darwinIdentity = {
+    name = "mei";
+    home = "/Users/mei";
+    uid = 501;
+    gid = 20;
+  };
 in
-assert laptop.target == "nixosConfigurations.remembrance";
-assert antagony.target == "nixosConfigurations.antagony";
-assert darwinArm.target == "darwinConfigurations.entropy";
 {
   den.hosts = {
     x86_64-linux = {
-      remembrance = {
-        system = "x86_64-linux";
-        hostName = laptop.hostId;
-        machine = laptop;
-        users.${laptop.identity.name}.identity = laptop.identity;
-      };
-      antagony = {
-        system = "x86_64-linux";
-        hostName = antagony.hostId;
-        machine = antagony;
-        users.${antagony.identity.name}.identity = antagony.identity;
-      };
+      remembrance.users.mei.identity = linuxIdentity;
+      antagony.users.mei.identity = linuxIdentity;
+      live.users.mei.identity = linuxIdentity;
+      installed.users.mei.identity = linuxIdentity;
     };
-    aarch64-darwin = {
-      entropy = {
-        system = "aarch64-darwin";
-        hostName = darwinArm.hostId;
-        machine = darwinArm;
-        users.${darwinArm.identity.name}.identity = darwinArm.identity;
-      };
-    };
+    aarch64-darwin.entropy.users.mei.identity = darwinIdentity;
   };
   den.homes = {
     x86_64-linux.massive = {
-      machine = laptop;
-      userName = laptop.identity.name;
-      homeDirectory = laptop.identity.home;
+      userName = "mei";
+      homeDirectory = "/home/mei";
     };
   };
 }

@@ -9,5 +9,6 @@
     den.aspects.preservation
     den.aspects.stylix
     den.aspects.nix-direnv
+    den.aspects.x86-hardware
   ];
 }

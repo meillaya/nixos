@@ -14,8 +14,6 @@ if grep -R -F 'den.batteries.user-shell "nushell"' --include='*.nix' modules; th
   exit 1
 fi
 
-# The merged repo must own the standalone-linux and darwin module trees
-# (union-added from the sibling repo).
 if ! test -e modules/standalone-linux/home-manager.nix; then
   echo 'merged repo must own standalone-linux/home-manager.nix' >&2
   exit 1
@@ -45,11 +43,6 @@ if grep -R -E '^\{[^}]*\buser\b[^}]*\.\.\.' --include='*.nix' modules/aspects; t
   exit 1
 fi
 
-if grep -Eq 'machineAuthority\.machines|builtins\.attrValues' modules/flake/apps.nix; then
-  echo 'Linux app exposure reads unvalidated machine records' >&2
-  exit 1
-fi
-
 if grep -Eiw 'polybar|dunst|screen-locker|i3lock|betterlockscreen|swaylock|swaybg|awww|swww|picom|rofi|waybar|mako|wlogout|bspwm|sxhkd' \
   modules/nixos/home-manager.nix \
   modules/nixos/files.nix \
@@ -65,7 +58,13 @@ fi
 for module in \
   modules/nixos/home-manager.nix \
   modules/nixos/system.nix \
-  modules/nixos/bootstrap-password.nix
+  modules/darwin/base.nix \
+  modules/darwin/system.nix \
+  modules/aspects/sops.nix \
+  modules/aspects/rootless-containers.nix \
+  modules/distro/base.nix \
+  modules/distro/live.nix \
+  modules/distro/installed.nix
 do
   if grep -Eq '"mei"|/home/mei|/Users/mei' "$module"; then
     echo "hardcoded identity remains in active module: $module" >&2
@@ -73,12 +72,22 @@ do
   fi
 done
 
-grep -Fq 'host.machine.identity' modules/nixos/system.nix
-grep -Fq 'user.identity' modules/nixos/home-manager.nix
-grep -Fq 'identity.name' modules/nixos/bootstrap-password.nix
-grep -Fq 'host.machine.identity' modules/aspects/bootstrap-password.nix
+grep -Fq 'host.users.mei.identity' modules/nixos/system.nix
+grep -Fq 'host.users.mei.identity' modules/darwin/base.nix
+grep -Fq 'host.users.mei.identity' modules/darwin/system.nix
+grep -Fq 'host.users.mei.identity' modules/aspects/sops.nix
+grep -Fq 'host.users.mei.identity' modules/aspects/rootless-containers.nix
 
-test ! -e modules/aspects/nix-core.nix
+if grep -R -E '/dev/disk/by-id|diskById|storage\.profile' --include='*.nix' modules flake.nix; then
+  echo 'host-bound disk identity remains after the label-storage migration' >&2
+  exit 1
+fi
+
+if grep -R -E 'host\.machine|_machine-authority|machineAuthority' \
+  --include='*.nix' modules flake.nix apps bin scripts 2>/dev/null; then
+  echo 'machine-authority reference remains in active code' >&2
+  exit 1
+fi
 
 if grep -Fq 'builtins.getEnv' modules/nixos/files.nix; then
   echo 'NixOS home files depend on the evaluator HOME' >&2

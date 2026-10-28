@@ -1,66 +1,57 @@
 # modules/aspects/ - the flat aspect tree
 
 ## OVERVIEW
-Every aspect lives here, in one flat directory, alongside the entity registry and the
-machine authority. `ls modules/aspects/` is the repository's table of contents; there are
-no sub-classification folders. Behaviour lives in aspects, never in the registry.
+Every aspect lives here, in one flat directory, next to the entity registry and
+the schema. `ls modules/aspects/` is the repository's table of contents. There
+are no sub-classification folders.
 
 ## STRUCTURE
 ```
 aspects/
-├── inventory.nix            # den.hosts / den.homes - the ONE entity registry
-├── schema.nix               # lib.types schemas + Den schema extensions
-├── authority.nix            # exposes flake.machineAuthority
-├── _machine-authority/      # private: model.nix, validators.nix, crypto.nix
-├── nixpkgs.nix              # shared-policy: nixpkgs config + overlays
-├── linux.nix, darwin.nix    # OS baseline chains
-├── workstation-*.nix        # role aggregators
-├── <host>.nix               # remembrance, antagony, entropy, massive
-├── storage-<host>.nix       # per-host boot/storage branch
-├── <capability>.nix         # leaf feature aspects
-└── mei.nix                  # the user entity + cross-platform HM payload
+├── inventory.nix          # den.hosts / den.homes - identity only
+├── schema.nix             # user identity, class payloads, home directory
+├── nixpkgs.nix            # shared-policy
+├── linux.nix, darwin.nix  # OS platform chains
+├── workstation-*.nix      # personal role aggregators
+├── <host>.nix             # remembrance, antagony, entropy, live, installed
+├── storage-labels.nix     # NIXBOOT/NIXROOT mounts
+├── x86-hardware.nix       # generic firmware, microcode, audio, power, i2c
+├── distro-*.nix           # distro platform and role
+├── <capability>.nix       # leaf feature aspects
+└── mei.nix                # the user entity + cross-platform HM payload
 ```
 
-## WHERE TO LOOK
-| Task | Location | Notes |
-|------|----------|-------|
-| Add/remove a host or home | `inventory.nix` | asserts target names match `_machine-authority/model.nix` |
-| What does machine X do | `<host>.nix` | its asserts, `includes`, and host-specific overrides |
-| Change what a machine record may contain | `schema.nix` | `machineType`, `identityType`, `bootType`, `storageType` |
-| Enroll a machine | `_machine-authority/model.nix` | enrolled hosts read `config/hosts/intake/<host>.json` |
-| Tighten validation | `_machine-authority/validators.nix` | closed `projectionFields` whitelist + cross-field rules |
-| Verify recorded device digests | `_machine-authority/crypto.nix` | pure-Nix SHA-256, no external tools |
-| Add a shared capability | a new `<kebab-name>.nix` | select it from a platform/role aggregator |
+## HOST DATA
+- Entity fields: `users.<name>.identity` only.
+- Aspects use `host.users.mei.identity` and `host.hostName`.
+- `massive` is a `den.homes` entry with `userName` and `homeDirectory`.
+- No `machine`, `boot`, `storage`, or capability record exists.
+
+## ADD A HOST
+1. Add `den.hosts.<system>.<name>.users.mei.identity` to `inventory.nix`.
+2. Add `aspects/<name>.nix` with the role include and host locale/timezone.
+3. If it installs to a disk, include `den.aspects.storage-labels`.
+4. Update the exact name sets in `tests/dendritic-config-eval.nix`.
+
+## ADD A FEATURE
+1. Add `modules/aspects/<kebab-name>.nix`.
+2. Give it a `nixos`, `darwin`, or `homeManager` payload, or `includes`.
+3. Keep the implementation in `modules/nixos`, `modules/darwin`,
+   `modules/shared`, `modules/linux`, `modules/standalone-linux`, or
+   `modules/distro`.
+4. Select it from a platform or role aggregator.
 
 ## CONVENTIONS
-- Entity entries carry identity and membership ONLY: `system`, `hostName`, `machine`,
-  `users.<name>.identity`. Host-specific behaviour lives in the `<host>.nix` aspect.
-- `inventory.nix` opens with asserts tying every registered host to its
-  `_machine-authority/model.nix` target; adding a host without adding its machine record
-  fails evaluation immediately.
-- `getMachine` runs `validators.assertValid` on every read - an unvalidated record never
-  reaches an aspect.
-- `allowsSystemMutation` gates activation authority: true only when boot, storage, or
-  capabilities are enrolled.
-- Extended fields on a machine record must be added to the `machineType` freeform-plus-
-  options schema and the `projectionFields` whitelist together, or the projection drops them.
-- `declaredMachineIds` is the source for tests asserting the exact
-  `nixosConfigurations` / `darwinConfigurations` / `homeConfigurations` sets.
-- Machine data reaches an aspect only as `host.machine`. No aspect imports
-  `_machine-authority` or calls `authority.getMachine`; `inventory.nix` and
-  `modules/flake/iso-images.nix` are the only two readers, and
-  `tests/dendritic-architecture.sh` enforces it.
-- A capability only one host uses belongs inline in that host's file. Promote it to its
-  own `<capability>.nix` once a second host needs it.
+- Refer to peers as `den.aspects.<peer>`, never by string.
+- Host-specific facts come from `host.users.mei.identity` and
+  `host.hostName`.
+- Storage facts come from `modules/nixos/storage-labels.nix`.
+- A capability only one host uses can live inline in that host's file.
 
 ## ANTI-PATTERNS
-- Never project a literal machine id from an aspect; host-local facts must come from
-  `host.machine` so projection cannot drift from the selected entity.
-- Never make `machine` / `identity` a generic `attrs` or `raw` type - the architecture
-  test fails on that regression explicitly.
-- Never hand-write a machine record for an enrolled host; it is pipeline output
-  (see `config/hosts/intake/README.md`).
-- Never construct or import a NixOS/Darwin system here.
-- Never add a sub-folder under `aspects/`. The flat directory is the discovery mechanism,
-  and the architecture test fails if `features/`, `platforms/`, `roles/`, `hardware/`,
-  `storage/`, `named-hosts/`, `users/`, or `entities/` comes back.
+- No `_machine-authority`, `authority.nix`, intake JSON, or `host.machine`.
+- No `diskById`, UUID, or per-host storage aspect.
+- No sub-folder under `aspects/`.
+- No literal `"mei"` / `/home/mei` / `/Users/mei` in a feature module; read the
+  entity or the `distro.liveUser` option.
+- No handwritten machine record or enrollment document.

@@ -35,19 +35,6 @@
         touch "$out"
       '';
 
-      install-staging = pkgs.runCommand "install-staging" {
-        # mkpasswd: the test executes the staging generator for real, and the
-        # generator shells out to `mkpasswd --method=yescrypt --stdin`.
-        nativeBuildInputs = [ pkgs.bash pkgs.coreutils pkgs.gnugrep pkgs.mkpasswd pkgs.nix pkgs.python3 ];
-        NIX_CONFIG = "experimental-features = nix-command flakes";
-        src = inputs.self;
-      } ''
-        cp -R "$src" source
-        chmod -R u+w source
-        bash source/tests/install-staging.sh
-        touch "$out"
-      '';
-
       package-policy = pkgs.runCommand "package-policy" {
         nativeBuildInputs = [ pkgs.bash pkgs.gnugrep pkgs.nix pkgs.python3 ];
         DENDRITIC_POLICY_REPO_ROOT = "${inputs.self}";
@@ -67,25 +54,6 @@
         pkgs.runCommand "dendritic-config-eval" { } ''
           touch "$out"
         '';
-
-      bootstrap-password-mutations = pkgs.runCommand "bootstrap-password-mutations" {
-        nativeBuildInputs = [
-          pkgs.bash
-          pkgs.coreutils
-          pkgs.gnugrep
-          pkgs.gnused
-          pkgs.gnutar
-          pkgs.jq
-          pkgs.nix
-        ];
-        NIX_CONFIG = "experimental-features = nix-command flakes";
-        src = inputs.self;
-      } ''
-        cp -R "$src" source
-        chmod -R u+w source
-        bash source/tests/bootstrap-password-mutations.sh
-        touch "$out"
-      '';
 
       dendritic-shells = pkgs.runCommand "dendritic-shells" {
         nativeBuildInputs = [ pkgs.bash ];
@@ -119,17 +87,25 @@
         touch "$out"
       '';
     } // lib.optionalAttrs (system == "x86_64-linux") {
-      # Gate-inertness VM (plan todo 14): boots the ISO's extended config
-      # (`flake.isoConfig.antagony`, the very config `flake.iso` builds from)
-      # as a QEMU test machine in one run with both variants: a plain boot
-      # (the unit must stay inactive) and a test-only `nixos.autoinstall=1`
-      # boot (the unit runs, refuses safely, and the rescue target takes
-      # over). The ISO hosts are x86_64-linux only, so the check exists only
-      # for that system.
-      iso-autostart-vm = import ../../tests/iso-autostart-vm.nix {
-        inherit pkgs;
-        isoConfig = inputs.self.isoConfig.antagony;
-      };
+      # The live profile plus the installer package, with a blank target disk.
+      # `--test` exercises partitioning, labels, subvolumes, and mounting
+      # without copying a system.
+      installer-disk-vm =
+        let
+          liveConfig = inputs.self.nixosConfigurations.live.extendModules {
+            modules = [
+              ../../modules/distro/installer.nix
+              {
+                distro.installer.enable = true;
+                distro.installer.installedSystem = "/run/not-used";
+                distro.installer.flakeSource = "/run/not-used";
+              }
+            ];
+          };
+        in
+        import ../../tests/installer-disk-vm.nix {
+          inherit pkgs liveConfig;
+        };
     };
   };
 }

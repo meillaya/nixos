@@ -18,10 +18,6 @@
       url = "github:LnL7/nix-darwin/master";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    disko = {
-      url = "github:nix-community/disko";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
     zen-browser = {
       url = "github:0xc000022070/zen-browser-flake";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -53,6 +49,14 @@
       url = "github:danth/stylix";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.systems.follows = "systems";
+    };
+    # Ghostty 1.4.0 on Linux: nixpkgs still packages 1.3.1, so take the
+    # release from upstream. macOS cannot build that flake's source package
+    # and uses the signed DMG instead (pkgs/ghostty-bin.nix). The input stays
+    # on the tag; nixpkgs follows so the overlay below uses one package set.
+    ghostty = {
+      url = "github:ghostty-org/ghostty/v1.4.0";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
     nh = {
       url = "github:nix-community/nh";

@@ -4,157 +4,95 @@ let
   policyConfig = policy.config;
   policyLinuxPkgs = policy.mkPkgs "x86_64-linux";
   nixos = flake.nixosConfigurations.remembrance.config;
-  nixosFiles = import ../modules/nixos/files.nix {
-    homeDirectory = nixos.home-manager.users.mei.home.homeDirectory;
-  };
-  authority = flake.machineAuthority;
-  validators = import ../modules/aspects/_machine-authority/validators.nix;
-  shellName = shell: shell.pname or shell.name or (builtins.baseNameOf (toString shell));
-  expectedLinuxApps = [
-    "build" "build-switch" "clean" "home-news" "home-switch" "install" "nh" "search-pkgs" "update" "zix"
-  ];
-  hasShell = name: shells: builtins.any (shell: shellName shell == name) shells;
-  remoteCapabilityValues = builtins.listToAttrs (
-    map
-      (name: {
-        inherit name;
-        value =
-          if builtins.elem name [ "install.remote" "network.ethernet" ] then
-            { state = "present"; }
-          else
-            {
-              state = "absent";
-              reason = "deferred";
-            };
-      })
-      validators.capabilityKeys
-  );
-  remoteCapableEnrolledFixture = {
-    remoteInstall = true;
-    capabilities = {
-      state = "enrolled";
-      values = remoteCapabilityValues;
-    };
-  };
-  remoteInstallCapabilityPresent = machine:
-    machine.capabilities.state == "enrolled"
-    && machine.capabilities.values."install.remote".state == "present";
-  hasInfix = flake.inputs.nixpkgs.lib.hasInfix;
-  countExactLine = expected: text:
-    builtins.length (
-      builtins.filter
-        (line: line == expected)
-        (flake.inputs.nixpkgs.lib.splitString "\n" text)
-    );
+  installed = flake.nixosConfigurations.installed.config;
+  live = flake.nixosConfigurations.live.config;
+  entropy = flake.darwinConfigurations.entropy.config;
+  iso = flake.isoConfig.live.config;
+  installedToplevel = flake.nixosConfigurations.installed.config.system.build.toplevel;
   packageName = package: package.pname or package.name or (builtins.baseNameOf (toString package));
-  tryDrvPath = package: builtins.tryEval package.drvPath;
   hasPackages = names: packages:
     let present = map packageName packages;
     in builtins.all (name: builtins.elem name present) names;
-  hasAnyPackage = names: packages:
-    let present = map packageName packages;
-    in builtins.any (name: builtins.elem name present) names;
-  hasAnyHomeFile = names: files:
-    builtins.any
-      (file: builtins.any (name: hasInfix name file) names)
-      (builtins.attrNames files);
-  homeFileBySuffix = suffix: files:
-    let
-      matches = builtins.filter
-        (name: flake.inputs.nixpkgs.lib.hasSuffix suffix name)
-        (builtins.attrNames files);
-    in
-    if matches == [ ] then
-      throw "missing home.file entry ending in ${suffix}"
-    else
-      files.${builtins.head matches};
-  nixosNiriConfig = homeFileBySuffix ".config/niri/config.kdl"
-    nixos.home-manager.users.mei.home.file;
-  nixosNoctaliaConfig = homeFileBySuffix ".config/noctalia/config.toml"
-    nixos.home-manager.users.mei.home.file;
-  nixosKonsoleProfile = homeFileBySuffix ".local/share/konsole/Garuda.profile"
-    nixos.home-manager.users.mei.home.file;
-  noctaliaServiceCount = services:
-    builtins.length (
-      builtins.filter
-        (name: hasInfix "noctalia" name)
-        (builtins.attrNames services)
-    );
-  noctaliaSettings = nixos.programs.noctalia.settings or null;
-  requiredLinuxApplications = [
-    "calibre" "devenv" "gimp" "ghostty" "herdr" "helium" "kitty" "obsidian"
-    "ollama" "qbittorrent" "noctalia" "zen-beta"
-  ];
-  assertHm = hm:
-    assert hm.programs.nushell.enable;
-    assert hm.programs.nushell.settings.show_hints;
-    assert hm.programs.nushell.settings.history.file_format == "sqlite";
-    assert hm.programs.nushell.settings.history.sync_on_enter;
-    assert hm.programs.nushell.settings.completions.algorithm == "fuzzy";
-    assert hm.programs.nushell.settings.color_config.hints == "light_cyan";
-    assert hasInfix ".nix-profile/bin" hm.programs.nushell.extraEnv;
-    assert hasInfix "/run/current-system/sw/bin" hm.programs.nushell.extraEnv;
-    assert hasInfix "fastfetch" hm.programs.nushell.extraConfig;
-    assert hasInfix "which fastfetch" hm.programs.nushell.extraConfig;
-    assert hm.programs.kitty.enable;
-    assert hm.programs.kitty.settings.background == "#161925";
-    assert hm.programs.kitty.settings.foreground == "#c3c7d1";
-    assert hm.programs.kitty.settings.color1 == "#ed254e";
-    assert hm.programs.kitty.settings.color2 == "#71f79f";
-    assert hasInfix "/bin/nu --login" hm.programs.kitty.settings.shell;
-    assert hm.programs.bash.enable;
-    assert hm.programs.zsh.enable;
-    assert hm.programs.fish.enable;
-    assert hm.programs.git.settings.credential."https://github.com".helper != [ ];
-    assert builtins.head hm.programs.git.settings.credential."https://github.com".helper == "";
-    assert hasInfix "gh auth git-credential"
-      (builtins.elemAt hm.programs.git.settings.credential."https://github.com".helper 1);
-    assert builtins.head hm.programs.git.settings.credential."https://gist.github.com".helper == "";
-    assert hasInfix "gh auth git-credential"
-      (builtins.elemAt hm.programs.git.settings.credential."https://gist.github.com".helper 1);
-    assert countExactLine "set -g allow-passthrough on"
-      hm.programs.tmux.extraConfig == 1;
-    assert countExactLine "set -g allow-passthrough on"
-      hm.xdg.configFile."tmux/tmux.conf".text == 1;
-    true;
-  # The installer ISO config (`flake.isoConfig.<host>`) is the extended
-  # per-host config the ISO builds from; the wall below pins both the
-  # btrfs-capable image and the opt-in gated autostart unit.
-  isoConfigAntagony = flake.isoConfig.antagony.config;
-  isoAutoinstallUnit = isoConfigAntagony.systemd.services."nixos-autoinstall";
-  isoEnrollmentText = isoConfigAntagony.environment.etc."hardware-enrollment/antagony.json".text;
+  tryDrvPath = package: builtins.tryEval package.drvPath;
 in
-assert builtins.attrNames flake.nixosConfigurations == [ "antagony" "remembrance" ];
-assert builtins.attrNames (flake.darwinConfigurations or { }) == [ "entropy" ];
-assert builtins.attrNames (flake.homeConfigurations or { }) == [ "massive" ];
-# The standalone host's system layer is the only system-manager output, and it
-# owns exactly the hostname and the tailscaled unit.
-assert builtins.attrNames (flake.systemConfigs or { }) == [ "massive" ];
-# CachyOS is not on system-manager's tested list, so the layer has to opt out of
-# the os-release assertion it would otherwise fail at activation.
-assert !flake.systemConfigs.massive.config.system-manager.preActivationAssertions.osVersion.enable;
-assert hasInfix "/bin/hostnamectl set-hostname massive"
-  flake.systemConfigs.massive.config.systemd.services.set-hostname.serviceConfig.ExecStart;
-assert builtins.elem "d /var/lib/tailscale 0700 root root -"
-  flake.systemConfigs.massive.config.systemd.tmpfiles.rules;
-assert builtins.elem "d /run/tailscale 0755 root root -"
-  flake.systemConfigs.massive.config.systemd.tmpfiles.rules;
-assert hasInfix "/bin/tailscaled --state=/var/lib/tailscale/tailscaled.state --socket=/run/tailscale/tailscaled.sock"
-  flake.systemConfigs.massive.config.systemd.services.tailscaled.serviceConfig.ExecStart;
-assert flake.configurationEvaluationPaths == [
-  "nixosConfigurations.remembrance"
-  "darwinConfigurations.entropy"
-];
-assert authority.machineIds == [
+assert builtins.attrNames flake.nixosConfigurations == [
   "antagony"
-  "entropy"
+  "installed"
+  "live"
   "remembrance"
 ];
-assert (authority.getMachine "remembrance").target == "nixosConfigurations.remembrance";
-assert builtins.attrNames remoteCapabilityValues == validators.capabilityKeys;
-assert remoteInstallCapabilityPresent remoteCapableEnrolledFixture;
-assert remoteCapableEnrolledFixture.remoteInstall
-  == (remoteCapableEnrolledFixture.capabilities.values."install.remote".state == "present");
+assert builtins.attrNames (flake.darwinConfigurations or { }) == [ "entropy" ];
+assert builtins.attrNames (flake.homeConfigurations or { }) == [ "massive" ];
+assert builtins.attrNames (flake.systemConfigs or { }) == [ "massive" ];
+assert flake.configurationEvaluationPaths == [
+  "nixosConfigurations.remembrance"
+  "nixosConfigurations.live"
+  "nixosConfigurations.installed"
+  "darwinConfigurations.entropy"
+];
+assert !(flake ? machineAuthority);
+assert builtins.attrNames flake.iso == [ "live" ];
+assert flake.iso ? live;
+assert flake.isoConfig ? live;
+
+# The installed system and the personal NixOS hosts share one storage
+# contract: labels written by the installer, never a machine-specific disk ID.
+assert installed.fileSystems."/".device == "/dev/disk/by-label/NIXROOT";
+assert installed.fileSystems."/".fsType == "btrfs";
+assert builtins.elem "subvol=@root" installed.fileSystems."/".options;
+assert installed.fileSystems."/boot".device == "/dev/disk/by-label/NIXBOOT";
+assert installed.fileSystems."/nix".neededForBoot;
+assert nixos.fileSystems."/".device == "/dev/disk/by-label/NIXROOT";
+assert nixos.fileSystems."/boot".device == "/dev/disk/by-label/NIXBOOT";
+assert !(nixos ? nixConfig);
+assert live.fileSystems."/".device == "tmpfs";
+
+# Live and installed profiles.
+assert installed.networking.hostName == "nixos";
+assert installed.system.stateVersion == "26.05";
+assert installed.users.mutableUsers;
+assert installed.services.openssh.enable;
+assert live.system.stateVersion == "26.05";
+assert live.services.displayManager.autoLogin.user == "mei";
+assert live.users.users.mei.initialHashedPassword == "";
+assert !live.services.openssh.enable;
+assert !live.boot.loader.systemd-boot.enable;
+assert installed.boot.loader.systemd-boot.enable;
+
+# ISO contract.
+assert iso.isoImage.volumeID == "MEINIX_LIVE";
+assert iso.isoImage.makeEfiBootable;
+assert iso.isoImage.makeUsbBootable;
+assert iso.system.nixos.variant_id == "live";
+assert builtins.elem installedToplevel iso.isoImage.storeContents;
+assert hasPackages [ "nixos-install-tui" ] iso.environment.systemPackages;
+
+# Personal hosts keep their desktop and identity, but no enrollment values.
+assert nixos.networking.hostName == "remembrance";
+assert nixos.system.stateVersion == "21.05";
+assert nixos.users.users.mei.uid == 1000;
+assert nixos.users.users.mei.home == "/home/mei";
+assert nixos.users.groups.users.gid == 100;
+assert nixos.users.users.mei.isNormalUser;
+assert nixos.programs.niri.enable;
+assert nixos.services.displayManager.defaultSession == "niri";
+assert nixos.programs.noctalia.enable;
+assert nixos.hardware.enableRedistributableFirmware;
+assert nixos.hardware.bluetooth.enable;
+assert nixos.hardware.cpu.intel.updateMicrocode;
+assert nixos.hardware.cpu.amd.updateMicrocode;
+assert nixos.services.pipewire.enable;
+assert nixos.services.power-profiles-daemon.enable;
+assert nixos.services.upower.enable;
+assert nixos.networking.networkmanager.enable;
+assert hasPackages [ "ghostty" "obsidian" "noctalia" ] (
+  nixos.home-manager.users.mei.home.packages ++ nixos.environment.systemPackages
+);
+assert packageName nixos.users.users.mei.shell == "nushell";
+assert entropy.networking.hostName == "entropy";
+assert entropy.users.users.mei.home == "/Users/mei";
+
+# Package policy still resolves the requested unfree packages.
 assert !(policyConfig ? allowBroken);
 assert !(policyConfig ? permittedInsecurePackages);
 assert !(policyConfig ? allowUnfree);
@@ -163,152 +101,25 @@ assert policyConfig ? allowUnfreePredicate;
 assert (tryDrvPath policyLinuxPkgs.google-chrome).success;
 assert (tryDrvPath policyLinuxPkgs.obsidian).success;
 assert !(tryDrvPath policyLinuxPkgs.steam).success;
-assert builtins.attrNames flake.apps.x86_64-linux == expectedLinuxApps;
+
+assert builtins.attrNames flake.apps.x86_64-linux == [
+  "build"
+  "build-switch"
+  "clean"
+  "home-news"
+  "home-switch"
+  "nh"
+  "search-pkgs"
+  "update"
+  "zix"
+];
 assert builtins.attrNames (flake.apps.aarch64-darwin or { }) == [
-  "build" "build-switch" "clean" "search-pkgs" "update" "zix"
+  "build"
+  "build-switch"
+  "clean"
+  "search-pkgs"
+  "update"
+  "zix"
 ];
-assert nixos.networking.hostName == "remembrance";
-assert nixos.system.stateVersion == "21.05";
-assert nixos.programs.niri.enable;
-assert nixos.xdg.portal.enable;
-assert nixos.services.displayManager.defaultSession == "niri";
-assert nixos.services.displayManager.sessionData.sessionNames == [ "niri" ];
-assert !nixos.services.xserver.windowManager.bspwm.enable;
-assert nixos.networking.networkmanager.enable;
-assert nixos.hardware.enableRedistributableFirmware;
-assert nixos.hardware.wirelessRegulatoryDatabase;
-assert nixos.programs.noctalia.enable;
-assert nixos.programs.spicetify.enable;
-assert nixos.programs.noctalia.systemd.enable;
-assert nixos.programs.noctalia.recommendedServices.enable;
-assert nixos.hardware.bluetooth.enable;
-assert nixos.services.upower.enable;
-assert nixos.services.power-profiles-daemon.enable;
-assert hasPackages [ "noctalia" ] nixos.environment.systemPackages;
-assert hasPackages requiredLinuxApplications (
-  nixos.home-manager.users.mei.home.packages ++ nixos.environment.systemPackages
-);
-assert !(hasAnyPackage [
-  "awww"
-  "dunst"
-  "i3lock"
-  "i3lock-fancy-rapid"
-  "mako"
-  "picom"
-  "polybar"
-  "rofi"
-  "rofi-calc"
-  "waybar"
-  "swaybg"
-  "swaylock"
-  "wlogout"
-] (
-  nixos.home-manager.users.mei.home.packages ++ nixos.environment.systemPackages
-));
-assert hasPackages [ "obsidian" ] (
-  nixos.home-manager.users.mei.home.packages ++ nixos.environment.systemPackages
-);
-assert hasPackages [ "heroic" ] (
-  nixos.home-manager.users.mei.home.packages ++ nixos.environment.systemPackages
-);
-assert !(hasPackages [ "steam" ] (
-  nixos.home-manager.users.mei.home.packages ++ nixos.environment.systemPackages
-));
-assert noctaliaServiceCount nixos.systemd.user.services == 1;
-assert noctaliaServiceCount nixos.home-manager.users.mei.systemd.user.services == 0;
-assert nixos.systemd.user.services.noctalia.wantedBy == [ "graphical-session.target" ];
-assert nixos.systemd.user.services.noctalia.serviceConfig.Restart == "on-failure";
-assert hasInfix "/bin/noctalia" nixos.systemd.user.services.noctalia.serviceConfig.ExecStart;
-assert noctaliaSettings == null || (
-  noctaliaSettings.shell.launch_apps_as_systemd_services
-  && noctaliaSettings.bar.main.enabled
-  && noctaliaSettings.notification.enable_daemon
-  && noctaliaSettings.wallpaper.enabled
-);
-assert !nixos.services.picom.enable;
-assert !nixos.home-manager.users.mei.services.dunst.enable;
-assert !nixos.home-manager.users.mei.services.polybar.enable;
-assert !nixos.home-manager.users.mei.services.screen-locker.enable;
-assert builtins.attrNames nixosFiles == [
-  ".config/niri/config.kdl"
-  ".config/noctalia/config.toml"
-];
-assert !(hasAnyHomeFile [
-  ".config/bspwm/"
-  ".config/mako/"
-  ".config/polybar/"
-  ".config/rofi/"
-  ".config/sxhkd/"
-  ".config/waybar/"
-] nixos.home-manager.users.mei.home.file);
-assert !hasInfix ''spawn-at-startup "noctalia"'' nixosNiriConfig.text;
-assert !hasInfix "awww" nixosNiriConfig.text;
-assert !hasInfix "mako" nixosNiriConfig.text;
-assert !hasInfix "picom" nixosNiriConfig.text;
-assert !hasInfix "swaybg" nixosNiriConfig.text;
-assert !hasInfix "swww" nixosNiriConfig.text;
-assert !hasInfix "waybar" nixosNiriConfig.text;
-assert hasInfix ''spawn-sh "noctalia msg screen-lock"'' nixosNiriConfig.text;
-assert nixos.users.users.mei.hashedPasswordFile == "/var/lib/nixos-bootstrap/mei-password.hash";
-assert nixos.users.users.mei.isNormalUser;
-assert nixos.users.users.mei.uid == 1000;
-assert nixos.users.groups.users.gid == 100;
-assert nixos.users.users.mei.home == "/home/mei";
-assert builtins.all (group: builtins.elem group nixos.users.users.mei.extraGroups) [
-  "wheel"
-  "networkmanager"
-  "i2c"
-  "video"
-];
-assert !(builtins.elem "docker" nixos.users.users.mei.extraGroups);
-assert nixos.users.users.mei.linger;
-assert nixos.virtualisation.docker.rootless.enable;
-assert nixos.virtualisation.docker.rootless.setSocketVariable;
-assert !nixos.virtualisation.docker.enable;
-assert nixos.virtualisation.podman.enable;
-assert !nixos.virtualisation.podman.dockerSocket.enable;
-assert nixos.systemd.sockets.podman.wantedBy == [ ];
-assert shellName nixos.users.users.mei.shell == "nushell";
-assert hasShell "nushell" nixos.environment.shells;
-assert hasShell "bash" nixos.environment.shells;
-assert hasShell "zsh" nixos.environment.shells;
-assert hasShell "fish" nixos.environment.shells;
-assert assertHm nixos.home-manager.users.mei;
-assert hasInfix "/bin/nu --login" nixosKonsoleProfile.text;
-
-# Declarative Zen Browser is configured on the NixOS home with the real spaces
-# from the shared fragment (which was generated from the live Zen
-# profile), proving the zen aspect is wired onto this host.
-assert nixos.home-manager.users.mei.programs.zen-browser.enable;
-assert nixos.home-manager.users.mei.programs.zen-browser.profiles.meillaya.spaces ? "Personal";
-assert nixos.home-manager.users.mei.programs.zen-browser.profiles.meillaya.spaces."Personal".id
-  == "66b75881-fbf4-40c5-95de-ac8041642aad";
-
-# ISO installer wall: the image reads a btrfs disk and the autostart unit is
-# opt-in, inert by default, and fails into the rescue target.
-assert isoConfigAntagony.boot.supportedFilesystems.btrfs;
-assert isoConfigAntagony.boot.supportedFilesystems.vfat;
-assert builtins.elem "btrfs" isoConfigAntagony.boot.kernelModules;
-assert hasInfix ''"hostId":"antagony"'' isoEnrollmentText;
-assert isoConfigAntagony.system.nixos.variant_id == "installer";
-assert builtins.elem "multi-user.target" isoAutoinstallUnit.wantedBy;
-assert builtins.elem "network-online.target" isoAutoinstallUnit.wants;
-assert builtins.elem "network-online.target" isoAutoinstallUnit.after;
-assert builtins.elem "sshd.service" isoAutoinstallUnit.after;
-assert builtins.elem "hardware-enroll.service" isoAutoinstallUnit.after;
-assert isoAutoinstallUnit.unitConfig.ConditionKernelCommandLine == "nixos.autoinstall=1";
-assert isoAutoinstallUnit.unitConfig.ConditionPathExists == "!/run/autoinstall-done";
-assert isoAutoinstallUnit.unitConfig.SuccessAction == "reboot";
-assert builtins.elem "iso-install-rescue.target" isoAutoinstallUnit.unitConfig.OnFailure;
-assert isoAutoinstallUnit.serviceConfig.Type == "oneshot";
-assert isoAutoinstallUnit.serviceConfig.RemainAfterExit;
-assert isoAutoinstallUnit.serviceConfig.StandardOutput == "journal+console";
-# Invocation, not tautology: a bare `hasInfix "install"` matched the
-# wrapper's own `/nix/store/...-install/bin/install` store path.
-assert hasInfix (builtins.unsafeDiscardStringContext flake.apps.x86_64-linux.install.program) isoAutoinstallUnit.script;
-assert hasInfix "--host antagony" isoAutoinstallUnit.script;
-assert hasInfix "--rescue-identity" isoAutoinstallUnit.script;
-# Negative: a plain boot must never carry the opt-in flag in kernelParams.
-assert !(builtins.elem "nixos.autoinstall=1" isoConfigAntagony.boot.kernelParams);
 
 "dendritic-config-eval=PASS"

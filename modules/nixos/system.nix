@@ -1,14 +1,12 @@
 { host, pkgs, ... }:
 
 let
-  identity = host.machine.identity;
+  identity = host.users.mei.identity;
   user = identity.name;
   home = identity.home;
-  # The installer and root trust anchor. Its private half is on no reachable
-  # machine, so it cannot authenticate anything by itself, but it stays exactly
-  # as it is: config/hosts/intake/*.json and scripts/hardware/gen_trust.py
-  # verify against it, so changing it means re-enrolling a host rather than
-  # editing a list. See docs/service-notes/github-ssh-key.md.
+  # The personal hosts' root trust anchor. The distro profile removes it with
+  # lib.mkForce; see modules/distro/base.nix. See
+  # docs/service-notes/github-ssh-key.md for the key's origin.
   keys = [ "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPoWsO0x+p0FKVKOrfHPc0xeZuOZyMapMt8LxPbWHtb5" ];
 
   # The identity home-manager installs on every host at ~/.ssh/id_github, and at

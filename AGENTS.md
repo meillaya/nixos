@@ -1,175 +1,146 @@
 # PROJECT KNOWLEDGE BASE
 
-**Generated:** 2026-09-25T01:53:22Z
-**Commit:** 0e80408
+**Updated:** 2026-10-28
 **Branch:** main
 
 ## OVERVIEW
-Personal Nix flake for one Den dendritic configuration tree: two NixOS workstations,
-one Apple Silicon macOS workstation, and one standalone Linux Home Manager host, all
-sharing the same `mei` user aspect and machine-authority schema.
+
+Personal Nix flake: two NixOS workstations, one Apple silicon macOS host, one
+standalone Linux Home Manager host, and a personal live/install distro. Den owns
+the entity and aspect tree; flake-parts owns the outputs.
+
+There is no machine authority. Host identity is plain Den user data. Installed
+NixOS systems use a fixed filesystem-label contract, so the installer accepts
+any whole disk.
 
 ## STRUCTURE
+
 ```
 nixos/
 ├── flake.nix            # inputs only + one mkFlake call; import-tree ./modules
 ├── modules/
-│   ├── aspects/         # FLAT: every aspect + the inventory + the machine authority
-│   │                    # inventory.nix schema.nix authority.nix _machine-authority/
-│   │                    # <host>.nix platform-*.nix role-*.nix feature-*.nix
-│   │                    # storage-<host>.nix mei.nix nixpkgs.nix
+│   ├── aspects/         # FLAT: hosts, roles, platforms, feature aspects
+│   │                    # inventory.nix schema.nix nixpkgs.nix
+│   │                    # <host>.nix workstation-*.nix linux.nix darwin.nix
+│   │                    # storage-labels.nix x86-hardware.nix distro-*.nix
+│   │                    # mei.nix niri.nix noctalia.nix sops.nix ...
 │   ├── flake/           # flake-parts outputs per system
-│   ├── nixos/           # low-level NixOS + HM modules owned by aspects
+│   ├── distro/          # live/installed profile, ISO, and installer modules
+│   ├── nixos/           # NixOS + HM payload owned by aspects
 │   ├── shared/          # cross-platform HM payload for the mei user
 │   ├── linux/           # Linux HM payload shared by NixOS and standalone-linux
 │   ├── darwin/          # nix-darwin modules
-│   └── standalone-linux/# the standalone HM home
-├── apps/<system>/       # committed app scripts (build, build-switch, clean)
-├── tests/               # architecture + boundaries + config-eval + policy + readiness
-├── bin/                 # operator entry points (install, enrollment, cachix)
-├── scripts/hardware/    # the enrollment/intake pipeline behind bin/
-├── pkgs/                # repo-local derivations
-├── tools/zix/           # zix: standalone CLI (own flake); every host installs it
-├── zix.json             # zix manifest: package targets, tools, switches
-├── zix/managed/         # zix-generated package set + version pins (manifest is canonical)
-├── config/              # intake declarations + install/package schemas
-├── secrets/             # sops/age stores (see secrets/README.md)
-└── docs/                # architecture + service notes + dated audits
+│   └── standalone-linux/# standalone HM home and system-manager layer
+├── apps/<system>/       # committed build/switch/clean scripts
+├── tests/               # architecture, boundaries, config-eval, policy, distro
+├── bin/                 # operator entry points (cachix setup)
+├── scripts/distro/      # the live ISO installer driver
+├── scripts/check-unfree-pins.py
+├── pkgs/                # repo-local derivations (helmet, omniwm, installer)
+├── tools/zix/           # zix: standalone CLI (own flake)
+├── zix.json             # zix manifest
+├── zix/managed/         # zix-generated package set and pins
+├── config/              # package exceptions only
+├── secrets/             # sops/age stores
+└── docs/                # architecture, service notes, dated audits
 ```
 
+## HOSTS
+
+- `remembrance`, `antagony`: NixOS x86_64 workstations.
+- `entropy`: nix-darwin aarch64-darwin.
+- `massive`: standalone Home Manager plus `systemConfigs.massive`.
+- `live`: the ISO's live session.
+- `installed`: the prebuilt system copied to the target disk.
+
+Identity lives in `modules/aspects/inventory.nix` under
+`users.mei.identity`. Host aspects read `host.users.mei.identity` and
+`host.hostName`. There is no `machine`, `boot`, `storage`, capability, or
+profile record.
+
 ## WHERE TO LOOK
+
 | Task | Location | Notes |
 |------|----------|-------|
-| Add or change a host | `modules/aspects/<host>.nix` + its record in `inventory.nix` | identity/data in the entity, behavior in the aspect |
-| Add a capability | `modules/aspects/<kebab-name>.nix` | one aspect per file; then select it through the chain below |
-| Change the composed chain | `modules/aspects/{linux,darwin}.nix`, `workstation-*.nix` | inward-only, one direction |
-| Change one host's storage or boot | `modules/aspects/storage-<host>.nix` | the enrolled/pending branch lives here |
-| Find what a machine does | `modules/aspects/<host>.nix` then follow `includes` | one file per host, no subfolder hunt |
-| Add / remove / pin a package | `zix add ...` (long form `zix pkg add`; `nix run .#zix` also works) | tools/zix/README.md; curated lists still live in `modules/*/packages.nix` |
-| Sandbox or VM work | `zix sandbox\|vm ...` | omnibin image / rewindvm passthrough |
-| Change zix behaviour | `zix.json` | targets, tools, switches, checks |
-| Allow an unfree package | `config/package-exceptions.json` | time-boxed 90-day entry; consumed by `lib/nixpkgs.nix` |
-| Flake outputs / apps | `modules/flake/` + `apps/<system>/` | flake-parts `perSystem`, never Den entities |
-| Install a new machine | `bin/host-install.sh`, `docs/service-notes/new-machine-ssh-install.md` | gated behind `--yes` |
-| Run the checks | `tests/` | see COMMANDS |
-
-## CODE MAP
-| Symbol | Type | Location | Refs | Role |
-|--------|------|----------|------|------|
-| `den.hosts` / `den.homes` | entity inventory | `modules/aspects/inventory.nix` | Den | the only host/home registry |
-| `getMachine` / `assertValid` | Nix function | `modules/aspects/_machine-authority/{model,validators}.nix` | 4 | the closed machine-authority record |
-| `mkPkgs` / `config` | Nix attrset | `lib/nixpkgs.nix` | 7 | nixpkgs policy, unfree allowlist, emacs overlay |
-| `den.aspects.mei` | aspect | `modules/aspects/mei.nix` | Den | user + cross-platform HM payload |
-| `den.schema.*` | schema extension | `modules/aspects/schema.nix` | Den strict | typed host/user/home/aspect/flake extensions |
-| `configurationEvaluationPaths` | flake option | `modules/flake/outputs.nix` | 1 test | evaluation inventory, not release authority |
-| `flake.iso.<host>` | flake output | `modules/flake/iso-images.nix` | install | per-host installer ISO carrying `hardware-enroll` |
-| `main` | Python entry | `scripts/hardware/cli.py` | 2 wrappers | `collect` / `create` / `validate` hardware intake |
+| Add or change a host | `modules/aspects/inventory.nix`, `modules/aspects/<host>.nix` | identity only in the entity |
+| Add a capability | `modules/aspects/<kebab-name>.nix` | select it from a role/platform |
+| Change the personal chain | `modules/aspects/{linux,darwin,workstation-*}.nix` | inward-only |
+| Change the distro | `modules/distro/` | live/installed/ISO/installer |
+| Change storage labels | `modules/nixos/storage-labels.nix` | `NIXBOOT`, `NIXROOT`, Btrfs subvolumes |
+| Change the installer | `scripts/distro/install.py` + `pkgs/distro-installer.nix` | `--test` covers disk logic |
+| Add or pin a package | `zix add ...` | `tools/zix/README.md` |
+| Change zix | `zix.json` | targets, tools, switches, checks |
+| Allow unfree | `config/package-exceptions.json` | 90-day entry |
+| Build the ISO | `nix build .#iso.live` | x86_64-linux only |
+| Run checks | `tests/` | see COMMANDS |
 
 ## CONVENTIONS
-- `flake.nix` holds inputs and ONE `mkFlake` call. Den exclusively creates
-  `nixosConfigurations`, `darwinConfigurations`, `homeConfigurations`.
-- Machine composition is one acyclic, inward-only chain:
-  `shared-policy -> {linux,darwin}-platform -> role -> hardware -> storage -> named host`.
-- Put behavior in an aspect, never in the registry. Entities carry only explicit
-  system/machine/identity/hostname/membership data.
-- Aspect file shape: `{ den, ... }: { den.aspects.<name> = ...; }`. Reference peers as
-  `den.aspects.<peer>`, select by name, never by string.
-- `zix` owns package-list edits: entries live between `# BEGIN zix` / `# END zix`
-  markers or in the generated `zix/managed/` set, with
-  `zix/managed/manifest.json` as the single source of truth. The CLI is its own
-  flake under `tools/zix/` and every host installs that derivation, so `zix add`
-  works from any directory; `nix run .#zix` remains the checkout path.
-- Repo-local packages go through `pkgs.callPackage` from an existing package list.
-- `secrets/*` is ignored except the three tracked files; the untracked ones are by design.
-- `.gitattributes` marks every non-`.nix` path non-linguist-detectable, so GitHub
-  counts this repo as pure Nix.
-- Agent rules for code, tests, commit messages, and prose live in
-  `agent-settings.nix`. `tools/check-prose.py` enforces the mechanical half of
-  the prose rules; `tests/prose.sh` and the `prose` flake check run it.
 
-## ANTI-PATTERNS (THIS PROJECT)
-- No `nixosSystem` / `darwinSystem` / `homeManagerConfiguration` calls in `flake.nix`. Den owns them.
-- No `specialArgs` / `extraSpecialArgs` anywhere in `flake.nix`, `modules/flake`, `modules/aspects`.
-- No sub-classification folders under `modules/aspects/`: it is one flat directory, so a
-  new aspect is one file. Reintroducing `features/`, `platforms/`, `roles/`, `hardware/`,
-  `storage/`, `named-hosts/`, `users/`, or `entities/` breaks the discovery rule and
-  `tests/dendritic-architecture.sh` fails on it.
-- No `modules/entities/`: the inventory, schema, and machine authority live in
-  `modules/aspects/`.
-- No aspect may `import` `_machine-authority` or call `authority.getMachine`; machine data
-  reaches an aspect only as `host.machine`. `inventory.nix` and `flake/iso-images.nix` are
-  the only two sanctioned readers, and the architecture test enforces it.
-- No `den.aspects` keyed on a system or a generic role name (`x86_64-linux`,
-  `nixos-workstation`, `darwin-workstation`, `massive-aarch64`, `qualifier-role-linux`,
-  `evaluation-role-linux`): Den selects an entity's aspect by the entity's own name, so
-  those keys are never reached.
-- No `runCommand` / `mkDerivation` in production modules (`lib/`, `modules/*` except `modules/flake/{apps,checks}.nix`).
-- No recursive import of `modules/nixos` and no host construction there.
-- No hardcoded `"mei"` / `/home/mei` / `/Users/mei` in active modules - read `host.machine.identity`.
-- No `builtins.getEnv` in `modules/nixos/files.nix`; the standalone home never consults evaluator env.
-- A host-class module must not request Den's `user` argument (Den silently suppresses that route).
-- No `den.batteries.user-shell "nushell"`; Nushell is configured explicitly.
-- Never hand-edit `zix/managed/*` or the inside of a `# BEGIN zix` block: both are
-  generated - use `zix add` / `zix rm` so the manifest and the files stay in sync.
-- No second Niri session authority: Noctalia alone owns bar, notifications, lock, wallpaper.
-- No `spawn-at-startup "noctalia"` in the Niri config.
-- The retired desktop stack must not come back: polybar, dunst, rofi, waybar, mako, picom,
-  bspwm, sxhkd, waybar, swaybg, awww/swww, i3lock, betterlockscreen.
-- Never hand-edit `config/hosts/intake/*.json` (pipeline output) or `secrets/remembrance-keys.yaml`
-  (use `bin/nix-config-host-key-enroll`).
-- Committed enrollment records are not authorization to erase a machine.
+- One acyclic chain: `shared-policy -> {linux,darwin}-platform -> role ->
+  hardware -> host`. The distro chain is `shared-policy -> distro-platform ->
+  distro-role -> live|installed`.
+- Behavior lives in an aspect; the inventory holds identity only.
+- Aspect files are flat and named `<kebab-name>.nix`.
+- `modules/distro/*` are raw NixOS modules imported by the host aspects or the
+  ISO extension. They do not take the Den `host` argument.
+- Storage is a label contract. Never add a disk ID, UUID, `diskById`, disko
+  device, or per-host storage branch.
+- `zix` owns package-list edits. Entries live between `# BEGIN zix` / `# END
+  zix` or in `zix/managed/`; the manifest is canonical.
+- One ISO only: `flake.iso.live`. The installer copies the prebuilt
+  `nixosConfigurations.installed` closure.
+- `secrets/*` is ignored except the tracked files. Do not commit private keys.
 
-## UNIQUE STYLES
-- Machine identity is typed data, not prose: role/boot/storage/capabilities/remoteInstall
-  are validated before any aspect projects them.
-- Capability enrollment is all-or-nothing per device: disabled means no projection is
-  added, and baseline services keep their upstream defaults.
-- Aliases `nixos-workstation` / `darwin-workstation` exist for callers; real hosts select
-  a literal named-host aspect.
-- Sops: encryption needs no identity, decryption does (`$SOPS_AGE_KEY_FILE`, else
-  `~/.config/sops/age/keys.txt`). The `&github` recipient is derived from the GitHub SSH key.
-- Intake JSON is canonical (sorted keys, no trailing whitespace) and digest-bound; the
-  system is written in Nushell.
+## ANTI-PATTERNS
+
+- No machine authority, intake JSON, hardware enrollment, `host.machine`,
+  `machineAuthority`, or per-host `boot`/`storage`/`capabilities` records.
+- No disk IDs or `/dev/disk/by-id` in modules. The installer selects the disk.
+- No `specialArgs` / `extraSpecialArgs` in `flake.nix`, `modules/flake`, or
+  `modules/aspects`.
+- No `nixosSystem` / `darwinSystem` / `homeManagerConfiguration` in `flake.nix`.
+  Den creates configurations.
+- No sub-classification folders under `modules/aspects/`.
+- No second Niri session authority: Noctalia owns bar, notifications, lock, and
+  wallpaper. No polybar, dunst, rofi, waybar, mako, picom, bspwm, sxhkd, swaybg,
+  awww/swww, i3lock, or betterlockscreen.
+- No handwritten `zix/managed/*` or generated marker blocks.
+- No kernel or filesystem command in the installer that skips the UEFI/live
+  medium/size checks.
 
 ## COMMANDS
-```bash
-nix run .#build                # dry-run toplevel build
-nix run .#build-switch         # build + activate (delegates to nh os switch)
-nix run .#home-switch          # standalone Linux Home Manager switch (default target massive)
-nix run .#update               # flake inputs + local source pins
-nix run .#clean                # delete system generations older than 7 days
-zix doctor                     # zix: packages, pins, sandboxes, VMs; on PATH
-zix --help                     # after a switch (tools/zix/README.md)
-nix build .#iso.<host>         # per-host installer ISO (install prerequisite
-                               # unless the installer URI is given explicitly)
 
-# checks (cheap, run all before applying)
+```bash
+nix run .#build                # build the toplevel
+nix run .#build-switch         # build and activate
+nix run .#home-switch          # standalone Home Manager switch
+nix run .#update               # flake inputs + pins
+nix run .#clean                # delete generations older than 7 days
+nix build .#iso.live           # live ISO
+nix build .#checks.x86_64-linux.installer-disk-vm
+zix doctor
+zix --help
+
+# checks
 nix flake check --all-systems --no-build
 bash tests/dendritic-architecture.sh
 bash tests/dendritic-boundaries.sh
 bash tests/dendritic-apps.sh
 bash tests/dendritic-shells.sh
 bash tests/package-policy.sh
+bash tests/prose.sh
 nix-instantiate --eval --strict --expr 'import ./tests/dendritic-config-eval.nix {}'
 ```
 
 ## NOTES
-- `nix flake check` also runs the dendritic `.sh` checks, `zix`, and package-policy as
-  `perSystem` derivations, so a single flake check covers the same invariants with a
-  longer compile.
-- `tests/bootstrap-password-*.sh` are destructive-risk (they bind-mount `/var/lib`,
-  `/etc/shadow`); run them deliberately, never as a reflex after unrelated edits.
-- Linux machine declarations currently hold disabled boot/storage authority, so the
-  toplevels build and evaluate without activation authority. `nh` is the pre-flight
-  build gate and the day-2 switch tool; it never installs.
-- Files that must be git-tracked to evaluate: `secrets/github-ssh.yaml` is referenced as
-  a path literal, and flake evaluation only sees tracked files.
-- Four host codenames exist: `remembrance` and `antagony` (NixOS), `entropy` (macOS) and
-  `massive` (standalone Linux, Home Manager plus a system-manager layer at
-  `systemConfigs.massive` that owns the hostname and tailscaled).
-- Only `remembrance` is enrolled; its record is the committed intake artifact. `antagony` and
-  `entropy` carry inline pending records with boot/storage/capabilities disabled.
-- Unfree pins in `config/package-exceptions.json` are version-exact; on nixpkgs drift the first
-  refused package aborts output evaluation (`nix flake check` fails on the darwin toplevel first).
-  `scripts/check-unfree-pins.py` lists every drifted pin; refresh version fields only.
-- The flake builds only `x86_64-linux` and `aarch64-darwin`; Intel Darwin is retired.
+
+- The flake builds `x86_64-linux` and `aarch64-darwin`. The ISO and installer
+  test exist only for `x86_64-linux`.
+- `nix flake check` also runs the `.sh` checks and package policy as
+  `perSystem` derivations.
+- The live ISO's installer needs UEFI, at least 16 GiB, and a non-live disk.
+- LUKS, Secure Boot, persistence/vaults, public-release hardening, and the
+  MeccanicOS command-bar/AI/fleet features are deferred.
+- `config/package-exceptions.json` is version-exact; nixpkgs drift fails the
+  first output that includes the package.
+- Unfree pins are checked with `scripts/check-unfree-pins.py`.

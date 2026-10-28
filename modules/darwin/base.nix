@@ -1,6 +1,6 @@
 { host, pkgs, lib, ... }:
 let
-  username = host.machine.identity.name;
+  username = host.users.mei.identity.name;
 in
 {
   # Setup user, packages, programs

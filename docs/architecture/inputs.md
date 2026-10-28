@@ -1,7 +1,7 @@
 # Extra flake inputs
 
 `flake.nix` holds the core inputs (nixpkgs, den, flake-parts, import-tree,
-home-manager, darwin, sops-nix, disko, deploy-rs) plus a small set of extras.
+home-manager, darwin, sops-nix, deploy-rs) plus a small set of extras.
 Each extra is selected by an aspect, so a host only pays for what its aspects
 ask for.
 
@@ -32,6 +32,15 @@ and is the day-2 switch tool.
 `modules/aspects/linux.nix`, keeps `/etc/machine-id`, `/etc/ssh`,
 `/var/lib`, `/var/db`, `/var/log`, `/srv`, `/home`, and `/root` from churning
 across rebuilds through bind mounts. NixOS only; Darwin skips it.
+
+## ghostty
+
+`github:ghostty-org/ghostty/v1.4.0`, only while nixpkgs still ships 1.3.1.
+`lib/nixpkgs.nix` seeds Zig 0.17 from the input's zig overlay and applies
+upstream's package overlay, so the Linux hosts build 1.4.0 against the same
+nixpkgs. macOS cannot build that source package and uses the signed DMG
+override in `pkgs/ghostty-bin.nix` instead. Drop the input once nixpkgs carries
+1.4.0.
 
 ## Consumed by an aspect
 

@@ -17,10 +17,12 @@ shared-packages ++ [
   # App replacements formerly installed as casks
   bruno
   dbeaver-bin
+  # Upstream 1.4.0 DMG; nixpkgs still ships 1.3.1. See pkgs/ghostty-bin.nix.
   ghostty-bin
   iterm2
   jetbrains.idea
   kitty
+  obsidian
   postman
   vesktop
   raycast

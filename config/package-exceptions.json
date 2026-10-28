@@ -79,6 +79,17 @@
       "version": "2.4.9"
     },
     {
+      "expiresAt": "2027-01-25",
+      "maxTtlDays": 90,
+      "output": "darwinConfigurations.aarch64-darwin",
+      "owner": "mei",
+      "pname": "obsidian",
+      "reason": "requested-desktop-application",
+      "reviewedAt": "2026-10-27",
+      "system": "aarch64-darwin",
+      "version": "1.13.7"
+    },
+    {
       "expiresAt": "2026-12-14",
       "maxTtlDays": 90,
       "output": "homeConfigurations.massive",

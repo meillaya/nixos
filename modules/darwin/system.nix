@@ -1,6 +1,6 @@
 { config, host, ... }:
 let
-  identity = host.machine.identity;
+  identity = host.users.mei.identity;
   user = identity.name;
 
   # Login keys. sshd reads these from /etc/ssh/nix_authorized_keys.d/<user>
@@ -9,7 +9,7 @@ let
   # this host has no ~/.ssh/authorized_keys.
   #
   # The first key is the install authorizer pinned by modules/nixos/system.nix
-  # and config/hosts/intake/*.json. Its private half is on no reachable machine,
+  # while the distro profile removes it entirely. Its private half is on no reachable machine,
   # so it cannot authenticate anything, but it stays listed so the reviewed
   # enrollment artifacts remain consistent. Changing it means re-enrolling, not
   # editing this list.
