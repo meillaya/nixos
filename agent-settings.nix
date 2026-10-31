@@ -381,8 +381,13 @@ let
     - Stack Overflow, best practices for writing code comments:
       https://stackoverflow.blog/2021/12/23/best-practices-for-writing-code-comments/
   '';
+
+  # Hand-drawn diagram rules. The palette and defaults stay structured; the
+  # prose is appended to the agent instructions.
+  drawing = import ./agents/excalidraw.nix;
+  drawingStyle = drawing.instructions;
 in {
-  inherit repoInstructions codeStyle writingStyle writingCraft;
+  inherit repoInstructions codeStyle writingStyle writingCraft drawing drawingStyle;
 
   instructions = ''
     ${repoInstructions}
@@ -392,5 +397,7 @@ in {
     ${writingStyle}
 
     ${writingCraft}
+
+    ${drawingStyle}
   '';
 }

@@ -38,6 +38,9 @@ shared-packages ++ [
   neovim
   omniorb
   (pkgs.callPackage ../../pkgs/omniwm.nix { })
+  # Hand-drawn diagrams for agents. The renderer uses a host Chrome or
+  # Chromium through EXCALIDRAW_BROWSER_PATH.
+  (pkgs.callPackage ../../pkgs/excalidraw-cli { })
   pycharm
   uv
 ]

@@ -1,0 +1,9 @@
+{
+  "name": "excalidraw-cli",
+  "version": "0.2.0",
+  "private": true,
+  "description": "Pinned npm inputs for the Nix build of @excalidraw/cli",
+  "dependencies": {
+    "@excalidraw/cli": "0.2.0"
+  }
+}

@@ -28,6 +28,16 @@ when nixpkgs doesn't have it or the version lag matters.
    ```
 5. Apply: `nix run .#home-switch`
 
+### Multi-file packages
+
+A package that vendors data files, such as the npm lock for `excalidraw-cli`,
+uses a directory with `default.nix` and the data next to it. Wire it the same
+way.
+
+```nix
+(pkgs.callPackage ../../pkgs/excalidraw-cli { })
+```
+
 ## Patterns
 
 ### Prebuilt binary (most common)

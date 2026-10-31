@@ -67,6 +67,7 @@ rather than changing the running system.
 - [docs/service-notes/zix.md](docs/service-notes/zix.md) and [tools/zix/README.md](tools/zix/README.md): packages, pins, sandboxes, VMs.
 - [secrets/README.md](secrets/README.md): the sops store and its recipients.
 - [agent-settings.nix](agent-settings.nix): the rules agents follow here.
+- [agents/excalidraw.nix](agents/excalidraw.nix): the hand-drawn diagram rules imported by `agent-settings.nix`.
 
 ## Checks
 
