@@ -20,13 +20,18 @@ while (( $# > 0 )); do
       ;;
     --help|-h)
       cat <<'EOF'
-Usage: build [--host HOST] [nix build arguments...]
+Usage: build [--host HOST] [--] [nix build arguments...]
 
 Builds the selected NixOS toplevel without switching, changing boot entries,
-or deleting generations. Defaults to the remembrance host, the same default as
+or deleting generations. Defaults to the current hostname, the same default as
 build-switch.
 EOF
       exit 0
+      ;;
+    --)
+      shift
+      build_args+=("$@")
+      break
       ;;
     *)
       build_args+=("$1")
@@ -36,8 +41,21 @@ EOF
 done
 
 if [[ -z "$host" ]]; then
-  host="remembrance"
+  host="$(hostname -s)"
 fi
 
-exec nix build ".#nixosConfigurations.${host}.config.system.build.toplevel" \
+# Prefer the caller's checkout when the command is run from a flake root.
+# Otherwise fall back to the store copy that contains this script.
+flake_root="$PWD"
+if [[ ! -f "$flake_root/flake.nix" ]]; then
+  flake_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd -P)"
+fi
+
+if git -C "$flake_root" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+  flake_ref="git+file://${flake_root}"
+else
+  flake_ref="path:${flake_root}"
+fi
+
+exec nix build "${flake_ref}#nixosConfigurations.${host}.config.system.build.toplevel" \
   "${build_args[@]}"

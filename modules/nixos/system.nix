@@ -4,18 +4,12 @@ let
   identity = host.users.mei.identity;
   user = identity.name;
   home = identity.home;
-  # The personal hosts' root trust anchor. The distro profile removes it with
-  # lib.mkForce; see modules/distro/base.nix. See
-  # docs/service-notes/github-ssh-key.md for the key's origin.
-  keys = [ "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPoWsO0x+p0FKVKOrfHPc0xeZuOZyMapMt8LxPbWHtb5" ];
-
+  caches = import ../../lib/nix-caches.nix;
   # The identity home-manager installs on every host at ~/.ssh/id_github, and at
   # ~/.ssh/id_ed25519 when that path is free. That is the key a machine actually
   # presents, so interactive login has to accept it or every host-to-host SSH
-  # falls back to a password.
-  loginKeys =
-    keys
-    ++ [ "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOML7rbzZQUicy279UWUYh/7bPEr8OyUqk16kDgStJn+ mei@nixos-thinkpad-machine0" ];
+  # falls back to a password. The public half lives in lib/keys.nix.
+  keys = [ (import ../../lib/keys.nix).github ];
 in
 {
   # Use the systemd-boot EFI boot loader.
@@ -47,21 +41,9 @@ in
     settings = {
       allowed-users = [ "${user}" ];
       trusted-users = [ "@admin" "${user}" ];
-      substituters = [
-        "https://noctalia.cachix.org"
-        "https://nix-community.cachix.org"
-        "https://cache.nixos.org"
-      ];
-      trusted-substituters = [
-        "https://noctalia.cachix.org"
-        "https://nix-community.cachix.org"
-        "https://cache.nixos.org"
-      ];
-      trusted-public-keys = [
-        "noctalia.cachix.org-1:pCOR47nnMEo5thcxNDtzWpOxNFQsBRglJzxWPp3dkU4="
-        "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
-        "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
-      ];
+      substituters = caches.substituters;
+      trusted-substituters = caches.substituters;
+      trusted-public-keys = caches.trustedPublicKeys;
     };
 
     package = pkgs.nix;
@@ -76,9 +58,6 @@ in
 
     # Needed for anything GTK related
     dconf.enable = true;
-
-    # My shell
-    zsh.enable = true;
   };
 
   services = {
@@ -123,7 +102,9 @@ in
     # Joining a tailnet stays a one-time `sudo tailscale up`.
     tailscale.enable = true;
 
-    # Sync state between machines
+    # Sync state between machines. Folders and devices stay user-managed:
+    # overriding them with an empty set would wipe interactive configuration
+    # on every activation.
     syncthing = {
       enable = true;
       openDefaultPorts = true;
@@ -132,11 +113,8 @@ in
       user = "${user}";
       group = "users";
       guiAddress = "127.0.0.1:8384";
-      overrideFolders = true;
-      overrideDevices = true;
 
       settings = {
-        devices = {};
         options.globalAnnounceEnabled = false; # Only sync on LAN
       };
     };
@@ -144,16 +122,6 @@ in
     gvfs.enable = true; # Mount, trash, and other functionalities
     tumbler.enable = true; # Thumbnail support for images
 
-    # Emacs runs as a daemon
-    #emacs = {
-    #  enable = true;
-    #  package = pkgs.emacs-unstable;
-    #};
-  };
-
-  # When emacs builds from no cache, it exceeds the 90s timeout default
-  systemd.user.services.emacs = {
-    serviceConfig.TimeoutStartSec = "7min";
   };
 
   # Enable CUPS to print documents
@@ -190,12 +158,11 @@ in
         "i2c"
         "video"
       ];
-      openssh.authorizedKeys.keys = loginKeys;
+      openssh.authorizedKeys.keys = keys;
     };
 
-    # Root keeps only the installer anchor. The ISO hands root that one key and
-    # the install flow verifies against it, so widening root here would widen
-    # the enrollment trust anchor as a side effect.
+    # Root uses the same fleet key because remote deployment and host-to-host
+    # SSH run as root.
     root = {
       openssh.authorizedKeys.keys = keys;
     };

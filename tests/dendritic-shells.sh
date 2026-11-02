@@ -52,12 +52,8 @@ resolve_bin() {
 
 nu=$(resolve_bin DENDRITIC_NU_BIN nushell nu)
 bash_bin=$(resolve_bin DENDRITIC_BASH_BIN bashInteractive bash)
-zsh=$(resolve_bin DENDRITIC_ZSH_BIN zsh zsh)
-fish=$(resolve_bin DENDRITIC_FISH_BIN fish fish)
 
 test "$("$nu" -c 'print nu-ok')" = nu-ok
 test "$("$bash_bin" -c 'printf bash-ok')" = bash-ok
-test "$("$zsh" -fc 'printf zsh-ok')" = zsh-ok
-test "$("$fish" -c 'printf fish-ok')" = fish-ok
 
 printf '%s\n' 'dendritic-shells=PASS'

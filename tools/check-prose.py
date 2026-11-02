@@ -143,10 +143,9 @@ def main():
     root = Path(__file__).resolve().parent.parent
     paths = [Path(p) for p in args.paths] if args.paths else list(walk(root))
 
-    # Two files state the rules rather than follow them, so the rules cannot be
-    # applied to those files: this script, and the agent-settings.nix rules
-    # document at the repo root.
-    exempt = {Path(__file__).resolve(), (root / "agent-settings.nix").resolve()}
+    # This script states the rules rather than follows them, so the rules
+    # cannot be applied to it.
+    exempt = {Path(__file__).resolve()}
     paths = [p for p in paths if p.resolve() not in exempt]
 
     total = 0

@@ -1,49 +1,56 @@
-# Extra flake inputs
+# Flake inputs
 
-`flake.nix` holds the core inputs (nixpkgs, den, flake-parts, import-tree,
-home-manager, darwin, sops-nix, deploy-rs) plus a small set of extras.
-Each extra is selected by an aspect, so a host only pays for what its aspects
-ask for.
+`flake.nix` holds the core inputs and the feature inputs that an enabled module
+actually reads.
 
-## stylix
+## Core
 
-`github:danth/stylix`, for declarative system-wide theming. The aspect lives in
-`modules/aspects/stylix.nix` and stays behind `stylix.enable = false`
-until a host picks a palette and a font in `stylix.targets.<host>.colors` and
-`stylix.targets.<host>.fonts`.
+- `nixpkgs`: the fleet package pin.
+- `den`, `flake-parts`, `import-tree`: the entity/aspect tree and the
+  per-system outputs. Den is the composition and learning layer.
+- `home-manager` and `darwin`: the two Home Manager and nix-darwin module sets,
+  both following the fleet nixpkgs.
+- `sops-nix`: the encrypted secret store.
+- `flake-compat`: shared by helium, so its consumer can follow one node.
 
-## nix-direnv
+## Feature inputs
 
-`github:nix-community/nix-direnv`. The aspect in
-`modules/aspects/nix-direnv.nix` imports
-`inputs.nix-direnv.nixosModules.default` and enables `programs.nix-direnv` on
-every NixOS host. It pairs with the `use flake` line in `.envrc`.
+- `zen-browser`, `spicetify-nix`, and `helium`: the browser, music, and
+  font-wrapped browser packages.
+- `noctalia`: the desktop shell. It keeps an independent nixpkgs pin so its
+  Cachix artifacts remain usable; zix passes `-I noctalia` to auto-follow for
+  the same reason.
+- `nix-plist-manager`: the macOS preference writer. It is the only author of
+  the keys it manages; `system.defaults` covers the remainder.
+- `system-manager`: the small system layer for `massive` (hostname and
+  tailscaled).
+- `multiverse`: the version index zix uses for real package pins (currently
+  raycast). It is a developer-tool input; the overlay is empty when
+  `zix/managed/pins.json` is empty.
 
-## nh
+## The distro
 
-`github:viperML/nh`, a replacement for `nixos-rebuild` and `home-manager` with
-activation-diff review and `flake.lock` awareness. It is exposed as a flake app
-and is the day-2 switch tool.
+`distro/flake.nix` has its own lock. It consumes this flake as `nixos-config`
+and pins the same nixpkgs revision explicitly, because a path input does not
+carry its own lock into the consumer. It builds the live ISO and the installed
+closure by extending `nixosConfigurations.remembrance`.
 
-## preservation
+## Removed inputs
 
-`github:nix-community/preservation`. The aspect in
-`modules/aspects/preservation.nix`, wired in from
-`modules/aspects/linux.nix`, keeps `/etc/machine-id`, `/etc/ssh`,
-`/var/lib`, `/var/db`, `/var/log`, `/srv`, `/home`, and `/root` from churning
-across rebuilds through bind mounts. NixOS only; Darwin skips it.
+The following were declared but not doing useful work and have been removed:
 
-## ghostty
+- `stylix`: the aspect set `stylix.enable = false`.
+- `preservation`: no host set `preserveAt`.
+- `emacs-overlay`: Emacs is not installed.
+- `nh`: `pkgs.nh` provides the same command without a root input.
+- `deploy-rs`: the flake no longer exposes deploy nodes; use
+  `nix run nixpkgs#deploy-rs` or `nixos-rebuild --target-host` when needed.
+- `ghostty`: nixpkgs carries the package; macOS uses the local
+  `pkgs/ghostty-bin.nix` overlay.
+- `systems`: it existed only to deduplicate stylix's systems node.
 
-`github:ghostty-org/ghostty/v1.4.0`, only while nixpkgs still ships 1.3.1.
-`lib/nixpkgs.nix` seeds Zig 0.17 from the input's zig overlay and applies
-upstream's package overlay, so the Linux hosts build 1.4.0 against the same
-nixpkgs. macOS cannot build that source package and uses the signed DMG
-override in `pkgs/ghostty-bin.nix` instead. Drop the input once nixpkgs carries
-1.4.0.
+## zix
 
-## Consumed by an aspect
-
-`zen-browser`, `spicetify-nix`, `helium`, and `noctalia` are read by the aspect
-that owns their behavior. `multiverse` is added by `zix` when the first version
-pin is created, and the pin overlay in `lib/nixpkgs.nix` applies it.
+zix is a developer tool. It is exposed as `nix run .#zix`, has a dev-shell
+function, and still owns `zix/managed/`. It is not installed in any host
+package closure.

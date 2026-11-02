@@ -4,6 +4,7 @@ grail, bin, wrap, and flake-input management."""
 import json
 import os
 import shutil
+import socket
 
 from . import nixedit, pins, tools
 from .cmd_pkg import show_change
@@ -180,9 +181,12 @@ def cmd_switch(ctx, args):
     if host is not None and host not in known and host.startswith("-"):
         extra = [host] + extra
         host = None
-    host = host or ctx.cfg.default_switch
+    if host is None:
+        current = socket.gethostname().split(".", 1)[0]
+        host = current if current in known else ctx.cfg.default_switch
     if not host:
-        raise ZixError("no host given and no default_switch configured")
+        raise ZixError(
+            "no host given and the current hostname is not a configured switch")
     if host not in known:
         raise ZixError("unknown host %r (known: %s)"
                        % (host, ", ".join(sorted(known))))

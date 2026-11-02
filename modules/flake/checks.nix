@@ -1,6 +1,6 @@
-{ inputs, lib, ... }:
+{ inputs, ... }:
 {
-  perSystem = { pkgs, system, ... }: {
+  perSystem = { pkgs, ... }: {
     checks = {
       dendritic-architecture = pkgs.runCommand "dendritic-architecture" {
         nativeBuildInputs = [ pkgs.bash pkgs.fastfetch pkgs.gnugrep pkgs.python3 ];
@@ -35,16 +35,19 @@
         touch "$out"
       '';
 
-      package-policy = pkgs.runCommand "package-policy" {
-        nativeBuildInputs = [ pkgs.bash pkgs.gnugrep pkgs.nix pkgs.python3 ];
-        DENDRITIC_POLICY_REPO_ROOT = "${inputs.self}";
-        DENDRITIC_NIXPKGS_FLAKE = "${inputs.nixpkgs}";
-        DENDRITIC_EMACS_OVERLAY_FLAKE = "${inputs.emacs-overlay}";
+      script-args = pkgs.runCommand "script-args" {
+        nativeBuildInputs = [
+          pkgs.bash
+          pkgs.coreutils
+          pkgs.git
+          pkgs.gnugrep
+          pkgs.inetutils
+        ];
         src = inputs.self;
       } ''
         cp -R "$src" source
         chmod -R u+w source
-        bash source/tests/package-policy.sh
+        bash source/tests/script-args.sh
         touch "$out"
       '';
 
@@ -59,8 +62,6 @@
         nativeBuildInputs = [ pkgs.bash ];
         DENDRITIC_NU_BIN = "${pkgs.nushell}/bin/nu";
         DENDRITIC_BASH_BIN = "${pkgs.bashInteractive}/bin/bash";
-        DENDRITIC_ZSH_BIN = "${pkgs.zsh}/bin/zsh";
-        DENDRITIC_FISH_BIN = "${pkgs.fish}/bin/fish";
         src = inputs.self;
       } ''
         bash "$src/tests/dendritic-shells.sh"
@@ -86,26 +87,6 @@
         bash source/tests/prose.sh
         touch "$out"
       '';
-    } // lib.optionalAttrs (system == "x86_64-linux") {
-      # The live profile plus the installer package, with a blank target disk.
-      # `--test` exercises partitioning, labels, subvolumes, and mounting
-      # without copying a system.
-      installer-disk-vm =
-        let
-          liveConfig = inputs.self.nixosConfigurations.live.extendModules {
-            modules = [
-              ../../modules/distro/installer.nix
-              {
-                distro.installer.enable = true;
-                distro.installer.installedSystem = "/run/not-used";
-                distro.installer.flakeSource = "/run/not-used";
-              }
-            ];
-          };
-        in
-        import ../../tests/installer-disk-vm.nix {
-          inherit pkgs liveConfig;
-        };
     };
   };
 }

@@ -62,9 +62,9 @@ for module in \
   modules/darwin/system.nix \
   modules/aspects/sops.nix \
   modules/aspects/rootless-containers.nix \
-  modules/distro/base.nix \
-  modules/distro/live.nix \
-  modules/distro/installed.nix
+  distro/modules/base.nix \
+  distro/modules/live.nix \
+  distro/modules/installed.nix
 do
   if grep -Eq '"mei"|/home/mei|/Users/mei' "$module"; then
     echo "hardcoded identity remains in active module: $module" >&2
@@ -84,7 +84,7 @@ if grep -R -E '/dev/disk/by-id|diskById|storage\.profile' --include='*.nix' modu
 fi
 
 if grep -R -E 'host\.machine|_machine-authority|machineAuthority' \
-  --include='*.nix' modules flake.nix apps bin scripts 2>/dev/null; then
+  --include='*.nix' modules flake.nix apps scripts 2>/dev/null; then
   echo 'machine-authority reference remains in active code' >&2
   exit 1
 fi

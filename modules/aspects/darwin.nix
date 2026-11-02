@@ -7,7 +7,4 @@
     den.aspects.sops
     den.aspects.darwin-home
   ];
-  # `preservation` is intentionally absent here: it is NixOS-flavored
-  # (boot.initrd.systemd + services.preservation) and only wired in
-  # ~/nixos/. The flake input is declared for lockfile symmetry.
 }

@@ -1,21 +1,24 @@
+# secrets/
+
 Place local sops-encrypted secret files in this directory when needed.
 
-This directory is intentionally ignored by git (except for the tracked files
-listed below) so the public flake can bootstrap on fresh Linux installs without
-fetching a private GitHub secrets repository during evaluation.
+This directory is intentionally ignored by git except for the tracked files
+listed below, so the public flake can bootstrap on fresh Linux installs without
+fetching a private secrets repository during evaluation.
 
 Tracked, committed, sops/age-encrypted:
 
 - `github-ssh.yaml`: the authoritative GitHub SSH keypair, field
   `github-ssh-private-key`. Installed on every host at `~/.ssh/id_github` (and at
   `~/.ssh/id_ed25519` when that path is still free) by
-  `home.activation.installGithubSshKey` in `modules/aspects/mei.nix`. See
+  `home.activation.installGithubSshKey` in `modules/aspects/mei.nix`. The public
+  half is declared in `lib/keys.nix`. See
   [../docs/service-notes/github-ssh-key.md](../docs/service-notes/github-ssh-key.md).
 
 Untracked by design, never commit:
 
-- `remembrance-keys.yaml`: per-host private keys produced by enrollment.
-  `scripts/hardware/gen_trust.py` reads it and fails closed when it is missing.
+- per-host private keys or environment-specific secret material. Keep them in a
+  private password manager or backup store, not in this repository.
 
 Recipients live in `../.sops.yaml`: `&admin` and `&recovery` (standalone age
 identities), `&workstation` (`~/.config/sops/age/keys.txt` on the CachyOS
@@ -24,6 +27,5 @@ GitHub key with `ssh-to-age`, which is what NixOS hosts get from
 `sops.age.sshKeyPaths = ~/.ssh/id_ed25519`).
 
 Decrypting requires an age identity on the machine: `$SOPS_AGE_KEY_FILE`, else
-`~/.config/sops/age/keys.txt`. Encryption needs no identity: the
-recipients in `.sops.yaml` are public, so a fresh clone can add secrets but not
-read them.
+`~/.config/sops/age/keys.txt`. Encryption needs no identity: the recipients
+in `.sops.yaml` are public, so a fresh clone can add secrets but not read them.

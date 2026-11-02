@@ -7,7 +7,9 @@ package module separately consumes the shared package list.
 ```text
 config/            Static program configuration and assets
 files.nix          Cross-platform Home Manager files
-home-manager.nix   Bash, Fish, Zsh, Nushell-adjacent tools, Git, Vim, tmux, etc.
+shell/bash.nix     Bash fallback and readline
+shell/nushell.nix  Nushell login shell
+home-manager.nix   Git, SSH, Vim, tmux, direnv, Yazi, Kitty, and fastfetch
 packages.nix       Cross-platform package list
 ```
 

@@ -5,7 +5,7 @@ let
   localUpdaterNamesFor = _system: [ ];
   # pathDeps are prepended to the wrapper's PATH. Used for scripts that shell
   # out to flake-provided tools that no module installs into the host
-  # environment (build-switch needs nh from inputs.nh).
+  # environment (build-switch needs nh from nixpkgs).
   mkApp = scriptName: system: { pathDeps ? [ ] }:
     let
       pkgs = nixpkgs.legacyPackages.${system};
@@ -124,7 +124,7 @@ EOF
   mkHomeSwitchApp = system:
     let
       pkgs = nixpkgs.legacyPackages.${system};
-      defaultTarget = "massive";
+      defaultTarget = "\${HOSTNAME:-}";
     in {
       type = "app";
       program = "${(pkgs.writeShellScriptBin "home-switch" ''
@@ -149,7 +149,7 @@ EOF
 Usage: nix run .#home-switch -- [--target HOME] [home-manager args...]
 
 Defaults:
-  x86_64-linux -> massive
+  current hostname
   backup extension -> hm-backup-<timestamp>
 
 Examples:
@@ -166,6 +166,11 @@ EOF
               ;;
           esac
         done
+
+        if [ -z "$target" ]; then
+          printf '%s\n' 'home-switch: cannot determine the current host; pass --target HOME' >&2
+          exit 2
+        fi
 
         # Pre-flight: name every derivation this switch would compile locally.
         # `--dry-run` consults the substituters, so anything listed here is
@@ -223,7 +228,7 @@ EOF
   mkHomeNewsApp = system:
     let
       pkgs = nixpkgs.legacyPackages.${system};
-      defaultTarget = "massive";
+      defaultTarget = "\${HOSTNAME:-}";
     in {
       type = "app";
       program = "${(pkgs.writeShellScriptBin "home-news" ''
@@ -243,7 +248,7 @@ EOF
 Usage: nix run .#home-news -- [--target HOME] [extra home-manager news args...]
 
 Defaults:
-  x86_64-linux -> massive
+  current hostname
 
 Examples:
   nix run .#home-news
@@ -257,6 +262,11 @@ EOF
               ;;
           esac
         done
+
+        if [ -z "$target" ]; then
+          printf '%s\n' 'home-news: cannot determine the current host; pass --target HOME' >&2
+          exit 2
+        fi
 
         exec ${home-manager.packages.${system}.home-manager}/bin/home-manager \
           --extra-experimental-features "nix-command flakes" \
@@ -515,7 +525,7 @@ EOF
     };
   mkLinuxApps = system:
     let
-      nhPkg = inputs.nh.packages.${system}.default or null;
+      nhPkg = nixpkgs.legacyPackages.${system}.nh or null;
     in {
       "build" = mkApp "build" system { };
       "home-news" = mkHomeNewsApp system;

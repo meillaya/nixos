@@ -18,8 +18,6 @@ in
     x86_64-linux = {
       remembrance.users.mei.identity = linuxIdentity;
       antagony.users.mei.identity = linuxIdentity;
-      live.users.mei.identity = linuxIdentity;
-      installed.users.mei.identity = linuxIdentity;
     };
     aarch64-darwin.entropy.users.mei.identity = darwinIdentity;
   };

@@ -20,6 +20,9 @@ let
 in
 {
   flake.systemConfigs.massive = system-manager.lib.makeSystemConfig {
-    modules = [ ../standalone-linux/system.nix ];
+    modules = [
+      ../standalone-linux/system.nix
+      { standalone.hostName = "massive"; }
+    ];
   };
 }

@@ -1,23 +1,29 @@
 # The personal distro
 
-The distro is one live ISO and one prebuilt installed system. It is personal:
-the user is `mei`, the package set is the repository's existing desktop, and
-the installed hostname is `nixos`.
+The distro is a separate flake under `distro/`. It owns one live ISO and one
+prebuilt installed system. Both are built from the real workstation profile,
+`nixosConfigurations.remembrance`, with the live/installed overrides in
+`distro/modules/`.
 
 ## Profiles
 
-`nixosConfigurations.live` is a normal live system. It includes `distro-role`,
-`modules/distro/base.nix`, and `modules/distro/live.nix`:
+`distro/flake.nix` extends the fleet host configuration:
 
-- user `mei`, empty initial password, passwordless sudo;
-- auto-login into the Niri session;
-- no personal SSH keys, tailscale, or syncthing;
-- a Btrfs/VFAT-capable kernel and generic x86 firmware, microcode, audio,
-  Bluetooth, power, i2c, and suspend support.
+- `nixosConfigurations.installed` adds `distro/modules/base.nix` and
+  `distro/modules/installed.nix`. It keeps the real Niri/Noctalia desktop, the
+  user payload, and the label storage contract, with a fixed `nixos` hostname,
+  SSH enabled, no trusted key, and mutable users.
+- `nixosConfigurations.live` adds `distro/modules/base.nix` and
+  `distro/modules/live.nix`. It sets `my.storage.labels.enable = false`, uses a
+  tmpfs root, auto-logs in as `mei`, gives passwordless sudo, and disables the
+  personal SSH, tailscale, and syncthing settings.
+- `iso.live` extends the live configuration with `distro/modules/iso.nix`,
+  `distro/modules/installer.nix`, the installed toplevel, and the main flake
+  source.
 
-`nixosConfigurations.installed` includes the same desktop, the label storage
-module, and `modules/distro/installed.nix`. It enables SSH but trusts no key,
-uses mutable users, and has no password until the installer sets one.
+The installed closure is the workstation profile, not a second `distro-role`.
+The distro pins the same nixpkgs revision as the fleet and follows it through
+the `nixos-config` input.
 
 ## Storage contract
 
@@ -31,26 +37,29 @@ The installer writes:
 
 The installed closure mounts those labels. It has no disk ID, UUID, or disko
 evaluation. A disk with the labels boots the same closure, which is what makes
-the installer disk-agnostic.
+the installer disk-agnostic. The live profile turns the mount set off with
+`my.storage.labels.enable = false`.
 
-## ISO
+## Build and install
 
-`flake.iso.live` extends `nixosConfigurations.live` with
-`modules/distro/iso.nix`, `modules/distro/installer.nix`, the prebuilt installed
-toplevel, and the flake source. `isoImage.storeContents` carries the installed
-closure, so `nixos-install --system` needs no network.
+From the repository root:
 
-The ISO uses the live user session, not an XFCE installer desktop. Open a
-terminal in the live session and run `sudo nixos-install-tui`, or run
-`nixos-install-tui --test --disk /dev/sdX` to exercise the disk steps alone.
+```bash
+nix build ./distro#iso.live
+sudo dd if=result/iso/*.iso of=/dev/sdX bs=4M status=progress oflag=sync
+```
 
-## Installer
+Boot the medium with UEFI, open a terminal in the live session, and run:
 
-`scripts/distro/install.py` is the disk and install driver. The wrapper
-`nixos-install-tui` supplies:
+```bash
+sudo nixos-install-tui
+```
+
+`distro/pkgs/distro-installer.nix` wraps `distro/scripts/install.py` and
+supplies:
 
 - `NIXOS_INSTALLED_SYSTEM`: the prebuilt installed toplevel;
-- `NIXOS_FLAKE_SOURCE`: the flake source copied to `/etc/nixos`;
+- `NIXOS_FLAKE_SOURCE`: the main flake source copied to `/etc/nixos`;
 - `NIXBOOT_LABEL` and `NIXROOT_LABEL`;
 - `NIXOS_LIVE_USER`.
 
@@ -60,11 +69,25 @@ creation, subvolume mounts, `nixos-install --system`, password creation,
 the typed confirmation; `--non-interactive` requires `--disk` and
 `NIXOS_PASSWORD`.
 
+## Checks
+
+```bash
+cd distro
+nix flake check
+nix build .#checks.x86_64-linux.installer-disk-vm
+```
+
+`distro/tests/config-eval.nix` checks the live, installed, and ISO contracts.
+`distro/tests/installer-disk-vm.nix` runs the installer's disk phase against a
+blank virtual disk.
+
 ## Rebuilds
 
-The installer copies the flake source to the target's `/etc/nixos`. A later
-`nixos-rebuild switch --flake /etc/nixos#installed` uses that source. Rebuilds
-may fetch flake inputs; the install itself does not.
+The installer copies the main flake source to the target's `/etc/nixos`. A
+later `nixos-rebuild switch --flake /etc/nixos#remembrance` (or `#antagony`)
+uses that source. The first switch targets the real host; the installed
+`nixos` hostname is only the initial identity. Rebuilds may fetch flake inputs;
+the install itself does not.
 
 ## Non-goals
 

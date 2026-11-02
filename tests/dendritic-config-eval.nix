@@ -4,11 +4,8 @@ let
   policyConfig = policy.config;
   policyLinuxPkgs = policy.mkPkgs "x86_64-linux";
   nixos = flake.nixosConfigurations.remembrance.config;
-  installed = flake.nixosConfigurations.installed.config;
-  live = flake.nixosConfigurations.live.config;
   entropy = flake.darwinConfigurations.entropy.config;
-  iso = flake.isoConfig.live.config;
-  installedToplevel = flake.nixosConfigurations.installed.config.system.build.toplevel;
+  massive = flake.homeConfigurations.massive.config;
   packageName = package: package.pname or package.name or (builtins.baseNameOf (toString package));
   hasPackages = names: packages:
     let present = map packageName packages;
@@ -17,55 +14,22 @@ let
 in
 assert builtins.attrNames flake.nixosConfigurations == [
   "antagony"
-  "installed"
-  "live"
   "remembrance"
 ];
 assert builtins.attrNames (flake.darwinConfigurations or { }) == [ "entropy" ];
 assert builtins.attrNames (flake.homeConfigurations or { }) == [ "massive" ];
 assert builtins.attrNames (flake.systemConfigs or { }) == [ "massive" ];
-assert flake.configurationEvaluationPaths == [
-  "nixosConfigurations.remembrance"
-  "nixosConfigurations.live"
-  "nixosConfigurations.installed"
-  "darwinConfigurations.entropy"
-];
 assert !(flake ? machineAuthority);
-assert builtins.attrNames flake.iso == [ "live" ];
-assert flake.iso ? live;
-assert flake.isoConfig ? live;
+assert !(flake ? iso);
+assert !(flake ? isoConfig);
 
-# The installed system and the personal NixOS hosts share one storage
-# contract: labels written by the installer, never a machine-specific disk ID.
-assert installed.fileSystems."/".device == "/dev/disk/by-label/NIXROOT";
-assert installed.fileSystems."/".fsType == "btrfs";
-assert builtins.elem "subvol=@root" installed.fileSystems."/".options;
-assert installed.fileSystems."/boot".device == "/dev/disk/by-label/NIXBOOT";
-assert installed.fileSystems."/nix".neededForBoot;
+# The personal NixOS hosts use the shared label contract.
 assert nixos.fileSystems."/".device == "/dev/disk/by-label/NIXROOT";
+assert nixos.fileSystems."/".fsType == "btrfs";
+assert builtins.elem "subvol=@root" nixos.fileSystems."/".options;
 assert nixos.fileSystems."/boot".device == "/dev/disk/by-label/NIXBOOT";
+assert nixos.fileSystems."/nix".neededForBoot;
 assert !(nixos ? nixConfig);
-assert live.fileSystems."/".device == "tmpfs";
-
-# Live and installed profiles.
-assert installed.networking.hostName == "nixos";
-assert installed.system.stateVersion == "26.05";
-assert installed.users.mutableUsers;
-assert installed.services.openssh.enable;
-assert live.system.stateVersion == "26.05";
-assert live.services.displayManager.autoLogin.user == "mei";
-assert live.users.users.mei.initialHashedPassword == "";
-assert !live.services.openssh.enable;
-assert !live.boot.loader.systemd-boot.enable;
-assert installed.boot.loader.systemd-boot.enable;
-
-# ISO contract.
-assert iso.isoImage.volumeID == "MEINIX_LIVE";
-assert iso.isoImage.makeEfiBootable;
-assert iso.isoImage.makeUsbBootable;
-assert iso.system.nixos.variant_id == "live";
-assert builtins.elem installedToplevel iso.isoImage.storeContents;
-assert hasPackages [ "nixos-install-tui" ] iso.environment.systemPackages;
 
 # Personal hosts keep their desktop and identity, but no enrollment values.
 assert nixos.networking.hostName == "remembrance";
@@ -92,11 +56,18 @@ assert packageName nixos.users.users.mei.shell == "nushell";
 assert entropy.networking.hostName == "entropy";
 assert entropy.users.users.mei.home == "/Users/mei";
 
+# The standalone host keeps its own Home Manager and system-manager layers.
+assert massive.home.username == "mei";
+assert massive.home.homeDirectory == "/home/mei";
+assert massive.programs.nushell.enable;
+assert builtins.hasAttr "podman" massive.systemd.user.sockets;
+assert builtins.isAttrs flake.systemConfigs.massive;
+
 # Package policy still resolves the requested unfree packages.
 assert !(policyConfig ? allowBroken);
 assert !(policyConfig ? permittedInsecurePackages);
 assert !(policyConfig ? allowUnfree);
-assert policyConfig.allowInsecure == true;
+assert policyConfig.allowInsecure == false;
 assert policyConfig ? allowUnfreePredicate;
 assert (tryDrvPath policyLinuxPkgs.google-chrome).success;
 assert (tryDrvPath policyLinuxPkgs.obsidian).success;

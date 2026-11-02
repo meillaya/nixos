@@ -28,7 +28,7 @@
       ],
       [
         "bash",
-        "tests/package-policy.sh"
+        "tests/script-args.sh"
       ],
       [
         "bash",
@@ -46,7 +46,6 @@
   "companion_inputs": {
     "multiverse": "github:fzakaria/nixpkgs-multiverse"
   },
-  "default_switch": "massive",
   "description": "Den dendritic Nix config: NixOS workstations, nix-darwin, standalone CachyOS Home Manager with a system-manager layer",
   "managed": {
     "manifest": "zix/managed/manifest.json",

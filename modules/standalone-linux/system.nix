@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ config, lib, pkgs, ... }:
 
 # System-level layer for the `massive` standalone host, built into
 # `systemConfigs.massive` by modules/flake/system-manager.nix.
@@ -8,7 +8,14 @@
 # package, and the rest of the system state stay with ./home-manager.nix and the
 # CachyOS package manager.
 {
-  nixpkgs.hostPlatform = "x86_64-linux";
+  options.standalone.hostName = lib.mkOption {
+    type = lib.types.str;
+    default = "massive";
+    description = "Static hostname for the standalone host.";
+  };
+
+  config = {
+    nixpkgs.hostPlatform = "x86_64-linux";
 
   # CachyOS is an Arch derivative, and system-manager's pre-activation assertion
   # only accepts nixos, ubuntu and debian. It ships this option for untested
@@ -58,12 +65,13 @@
   # refused outright while a static hostname exists, which is the state this
   # machine is in.
   systemd.services.set-hostname = {
-    description = "Set the static hostname to massive";
+    description = "Set the static hostname to ${config.standalone.hostName}";
     wantedBy = [ "multi-user.target" ];
     serviceConfig = {
       Type = "oneshot";
       RemainAfterExit = true;
-      ExecStart = "${pkgs.systemd}/bin/hostnamectl set-hostname massive";
+      ExecStart = "${pkgs.systemd}/bin/hostnamectl set-hostname ${config.standalone.hostName}";
     };
+  };
   };
 }

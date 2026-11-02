@@ -18,13 +18,13 @@ den.hosts.x86_64-linux.remembrance.users.mei.identity = {
 ```
 
 Den defaults `host.hostName` to the entity name and `host.system` to the
-inventory key. Aspects read `host.hostName` and
-`host.users.mei.identity`; there is no `host.machine` record and no flake-level
-machine authority.
+inventory key. Aspects read `host.hostName` and `host.users.mei.identity`; there
+is no `host.machine` record and no flake-level machine authority.
 
 The personal hosts are `remembrance` and `antagony` (NixOS), `entropy`
 (nix-darwin), and `massive` (standalone Home Manager plus system-manager). The
-distro adds `live` and `installed`.
+distro is a separate flake under `distro/`; it is not an entity in this
+inventory.
 
 `modules/aspects/schema.nix` extends Den with the user `identity` type, the
 three class payload options, and `homeDirectory` for standalone homes.
@@ -39,34 +39,42 @@ named host -> role -> platform -> feature aspects
 
 - `workstation-role-linux` = `linux-platform` + Niri + Noctalia + Home Manager.
 - `linux-platform` = shared nixpkgs policy, the personal NixOS base, rootless
-  containers, sops, desktop media, preservation, stylix, nix-direnv, and generic
-  x86 hardware.
+  containers, sops, desktop media, and generic x86 hardware.
 - `workstation-role-darwin` = the Darwin platform plus the dock module.
-- `distro-role` = `distro-platform` + Niri + Noctalia + Home Manager.
-- `distro-platform` = shared nixpkgs policy, the NixOS base, rootless
-  containers, desktop media, stylix, nix-direnv, and generic x86 hardware.
+- `massive` = the user aspect plus the standalone rootless-container, Noctalia,
+  and desktop-media aspects, with the system-manager layer in
+  `modules/standalone-linux/`.
 
 A host aspect may include a raw module with `nixos.imports` or `darwin.imports`
-when the module is not itself an aspect. Personal hosts and `installed` include
-`storage-labels`; `live` does not, because the ISO owns its media.
+when the module is not itself an aspect. Personal hosts include
+`storage-labels`; the standalone home and Darwin host do not.
 
-## Host and distro data
+## Host data
 
 `modules/nixos/system.nix` is the shared NixOS base. It reads
-`host.users.mei.identity` for the account, home, and SSH key paths. Personal
-services that should not start on a fresh distro (tailscale, syncthing, the
-personal SSH trust anchor) are switched off by `modules/distro/base.nix` with
-`lib.mkForce`.
+`host.users.mei.identity` for the account, home, group, and SSH key paths.
+`modules/nixos/storage-labels.nix` owns the label contract and exposes
+`my.storage.labels.enable`, so a profile without an installed disk can opt out
+without forcing the mount set away.
 
-`modules/distro/` owns the distro:
+`modules/shared/home-manager.nix` is the cross-platform Home Manager payload.
+Nushell and Bash are the only configured shells; Nushell is the login shell.
 
-- `identity.nix`: name, id, hostname, live user, and storage labels.
-- `base.nix`: shared live/installed overrides.
-- `live.nix`: auto-login, passwordless sudo, and a temporary root for the
-  normal `nixosConfigurations.live` build.
-- `installed.nix`: fixed hostname and SSH without trusted keys.
-- `iso.nix`: ISO media plumbing.
-- `installer.nix`: the offline installer package and its options.
+## The distro boundary
+
+`distro/` is its own flake. It consumes this flake as a path input and extends
+`nixosConfigurations.remembrance` with:
+
+- `distro/modules/base.nix`: the live/installed overrides.
+- `distro/modules/live.nix`: auto-login, passwordless sudo, and the ISO root.
+- `distro/modules/installed.nix`: a fixed hostname and SSH without trusted keys.
+- `distro/modules/iso.nix`: ISO media plumbing.
+- `distro/modules/installer.nix`: the offline installer package and its options.
+- `distro/modules/identity.nix`: name, id, hostname, live user, and labels.
+
+The installed closure is the real workstation profile, not a second
+`distro-role`. The distro pins the same nixpkgs revision as the fleet and
+follows it through `nixos-config`.
 
 ## Storage
 
@@ -81,25 +89,29 @@ Every installed NixOS system reads the same labels:
 | `NIXROOT` | Btrfs, `@log` | `/var/log` |
 
 `modules/nixos/storage-labels.nix` owns the mounts. The installer creates the
-labels on the selected disk. No aspect references a disk ID or a UUID.
+labels on the selected disk. No aspect references a disk ID or a UUID. The live
+profile sets `my.storage.labels.enable = false` because its root is the ISO
+medium.
 
 ## Flake outputs
 
-- `nixosConfigurations.{remembrance,antagony,live,installed}`
+- `nixosConfigurations.{remembrance,antagony}`
 - `darwinConfigurations.entropy`
 - `homeConfigurations.massive`
 - `systemConfigs.massive`
-- `iso.live` and `isoConfig.live`
-- `deploy.nodes` for the four personal hosts
+- `checks`, `apps`, `packages`, `devShells`
 
 `flake.nix` holds inputs and one `mkFlake` call. Den creates the
-configurations; `modules/flake/` creates the per-system outputs.
+configurations; `modules/flake/` creates the per-system outputs. The distro
+flake owns `nixosConfigurations.{live,installed}`, `iso.live`, and
+`isoConfig.live`.
 
 ## Tests
 
-`tests/dendritic-architecture.sh` pins the flat tree, the entity shape, and the
-absence of machine authority. `tests/dendritic-boundaries.sh` pins the
-identity sources and the retired desktop stack. `dendritic-config-eval.nix`
-evaluates the real hosts plus the live and installed profiles and the ISO
-contract. `tests/installer-disk-vm.nix` exercises partitioning on a blank
-virtual disk.
+`tests/dendritic-architecture.sh` pins the flat tree, the entity shape, the
+absence of machine authority, and the distro boundary. `tests/dendritic-
+boundaries.sh` pins the identity sources and the retired desktop stack.
+`tests/dendritic-config-eval.nix` evaluates the personal hosts and the package
+policy. The distro's own `tests/config-eval.nix` evaluates the live, installed,
+and ISO contracts; `distro/tests/installer-disk-vm.nix` exercises partitioning
+on a blank virtual disk.

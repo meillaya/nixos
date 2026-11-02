@@ -1,3 +1,0 @@
-warning: Nix search path entry '/home/mei/.nix-defexpr/channels' does not exist, ignoring
-package-policy-source=PASS
-package-policy-probe=PASS

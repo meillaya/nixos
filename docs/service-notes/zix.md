@@ -20,11 +20,11 @@ switch commands.
 
 | what | where | notes |
 | ---- | ----- | ----- |
-| CLI | `tools/zix/` (installed as `zix`; `nix run .#zix`) | Python 3 stdlib only; own flake + package, built by `modules/flake/packages.nix` |
+| CLI | `tools/zix/` (developer tool; `nix run .#zix`) | Python 3 stdlib only; own flake + package, built by `modules/flake/packages.nix` |
 | manifest | `zix.json` | targets, tools, switches, checks, sandbox defaults |
 | managed state | `zix/managed/` | `manifest.json` canonical; `packages.nix` + `pins.json` generated |
 | managed packages | imported by `modules/shared/packages.nix` | reaches every host |
-| pins overlay | `lib/nixpkgs.nix` (`zixPins`) | `inputs.multiverse.lib.pinOverlay`; applies via `mkPkgs` everywhere |
+| pins overlay | `lib/nixpkgs.nix` (reads `zix/managed/pins.json`) | `inputs.multiverse.lib.pinOverlay`; applies via `mkPkgs` everywhere |
 | marker blocks | `modules/*/packages.nix` | `# BEGIN zix` / `# END zix`; created on first use |
 | check | `tests/zix.sh` (+ `checks.nix`) | unit + fixture tests offline; dry-run smoke against this repo |
 | dev shell | `modules/flake/dev-shells.nix` | `zix` function runs the working tree copy |
@@ -119,9 +119,10 @@ and `apps.default`. It therefore runs without this repository:
 
     nix run github:meillaya/nixos?dir=tools/zix -- --help
 
-Every host installs it through `modules/shared/packages.nix`, so `zix` is on
-PATH after a switch, and `nix run .#zix` points at the same derivation rather
-than a second implementation.
+The CLI is a developer tool. It is not installed on the hosts, so `zix` is not
+on a host PATH by default; run it with `nix run .#zix`, from the dev shell, or
+from its own flake. The zix-managed package set is still imported by
+`modules/shared/packages.nix`, because those are host packages, not the CLI.
 
 The package verbs gained bare aliases: `zix add` is `zix pkg add`. One
 registration function produces both, so the surfaces cannot drift. `update`

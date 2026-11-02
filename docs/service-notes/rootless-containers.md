@@ -13,9 +13,10 @@ login.
 
 ## Standalone Linux home
 
-A foreign distribution with Nix gets the rootless podman user socket plus a
-docker-compatible `DOCKER_HOST`, so docker clients never need a root daemon
-there either.
+`massive` includes `rootless-containers-standalone`, which gives a foreign
+distribution with Nix the rootless podman user socket plus a docker-compatible
+`DOCKER_HOST`, so docker clients never need a root daemon there either. The
+shared aspect has no Home Manager branch and does not inspect `osConfig`.
 
 ## Darwin
 

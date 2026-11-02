@@ -9,9 +9,10 @@
 #            service and exports DOCKER_HOST;
 #          * podman ships with its rootless user socket, and the stock system
 #            (root) socket is pinned off.
-#   HM     * a standalone (non-NixOS) home gets the rootless podman user socket
-#            plus a docker-compatible DOCKER_HOST, so docker clients never need
-#            a root daemon on a foreign distro.
+#   HM     * the separate rootless-containers-standalone aspect gives a
+#            standalone (non-NixOS) home the rootless podman user socket plus a
+#            docker-compatible DOCKER_HOST, so docker clients never need a root
+#            daemon on a foreign distro.
 #   darwin * deliberately untouched: Docker Desktop/colima and `podman machine`
 #            already run the engine inside a VM, never as a host root process.
 { den, ... }:
@@ -59,24 +60,22 @@
           }
         ];
       };
-
-    homeManager =
-      { pkgs, lib, osConfig ? null, ... }:
-      lib.mkIf (pkgs.stdenv.hostPlatform.isLinux && osConfig == null) {
-        # Standalone Home Manager host (a foreign distro with Nix installed):
-        # the Nix podman package is the only engine, so docker-compatible
-        # clients talk to its per-user rootless socket instead of a root
-        # daemon. On NixOS the system module owns both sockets already.
-        systemd.user.packages = [ pkgs.podman ];
-        systemd.user.sockets.podman = {
-          Unit.Description = "Podman rootless API socket";
-          Socket = {
-            ListenStream = "%t/podman/podman.sock";
-            SocketMode = "0660";
-          };
-          Install.WantedBy = [ "sockets.target" ];
-        };
-        home.sessionVariables.DOCKER_HOST = "unix://$XDG_RUNTIME_DIR/podman/podman.sock";
-      };
   };
+
+  # Included only by the standalone `massive` home. On NixOS the system module
+  # owns both sockets already, so this must not apply to a NixOS HM user.
+  den.aspects.rootless-containers-standalone.homeManager =
+    { pkgs, ... }:
+    {
+      systemd.user.packages = [ pkgs.podman ];
+      systemd.user.sockets.podman = {
+        Unit.Description = "Podman rootless API socket";
+        Socket = {
+          ListenStream = "%t/podman/podman.sock";
+          SocketMode = "0660";
+        };
+        Install.WantedBy = [ "sockets.target" ];
+      };
+      home.sessionVariables.DOCKER_HOST = "unix://$XDG_RUNTIME_DIR/podman/podman.sock";
+    };
 }

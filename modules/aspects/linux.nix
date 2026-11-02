@@ -6,9 +6,6 @@
     den.aspects.rootless-containers
     den.aspects.sops
     den.aspects.desktop-media
-    den.aspects.preservation
-    den.aspects.stylix
-    den.aspects.nix-direnv
     den.aspects.x86-hardware
   ];
 }

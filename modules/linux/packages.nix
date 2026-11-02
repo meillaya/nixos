@@ -79,7 +79,7 @@ with pkgs;
   # Vendored: removed upstream over gtk-engine-murrine (nixpkgs #549887)
   (pkgs.callPackage ../../pkgs/sweet.nix { })
 
-  # Android development (android-studio is unfree: package-exceptions.json)
+  # Android development (android-studio is in the unfree list in lib/nixpkgs.nix)
   android-studio
   android-tools
 ]

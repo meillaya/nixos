@@ -7,20 +7,22 @@ closure in the store.
 ## Build
 
 ```bash
-nix build .#iso.live
+nix build ./distro#iso.live
 ls result/iso/
 ```
 
 `result` is a garbage-collector root. A `--no-link` build leaves the ISO in the
 store without a root, so copy it out before the next collection.
 
+The ISO is built from the real `remembrance` workstation profile. The distro
+flake extends that configuration; it does not carry a second desktop role.
+
 ## Static checks
 
 ```bash
 nix flake check --all-systems --no-build
-bash tests/dendritic-architecture.sh
-bash tests/dendritic-boundaries.sh
-bash tests/dendritic-config-eval.nix
+cd distro
+nix flake check
 nix build .#checks.x86_64-linux.installer-disk-vm
 ```
 

@@ -29,7 +29,6 @@ with pkgs;
   # Encryption and security tools
   gnupg
   libfido2
-  nix-direnv
 
   # Media-related packages
   emacs-all-the-icons-fonts
@@ -81,7 +80,6 @@ with pkgs;
   yazi
   zellij
   zoxide
-  zsh-powerlevel10k
 
   # Development tools
   curl
@@ -100,7 +98,6 @@ with pkgs;
   lazygit
   mcp-nixos
   fzf
-  direnv
   flyctl
   railway
   podman
@@ -128,7 +125,6 @@ with pkgs;
   # daemon JVM criteria require "Java 21" and a second JDK would collide on
   # bin/java. For a newer JDK use a per-project `nix shell nixpkgs#openjdk25`.
   openjdk
-  jdt-language-server
   gradle
   maven
   pandoc
@@ -150,10 +146,8 @@ with pkgs;
   docker-compose
 ]
 
-# zix itself, built from tools/zix. That tree is also its own flake, so the CLI
-# runs without this repository:
-#   nix run github:meillaya/nixos?dir=tools/zix -- --help
-++ [ (pkgs.callPackage ../../tools/zix/package.nix { }) ]
+# zix is a developer tool. Run it from the flake (`nix run .#zix`) or the
+# dev shell; it is deliberately not part of the host package closure.
 
 # zix-managed packages (`zix add|rm`; see tools/zix/README.md)
 ++ (import ../../zix/managed/packages.nix { inherit pkgs; })

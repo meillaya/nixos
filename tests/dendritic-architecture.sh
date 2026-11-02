@@ -20,8 +20,6 @@ fi
 
 for path in \
   modules/flake/dendritic.nix \
-  modules/flake/outputs.nix \
-  modules/flake/iso-images.nix \
   $a/inventory.nix \
   $a/schema.nix \
   $a/nixpkgs.nix \
@@ -30,10 +28,6 @@ for path in \
   $a/remembrance.nix \
   $a/antagony.nix \
   $a/entropy.nix \
-  $a/live.nix \
-  $a/installed.nix \
-  $a/distro-platform.nix \
-  $a/distro-role.nix \
   $a/storage-labels.nix \
   $a/x86-hardware.nix \
   $a/mei.nix \
@@ -42,16 +36,17 @@ for path in \
   $a/desktop-media.nix \
   $a/linux-desktop.nix \
   $a/sops.nix \
-  modules/distro/identity.nix \
-  modules/distro/base.nix \
-  modules/distro/live.nix \
-  modules/distro/installed.nix \
-  modules/distro/iso.nix \
-  modules/distro/installer.nix \
   modules/nixos/storage-labels.nix \
-  pkgs/distro-installer.nix \
-  scripts/distro/install.py \
-  tests/installer-disk-vm.nix
+  distro/flake.nix \
+  distro/modules/identity.nix \
+  distro/modules/base.nix \
+  distro/modules/live.nix \
+  distro/modules/installed.nix \
+  distro/modules/iso.nix \
+  distro/modules/installer.nix \
+  distro/pkgs/distro-installer.nix \
+  distro/scripts/install.py \
+  distro/tests/installer-disk-vm.nix
 do
   test -f "$path" || {
     echo "missing expected file: $path" >&2
@@ -60,6 +55,16 @@ do
 done
 
 for retired in \
+  modules/flake/outputs.nix \
+  modules/flake/iso-images.nix \
+  modules/aspects/live.nix \
+  modules/aspects/installed.nix \
+  modules/aspects/distro-platform.nix \
+  modules/aspects/distro-role.nix \
+  modules/distro \
+  pkgs/distro-installer.nix \
+  scripts/distro \
+  tests/installer-disk-vm.nix \
   modules/aspects/_machine-authority \
   modules/aspects/authority.nix \
   modules/aspects/bootstrap-password.nix \
@@ -98,7 +103,7 @@ done
 
 if grep -R -E '_machine-authority|machineAuthority|host\.machine|diskById|config/hosts/intake|hardware-enroll|nixos\.autoinstall' \
   --include='*.nix' --include='*.sh' --include='*.py' \
-  modules flake.nix apps bin scripts 2>/dev/null \
+  modules flake.nix apps scripts 2>/dev/null \
   | grep -v '__pycache__'; then
   echo 'machine-authority or enrollment reference remains in active code' >&2
   exit 1
@@ -157,7 +162,7 @@ if grep -Eq '^[[:space:]]*(aspect|includes|nixos|darwin|homeManager|machine)[[:s
   exit 1
 fi
 
-for identity in remembrance antagony live installed; do
+for identity in remembrance antagony; do
   grep -Fq "${identity}.users.mei.identity" $a/inventory.nix
 done
 grep -Fq 'entropy.users.mei.identity' $a/inventory.nix
@@ -175,7 +180,6 @@ test ! -e apps/x86_64-darwin
 grep -Fq 'den.aspects.linux-platform' $a/linux.nix
 grep -Fq 'den.aspects.workstation-role-linux' $a/workstation-linux.nix
 grep -Fq 'den.aspects.storage-labels' $a/remembrance.nix
-grep -Fq 'den.aspects.storage-labels' $a/installed.nix
 
 grep -Fq '/dev/disk/by-label/NIXROOT' modules/nixos/storage-labels.nix
 grep -Fq '/dev/disk/by-label/NIXBOOT' modules/nixos/storage-labels.nix

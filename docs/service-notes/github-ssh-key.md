@@ -1,9 +1,8 @@
 # Authoritative GitHub SSH key
 
 One ed25519 keypair is the GitHub identity of every machine in this repo. It is
-escrowed (sops/age) in `secrets/github-ssh.yaml`, declared in
-`modules/shared/files.nix` as `githubPublicKey`, and installed on every host by
-home-manager activation.
+escrowed (sops/age) in `secrets/github-ssh.yaml`, declared in `lib/keys.nix` as
+`github`, and installed on every host by home-manager activation.
 
     private half : escrowed in secrets/github-ssh.yaml (field github-ssh-private-key)
                    origin: ~/.ssh/id_rsa on nixos-thinkpad, the machine's own key
@@ -24,12 +23,11 @@ Check the live registration with `ssh -T git@github.com`; it must answer
 
 ## What this key is not
 
-`modules/nixos/system.nix` (`keys`) still pins the older entropy key
-(`SHA256:MxQc4nBAjX986U2RURy/pRLXO714pBtz5odlIUuA66Q`, `mei@entropyos-nix`, GitHub
-id 159544603) whose private half is not present on any machine reachable from
-here. That key is the personal root SSH trust anchor. The distro profile
-removes it with `lib.mkForce` and trusts no key. Changing it means editing this
-list and re-keying the personal hosts.
+The older entropy installer anchor has been removed. Both the user and root
+authorize this single fleet key; the distro profile empties both lists, so the
+live and installed profiles trust no personal key until the operator adds one.
+Changing the key means editing `lib/keys.nix`, the sops store, and the GitHub
+registration together.
 
 ## Where the private half lives
 
@@ -42,8 +40,9 @@ list and re-keying the personal hosts.
 
 `modules/shared/home-manager.nix` configures `github.com` with
 `IdentitiesOnly = yes` and `IdentityFile` `~/.ssh/id_github` then
-`~/.ssh/id_ed25519`, so both names work. `~/.ssh/id_github.pub` stays a
-home-manager file (`modules/shared/files.nix`) carrying the public half above.
+`~/.ssh/id_ed25519`, so both names work. The public half is declared in
+`lib/keys.nix` and written to `~/.ssh/id_github.pub` by
+`modules/shared/files.nix`.
 
 ## Deployment
 
@@ -103,7 +102,7 @@ runs the CLI and therefore needs `keys.txt`.
    `SOPS_AGE_KEY_FILE=~/.config/sops/age/keys.txt sops --decrypt --extract
    '["github-ssh-private-key"]' --output-type binary secrets/github-ssh.yaml |
    cmp - <new key>`.
-3. Update `githubPublicKey` in `modules/shared/files.nix`.
+3. Update `github` in `lib/keys.nix`.
 4. Register the new public half on GitHub (`gh ssh-key add <pub> --title ...`)
    and delete the replaced entry (`gh ssh-key delete <id>`).
 5. Commit, then re-run `home-switch` / `build-switch` everywhere.

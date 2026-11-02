@@ -2,17 +2,22 @@
 set -euo pipefail
 
 host=""
+nh_args=()
 
 usage() {
   cat <<'EOF'
-Usage: build-switch [--host HOST] [nh arguments...]
+Usage: build-switch [--host HOST] [--] [nh arguments...]
 
 Builds and activates the selected NixOS toplevel (switch) via nh
-(github:viperML/nh). Defaults to the remembrance host. Requires
-a live NixOS machine; activation runs via sudo.
+(github:viperML/nh). Defaults to the current hostname, so running it on
+antagony cannot switch remembrance. Requires a live NixOS machine;
+activation runs via sudo.
+
+Arguments after `--`, or any argument that is not `--host`, are passed to
+`nh os switch` unchanged.
 
 Examples:
-  build-switch                                # default host
+  build-switch                                # current host
   build-switch --host remembrance             # different host
   build-switch -- --dry                       # pass-through to nh (build only)
 EOF
@@ -37,18 +42,35 @@ while (( $# > 0 )); do
       usage
       exit 0
       ;;
+    --)
+      shift
+      nh_args+=("$@")
+      break
+      ;;
     *)
+      nh_args+=("$1")
       shift
       ;;
   esac
 done
 
 if [[ -z "$host" ]]; then
-  host="remembrance"
+  host="$(hostname -s)"
 fi
 
-# Flake root is two levels up from this script (apps/<system>/build-switch).
-# nh only falls back to /etc/nixos on its own, which does not exist here.
-flake_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd -P)"
+# Prefer the caller's checkout when the command is run from a flake root.
+# Otherwise fall back to the store copy that contains this script.
+flake_root="$PWD"
+if [[ ! -f "$flake_root/flake.nix" ]]; then
+  flake_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd -P)"
+fi
 
-exec nh os switch "path:${flake_root}" --hostname "${host}" "$@"
+# A git flake sees tracked files only, so ignored secrets cannot enter the
+# world-readable Nix store. The path fallback is for a non-git checkout.
+if git -C "$flake_root" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+  flake_ref="git+file://${flake_root}"
+else
+  flake_ref="path:${flake_root}"
+fi
+
+exec nh os switch "$flake_ref" --hostname "$host" "${nh_args[@]}"

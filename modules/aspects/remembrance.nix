@@ -11,19 +11,19 @@
         den.aspects.storage-labels
       ];
       nixos =
-        { lib, ... }:
+        { ... }:
         {
-          networking.hostName = lib.mkForce host.hostName;
-          time.timeZone = lib.mkForce "America/New_York";
-          i18n.defaultLocale = lib.mkForce "en_US.UTF-8";
-          console.keyMap = lib.mkForce "us";
-          services.xserver.xkb.layout = lib.mkForce "us";
+          networking.hostName = host.hostName;
+          time.timeZone = "America/New_York";
+          i18n.defaultLocale = "en_US.UTF-8";
+          console.keyMap = "us";
+          services.xserver.xkb.layout = "us";
 
           users.users.${identity.name} = {
-            uid = lib.mkForce identity.uid;
-            home = lib.mkForce identity.home;
+            uid = identity.uid;
+            home = identity.home;
           };
-          users.groups.users.gid = lib.mkForce identity.gid;
+          users.groups.users.gid = identity.gid;
         };
     };
 }
