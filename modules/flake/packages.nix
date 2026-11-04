@@ -12,6 +12,11 @@ in
       packages = {
         zix = pkgs.callPackage ../../tools/zix/package.nix { };
         excalidraw-cli = pkgs.callPackage ../../pkgs/excalidraw-cli { };
+        # The merged agent rules as one markdown file. The source of truth stays
+        # agent-settings.nix; this output makes it buildable and gives the
+        # agent-settings check a rendered artifact to inspect.
+        agent-settings = pkgs.writeText "agent-settings.md"
+          (import ../../agent-settings.nix).instructions;
       } // lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
         # Chromium is the browser the CLI drives on Linux. Darwin uses a host
         # Chrome or Chromium through EXCALIDRAW_BROWSER_PATH.

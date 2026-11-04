@@ -1,6 +1,6 @@
 # PROJECT KNOWLEDGE BASE
 
-**Updated:** 2026-11-02
+**Updated:** 2026-11-04
 **Branch:** main
 
 ## OVERVIEW
@@ -72,6 +72,7 @@ profile record.
 | Change the installer | `distro/scripts/install.py` + `distro/pkgs/distro-installer.nix` | `--test` covers disk logic |
 | Add or pin a package | `zix add ...` | `tools/zix/README.md` |
 | Change zix | `zix.json` | targets, tools, switches, checks |
+| Change agent rules | `agent-settings.nix`, `agents/excalidraw.nix` | render with `nix build .#agent-settings` |
 | Allow unfree | `lib/nixpkgs.nix` | name-only list |
 | Change the fleet key | `lib/keys.nix` | one public key |
 | Change binary caches | `lib/nix-caches.nix` | one list for all hosts |
@@ -83,6 +84,9 @@ profile record.
 - One acyclic chain: `shared-policy -> {linux,darwin}-platform -> role ->
   hardware -> host`. The distro is not a second chain; it extends a real host.
 - Behavior lives in an aspect; the inventory holds identity only.
+- Agent rules live in `agent-settings.nix`; read it before editing code, prose,
+  or a commit message. The `agent-settings` package and check import it, so a
+  broken edit fails evaluation.
 - Aspect files are flat and named `<kebab-name>.nix`.
 - `distro/modules/*` are raw NixOS modules consumed by the distro flake. They do
   not take the Den `host` argument.
@@ -127,6 +131,7 @@ nix run .#home-switch          # standalone Home Manager switch
 nix run .#update               # flake inputs + source pins
 nix run .#clean                # delete generations older than 7 days
 nix run .#zix -- --help        # developer tool
+nix build .#agent-settings     # render the merged agent rules
 nix build ./distro#iso.live    # live ISO
 cd distro && nix build .#checks.x86_64-linux.installer-disk-vm
 zix doctor

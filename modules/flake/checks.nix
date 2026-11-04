@@ -78,6 +78,37 @@
         touch "$out"
       '';
 
+      # The merged agent rules must stay renderable and complete. A missing
+      # section means agent-settings.nix was truncated or an include was
+      # dropped, which nothing else would catch.
+      agent-settings =
+        let
+          settings = import ../../agent-settings.nix;
+          requiredSections = [
+            "## This repo"
+            "## Environment"
+            "## Before you call it done"
+            "## Secrets"
+            "## Code style"
+            "## Tests"
+            "## Commit messages"
+            "## Tone"
+            "## Writing style: no LLM tells"
+            "## How to write well"
+            "## Drawing diagrams with the Excalidraw CLI"
+          ];
+          missingSections = builtins.filter
+            (section: !(pkgs.lib.hasInfix section settings.instructions))
+            requiredSections;
+        in
+        if missingSections != [ ] then
+          throw "agent-settings: missing sections: ${builtins.concatStringsSep ", " missingSections}"
+        else
+          pkgs.runCommand "agent-settings" { } ''
+            test -s ${pkgs.writeText "agent-settings.md" settings.instructions}
+            touch "$out"
+          '';
+
       prose = pkgs.runCommand "prose" {
         nativeBuildInputs = [ pkgs.bash pkgs.python3 ];
         src = inputs.self;

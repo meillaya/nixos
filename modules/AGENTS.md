@@ -64,8 +64,8 @@ NixOS modules using `config.distro.liveUser` instead of a literal identity.
 | `flake/dendritic.nix` | imports Den strict and `import-tree ../aspects` |
 | `flake/systems.nix` | `x86_64-linux`, `aarch64-darwin` |
 | `flake/apps.nix` | build/switch/update/clean apps and the zix app |
-| `flake/checks.nix` | per-system checks |
-| `flake/packages.nix` | `zix` and Excalidraw packages |
+| `flake/checks.nix` | per-system checks, including `agent-settings` |
+| `flake/packages.nix` | `zix`, Excalidraw, and `agent-settings` packages |
 | `flake/system-manager.nix` | `systemConfigs.massive` |
 
 The ISO, installer, live, and installed modules live in `distro/` and have

@@ -143,9 +143,13 @@ def main():
     root = Path(__file__).resolve().parent.parent
     paths = [Path(p) for p in args.paths] if args.paths else list(walk(root))
 
-    # This script states the rules rather than follows them, so the rules
-    # cannot be applied to it.
-    exempt = {Path(__file__).resolve()}
+    # These files state the rules rather than follow them, so the rules cannot
+    # be applied to them: the checker names every banned word, and
+    # agent-settings.nix spells the rules out on purpose.
+    exempt = {
+        Path(__file__).resolve(),
+        (root / "agent-settings.nix").resolve(),
+    }
     paths = [p for p in paths if p.resolve() not in exempt]
 
     total = 0
