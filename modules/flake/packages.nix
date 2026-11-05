@@ -23,6 +23,10 @@ in
         excalidraw-cli-browser = pkgs.callPackage ../../pkgs/excalidraw-cli {
           browser = "${pkgs.chromium}/bin/chromium";
         };
+        # The SDDM theme system-manager installs for massive. The default Blush
+        # preset is what the host selects; this output makes the theme
+        # buildable and inspectable on its own.
+        thyx = pkgs.callPackage ../../pkgs/thyx.nix { };
       };
     };
 }

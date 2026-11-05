@@ -55,6 +55,9 @@ assert hasPackages [ "ghostty" "obsidian" "noctalia" ] (
   nixos.home-manager.users.mei.home.packages ++ nixos.environment.systemPackages
 );
 assert packageName nixos.users.users.mei.shell == "nushell";
+# The NixOS hosts already provide the PAM helper wrapper that Nix-built
+# Noctalia expects. The standalone layer mirrors the same wrapper.
+assert nixos.security.wrappers.unix_chkpwd.setuid;
 assert entropy.networking.hostName == "entropy";
 assert entropy.users.users.mei.home == "/Users/mei";
 
@@ -74,6 +77,37 @@ assert lib.hasInfix "trusted-users = root @wheel" system.environment.etc."nix/ni
 assert lib.any (rule: lib.hasInfix "/run/opengl-driver" rule) system.systemd.tmpfiles.rules;
 assert lib.any (mount: mount.where == "/mnt/970" && mount.what == "LABEL=970EVO") system.systemd.mounts;
 assert builtins.hasAttr "data-disk-ownership" system.systemd.services;
+
+# The standalone host declares its login account, shell list, PAM helper, and
+# CachyOS package/bootstrap state through system-manager.
+assert system.users.users.mei.uid == 1000;
+assert system.users.users.mei.group == "mei";
+assert system.users.groups.mei.gid == 1000;
+assert packageName system.users.users.mei.shell == "nushell";
+assert lib.hasInfix "/run/system-manager/sw/bin/nu" system.environment.etc.shells.text;
+assert system.security.wrappers.unix_chkpwd.setuid;
+assert lib.hasInfix "unix_chkpwd" (toString system.security.wrappers.unix_chkpwd.source);
+assert builtins.hasAttr "cachyos-bootstrap" system.systemd.services;
+assert builtins.hasAttr "openrgb-udev-reload" system.systemd.services;
+assert lib.elem "yay" system.standalone.cachyos.packages;
+assert lib.elem "cachyos-gaming-meta" system.standalone.cachyos.packages;
+assert lib.elem "cachyos-gaming-applications" system.standalone.cachyos.packages;
+assert lib.elem "wine-mono" system.standalone.cachyos.packages;
+assert lib.elem "winetricks" system.standalone.cachyos.packages;
+assert lib.elem "mangohud" system.standalone.cachyos.packages;
+assert lib.elem "gamemode" system.standalone.cachyos.packages;
+assert lib.elem "fish" system.standalone.cachyos.removePackages;
+assert system.standalone.cachyos.thyx.preset == "blush";
+assert lib.hasInfix "Current=thyx" system.environment.etc."sddm.conf.d/00-system-manager-theme.conf".text;
+assert lib.hasInfix "ThemeDir=/run/system-manager/sw/share/sddm/themes" system.environment.etc."sddm.conf.d/00-system-manager-theme.conf".text;
+assert lib.hasInfix "i2c-dev" system.environment.etc."modules-load.d/i2c-dev.conf".text;
+assert builtins.hasAttr "udev/rules.d/60-openrgb.rules" system.environment.etc;
+assert builtins.hasAttr "systemd/user/app-steam@.service.d/10-system-manager-path.conf" system.environment.etc;
+assert lib.hasInfix "Environment=PATH=/usr/local/sbin" system.environment.etc."systemd/user/app-steam@.service.d/10-system-manager-path.conf".text;
+assert massive.home.file ? ".local/bin/steam";
+assert hasPackages [ "thyx" "openrgb" "nushell" ] system.environment.systemPackages;
+assert hasPackages [ "hydralauncher" ] massive.home.packages;
+assert flake.packages.x86_64-linux ? thyx;
 
 # Package policy still resolves the requested unfree packages.
 assert !(policyConfig ? allowBroken);

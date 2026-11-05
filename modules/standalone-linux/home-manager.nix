@@ -29,7 +29,18 @@ in
     username = lib.mkDefault userName;
     homeDirectory = lib.mkDefault homeDirectory;
     packages = import ./packages.nix { inherit pkgs inputs; };
-    file = standalone-files;
+    file = standalone-files // {
+      # Noctalia launches Steam through systemd, where ./cachyos.nix sets the
+      # host PATH on the service. This wrapper covers a Steam launch from a
+      # terminal, where the user PATH still puts Nix coreutils ahead of the
+      # host tools.
+      ".local/bin/steam".source = pkgs.writeScript "steam-host-path" ''
+        #!/bin/sh
+        unset LD_LIBRARY_PATH LD_PRELOAD
+        export PATH=/usr/local/sbin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin
+        exec /usr/bin/steam "$@"
+      '';
+    };
     sessionVariables = {
       BROWSER = "zen-beta";
       TERM = "xterm-256color";
@@ -46,6 +57,8 @@ in
     ];
     stateVersion = "25.11";
   };
+
+
 
 
   # system-manager owns /run/opengl-driver (see ./system.nix), so the user-level

@@ -22,9 +22,11 @@ aspects/
 ```
 
 ## HOST DATA
-- Entity fields: `users.<name>.identity` only.
+- Entity fields: `users.<name>.identity` for Den hosts and `identity` for a
+  standalone home.
 - Aspects use `host.users.mei.identity` and `host.hostName`.
-- `massive` is a `den.homes` entry with `userName` and `homeDirectory`.
+- `massive` is a `den.homes` entry with `userName`, `homeDirectory`, and
+  `identity`; system-manager reads the identity for the login account.
 - No `machine`, `boot`, `storage`, or capability record exists.
 
 ## ADD A HOST

@@ -48,7 +48,11 @@ with pkgs;
   gimp
   ghostty
   halloy
-  hydralauncher
+  # Hydra's stock AppImage hides the host /usr/bin, so it cannot see
+  # winetricks, mangohud, or gamemoderun. The local package adds those tools
+  # to the FHS environment and replaces the bundled umu-run 1.3.0 with the
+  # current Nix umu-launcher.
+  (pkgs.callPackage ../../pkgs/hydralauncher.nix { })
   imhex
   incus
   kicad

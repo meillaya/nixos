@@ -118,6 +118,23 @@
         bash source/tests/prose.sh
         touch "$out"
       '';
+    } // pkgs.lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
+      # The standalone host boots this theme from the Nix profile, so the
+      # package must keep the Blush preset selected and carry the QML, image,
+      # and font files SDDM and fontconfig read.
+      thyx-theme =
+        let
+          thyx = pkgs.callPackage ../../pkgs/thyx.nix { };
+        in
+        pkgs.runCommand "thyx-theme" {
+          nativeBuildInputs = [ pkgs.gnugrep ];
+        } ''
+          test -f ${thyx}/share/sddm/themes/thyx/src/Main.qml
+          test -f ${thyx}/share/sddm/themes/thyx/backgrounds/blush.jpg
+          grep -q '^Background="backgrounds/blush.jpg"$' ${thyx}/share/sddm/themes/thyx/theme.conf
+          test -f ${thyx}/share/fonts/truetype/thyx/PlusJakartaSans-VariableFont_wght.ttf
+          touch "$out"
+        '';
     };
   };
 }

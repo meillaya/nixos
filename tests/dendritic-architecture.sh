@@ -37,6 +37,11 @@ for path in \
   $a/linux-desktop.nix \
   $a/sops.nix \
   modules/nixos/storage-labels.nix \
+  modules/standalone-linux/system.nix \
+  modules/standalone-linux/cachyos.nix \
+  modules/standalone-linux/openrgb.nix \
+  pkgs/thyx.nix \
+  pkgs/hydralauncher.nix \
   distro/flake.nix \
   distro/modules/identity.nix \
   distro/modules/base.nix \

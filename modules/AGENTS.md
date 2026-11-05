@@ -15,7 +15,7 @@ modules/
 ├── darwin/         # low-level nix-darwin payload
 ├── shared/         # cross-platform Home Manager payload
 ├── linux/          # Linux Home Manager payload
-└── standalone-linux/
+└── standalone-linux/ # Home Manager, system-manager, CachyOS, SDDM, OpenRGB
 ```
 
 ## COMPOSITION
@@ -39,7 +39,8 @@ The distro is not a second chain. `distro/flake.nix` extends
 NixOS modules using `config.distro.liveUser` instead of a literal identity.
 
 ## HOST DATA
-- `inventory.nix` carries `users.<name>.identity` only.
+- `inventory.nix` carries `users.<name>.identity` for Den hosts and
+  `identity` for the standalone home.
 - Host aspects read `host.users.mei.identity` and `host.hostName`.
 - No `machine`, `boot`, `storage`, `capabilities`, or `remoteInstall` record.
 - No disk ID or UUID. `modules/nixos/storage-labels.nix` mounts `NIXBOOT` and
@@ -64,20 +65,25 @@ NixOS modules using `config.distro.liveUser` instead of a literal identity.
 | `flake/dendritic.nix` | imports Den strict and `import-tree ../aspects` |
 | `flake/systems.nix` | `x86_64-linux`, `aarch64-darwin` |
 | `flake/apps.nix` | build/switch/update/clean apps and the zix app |
-| `flake/checks.nix` | per-system checks, including `agent-settings` |
-| `flake/packages.nix` | `zix`, Excalidraw, and `agent-settings` packages |
+| `flake/checks.nix` | per-system checks, including `agent-settings` and `thyx-theme` |
+| `flake/packages.nix` | `zix`, Excalidraw, `agent-settings`, and `thyx` packages |
 | `flake/system-manager.nix` | `systemConfigs.massive` |
 
 The ISO, installer, live, and installed modules live in `distro/` and have
 their own flake outputs.
 
 ## CONVENTIONS
-- Identity comes from `host.users.mei.identity`; never a literal.
+- Identity comes from `host.users.mei.identity`; never a literal. The standalone
+  home reads its `identity` and hands the same values to system-manager.
 - Raw distro modules use `config.distro.liveUser`.
 - Storage is a label contract, never a disk ID.
 - Aspect names are kebab-case; class payloads are `nixos`, `darwin`,
   `homeManager`.
-- Nushell is the login shell; Bash is the only fallback.
+- Nushell is the login shell; Bash is the only fallback. `/etc/shells` on the
+  standalone host must list the system-manager Nushell path for `pam_shells`.
+- `modules/standalone-linux/cachyos.nix` owns the pacman package bootstrap,
+  fish removal, and SDDM theme. `openrgb.nix` owns the OpenRGB system package
+  and udev rules.
 
 ## ANTI-PATTERNS
 - No `_machine-authority`, intake JSON, enrollment scripts, or

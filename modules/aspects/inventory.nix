@@ -6,6 +6,12 @@ let
     uid = 1000;
     gid = 100;
   };
+  # The NixOS hosts share the `users` group at gid 100. The standalone host has
+  # a user-private primary group, so its home identity carries that gid.
+  massivePrimaryGid = 1000;
+  massiveIdentity = linuxIdentity // {
+    gid = massivePrimaryGid;
+  };
   darwinIdentity = {
     name = "mei";
     home = "/Users/mei";
@@ -25,6 +31,7 @@ in
     x86_64-linux.massive = {
       userName = "mei";
       homeDirectory = "/home/mei";
+      identity = massiveIdentity;
     };
   };
 }

@@ -45,6 +45,14 @@ in
         description = "Absolute home directory for a standalone Home Manager entity.";
       };
 
+      options.identity = lib.mkOption {
+        type = identityType;
+        description = ''
+          Account identity for a standalone home. system-manager reads this
+          record for the login account, shell, and group data.
+        '';
+      };
+
       config.pkgs = nixpkgsPolicy.mkPkgs home.system;
     };
 }

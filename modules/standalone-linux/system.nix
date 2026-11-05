@@ -3,12 +3,13 @@
 # System-level layer for the `massive` standalone host, built into
 # `systemConfigs.massive` by modules/flake/system-manager.nix.
 #
-# This file owns only what Home Manager cannot reach on a non-NixOS machine:
-# the static hostname, the tailscaled service, the GPU driver tree that Nix
+# This file owns what Home Manager cannot reach on a non-NixOS machine: the
+# static hostname, the tailscaled service, the GPU driver tree that Nix
 # packages expect under /run/opengl-driver, the Nix settings that the
-# distribution's nix.conf includes, and the 970 EVO data mount. The desktop,
-# every user package, and the rest of the system state stay with
-# ./home-manager.nix and the CachyOS package manager.
+# distribution's nix.conf includes, the 970 EVO data mount, the login account
+# and its shell, the PAM helper wrapper, and the OpenRGB system package. The
+# CachyOS pacman package set and the SDDM theme live in ./cachyos.nix. The
+# desktop and every user package stay with ./home-manager.nix.
 let
   caches = import ../../lib/nix-caches.nix;
 
@@ -34,6 +35,11 @@ let
   mountUnit = "${utils.escapeSystemdPath disk.mountPoint}.mount";
 in
 {
+  imports = [
+    ./cachyos.nix
+    ./openrgb.nix
+  ];
+
   options.standalone = {
     hostName = lib.mkOption {
       type = lib.types.str;
@@ -43,7 +49,22 @@ in
 
     userName = lib.mkOption {
       type = lib.types.str;
-      description = "User that owns the mounted data disk.";
+      description = "User that owns the mounted data disk and the desktop session.";
+    };
+
+    userUid = lib.mkOption {
+      type = lib.types.ints.unsigned;
+      description = "UID of the standalone host's login account.";
+    };
+
+    userGid = lib.mkOption {
+      type = lib.types.ints.unsigned;
+      description = "GID of the standalone host's user-private primary group.";
+    };
+
+    homeDirectory = lib.mkOption {
+      type = lib.types.str;
+      description = "Home directory of the standalone host's login account.";
     };
 
     dataDisk = {
@@ -79,6 +100,49 @@ in
     # Daemon and CLI come from the same nixpkgs revision, so they cannot drift
     # apart the way a profile CLI and a distribution daemon did.
     environment.systemPackages = [ pkgs.tailscale ];
+
+    # system-manager owns the account record on this host. userborn never
+    # changes an existing UID and leaves supplementary groups alone because no
+    # extraGroups are declared, so this only updates the primary group and the
+    # shell of the account the CachyOS installer created.
+    users.groups.${config.standalone.userName} = {
+      gid = config.standalone.userGid;
+    };
+
+    users.users.${config.standalone.userName} = {
+      isNormalUser = true;
+      uid = config.standalone.userUid;
+      group = config.standalone.userName;
+      home = config.standalone.homeDirectory;
+      createHome = false;
+      shell = pkgs.nushell;
+    };
+
+    # pam_shells reads this file before it runs pam_unix, so a login shell that
+    # is absent here fails authentication even with the correct password. The
+    # NixOS hosts get the same list from environment.shells in
+    # modules/aspects/mei.nix.
+    environment.etc."shells" = {
+      replaceExisting = true;
+      text = ''
+        # Managed by modules/standalone-linux/system.nix through system-manager.
+        /bin/sh
+        /bin/bash
+        ${utils.toShellPath pkgs.nushell}
+      '';
+    };
+
+    # Nix-built Noctalia links nixpkgs libpam, whose pam_unix calls
+    # /run/wrappers/bin/unix_chkpwd. NixOS creates that wrapper through
+    # security.pam; a foreign distribution does not. This is the same wrapper
+    # definition NixOS uses, so lock screen password authentication reaches the
+    # distribution's setuid helper.
+    security.wrappers.unix_chkpwd = {
+      source = "${pkgs.pam}/bin/unix_chkpwd";
+      owner = "root";
+      group = "root";
+      setuid = true;
+    };
 
     # Determinate Nix includes this file from /etc/nix/nix.conf, so daemon
     # settings can be declarative without taking over the installer's own file.

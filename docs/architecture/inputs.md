@@ -22,8 +22,10 @@ actually reads.
   the same reason.
 - `nix-plist-manager`: the macOS preference writer. It is the only author of
   the keys it manages; `system.defaults` covers the remainder.
-- `system-manager`: the small system layer for `massive` (hostname and
-  tailscaled).
+- `system-manager`: the system layer for `massive`, covering the hostname,
+  tailscaled, GPU driver path, Nix settings, data disk, login account and shell,
+  PAM helper wrapper, CachyOS package bootstrap, SDDM theme, and OpenRGB udev
+  integration.
 - `multiverse`: the version index zix uses for real package pins (currently
   raycast). It is a developer-tool input; the overlay is empty when
   `zix/managed/pins.json` is empty.

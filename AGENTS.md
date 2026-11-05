@@ -57,7 +57,8 @@ nixos/
 
 Identity lives in `modules/aspects/inventory.nix` under
 `users.mei.identity`. Host aspects read `host.users.mei.identity` and
-`host.hostName`. There is no `machine`, `boot`, `storage`, capability, or
+`host.hostName`. The standalone home also carries `identity` for
+`system-manager`. There is no `machine`, `boot`, `storage`, capability, or
 profile record.
 
 ## WHERE TO LOOK
@@ -68,6 +69,11 @@ profile record.
 | Add a capability | `modules/aspects/<kebab-name>.nix` | select it from a role/platform |
 | Change the personal chain | `modules/aspects/{linux,darwin,workstation-*}.nix` | inward-only |
 | Change the distro | `distro/` | separate flake; extends `remembrance` |
+| Change the standalone system layer | `modules/standalone-linux/system.nix` | system-manager owns `/etc`, units, users, wrappers |
+| Add a CachyOS package or change fish removal | `modules/standalone-linux/cachyos.nix` | pacman bootstrap unit |
+| Change the SDDM theme | `modules/standalone-linux/cachyos.nix`, `pkgs/thyx.nix` | pinned v1.1.0; Blush preset |
+| Configure OpenRGB | `modules/standalone-linux/openrgb.nix` | generated udev rules and `i2c-dev` |
+| Fix Hydra game tools or umu | `pkgs/hydralauncher.nix`, `modules/linux/packages.nix` | FHS tools and umu 1.4.4 |
 | Change storage labels | `modules/nixos/storage-labels.nix` | `NIXBOOT`, `NIXROOT`; `my.storage.labels.enable` |
 | Change the installer | `distro/scripts/install.py` + `distro/pkgs/distro-installer.nix` | `--test` covers disk logic |
 | Add or pin a package | `zix add ...` | `tools/zix/README.md` |
@@ -98,7 +104,11 @@ profile record.
 - One ISO only: `distro/flake.nix`. The installer copies the prebuilt
   `nixosConfigurations.installed` closure, which is the real workstation profile.
 - Nushell is the login shell; Bash is the only fallback. Do not add fish or zsh
-  to `environment.shells`.
+  to `environment.shells`, and keep `/etc/shells` in step with the Nushell
+  profile path on the standalone host.
+- system-manager owns the standalone host's `/etc` files, systemd units, login
+  account, wrappers, and pacman package bootstrap. Home Manager does not reach
+  those.
 - `secrets/*` is ignored except the tracked files. Do not commit private keys.
 - Prefer one source for the key, cache list, user identity, unfree policy, and
   storage labels.

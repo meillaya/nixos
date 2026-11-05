@@ -1,9 +1,10 @@
 # system-manager on the standalone host
 
 `massive` (the CachyOS ThinkPad) is the only non-NixOS machine in this repo.
-Home Manager owns its user payload. The `system-manager` layer owns the small
-amount of system state that Home Manager cannot reach there, because a foreign
-distribution keeps `/etc` and the systemd system units out of reach.
+Home Manager owns its user payload. The `system-manager` layer owns the system
+state that Home Manager cannot reach there, because a foreign distribution keeps
+`/etc`, the systemd system units, the pacman database, and the login shell out of
+Home Manager's reach.
 
 ## What the layer owns
 
@@ -18,12 +19,19 @@ distribution keeps `/etc` and the systemd system units out of reach.
 - `/run/opengl-driver`, a symlink to a `buildEnv` of Mesa, libglvnd, and the
   VA-API drivers, created by a `systemd.tmpfiles` rule;
 - `/etc/nix/nix.custom.conf`, with `trusted-users = root @wheel` and the signed
-  cache union from `lib/nix-caches.nix`; and
+  cache union from `lib/nix-caches.nix`;
 - the 970 EVO data disk, as a mount unit for `LABEL=970EVO` at `/mnt/970` plus a
-  oneshot that gives the desktop user ownership of the filesystem root.
+  oneshot that gives the desktop user ownership of the filesystem root;
+- the login account record, its Nushell login shell, and `/etc/shells`;
+- the `/run/wrappers/bin/unix_chkpwd` PAM helper;
+- the CachyOS pacman package bootstrap and fish removal in
+  `modules/standalone-linux/cachyos.nix`;
+- the Thyx SDDM theme selection and its Qt6 packages; and
+- OpenRGB and its generated udev rules in `modules/standalone-linux/openrgb.nix`.
 
-The kernel, the bootloader, the package manager, and the desktop stay with
-CachyOS.
+The kernel, the bootloader, and the rest of the package manager stay with
+CachyOS. Pacman packages declared here are reconciled by a unit, not installed
+by system-manager.
 
 ## GPU drivers on a foreign distribution
 
@@ -72,6 +80,141 @@ The ownership service runs `chown` on the filesystem root only, then sets mode
 `0755`. Existing files keep their owners, so a disk moved from another install
 keeps its per-file ownership.
 
+## Nushell login shell
+
+`modules/standalone-linux/system.nix` declares the account under `users.users`
+with `shell = pkgs.nushell`. system-manager maps a shell package to
+`/run/system-manager/sw/bin/nu`, so that exact path must appear in `/etc/shells`.
+The PAM stacks on CachyOS include `pam_shells`, which rejects a login shell that
+is absent from that file. The layer replaces `/etc/shells` with a managed list
+containing `/bin/sh`, `/bin/bash`, and the Nushell profile path.
+`replaceExisting = true` makes system-manager keep a backup and restore the
+distribution file on deactivation.
+
+The account keeps the UID and supplementary groups the CachyOS installer
+created. userborn never changes an existing UID, and because this module declares
+no `extraGroups`, existing memberships are preserved. The primary group is the
+user-private group at the same gid as the account.
+
+## CachyOS packages and fish removal
+
+system-manager cannot install pacman packages. `modules/standalone-linux/cachyos.nix`
+declares the package list and a `cachyos-bootstrap` oneshot. On activation the
+unit checks each package with `pacman -Qq`, installs the missing set with
+`pacman -S --needed --noconfirm`, then removes any installed package from the
+removal list. The default list installs `yay`, `cachyos-gaming-meta`,
+`cachyos-gaming-applications`, `wine-mono`, `winetricks`, `mangohud`,
+`gamemode`, and `lib32-gamemode`, and removes `fish`, `cachyos-fish-config`,
+`fish-autopair`, `fish-pure-prompt`, and `fisher`.
+
+The unit does not run `pacman -Sy` and does not upgrade the host. A missing
+package with a stale sync database fails the unit; run a normal system update,
+then retry:
+
+```bash
+sudo systemctl start cachyos-bootstrap
+```
+
+The script exports the distribution `PATH` before it calls pacman. systemd gives
+the unit a Nix-only `PATH`, and pacman's gpgme needs to find the host `gpg` to
+verify the package databases. Without the export, pacman fails with `GPGME
+error: Invalid crypto engine`.
+
+Removing the fish packages leaves `~/.config/fish` alone. User files stay user
+files.
+
+## SDDM theme
+
+`modules/standalone-linux/cachyos.nix` installs the pinned Thyx theme from
+`pkgs/thyx.nix` and writes
+`/etc/sddm.conf.d/00-system-manager-theme.conf` with
+`Current=thyx` and `ThemeDir=/run/system-manager/sw/share/sddm/themes`.
+The package copies `presets/blush.conf` over `theme.conf`, so the greeter starts
+on the Blush preset. The other presets stay installed.
+
+SDDM reads the theme when it starts. Restart it or reboot after the switch:
+
+```bash
+sudo systemctl restart sddm
+```
+
+The theme imports QtMultimedia and Qt5Compat.GraphicalEffects, so the package
+unit also installs `qt6-multimedia`, `qt6-multimedia-ffmpeg`, `qt6-5compat`, and
+`qt6-svg`. The greeter runs as the `sddm` user and reads the theme and bundled
+Plus Jakarta Sans font from the system-manager profile. A fontconfig fragment
+adds `/run/system-manager/sw/share/fonts` to the search path, and a `fc-cache -f`
+oneshot refreshes the cache.
+
+Test the greeter from a TTY without restarting the running session:
+
+```bash
+sddm-greeter-qt6 --test-mode --theme /run/system-manager/sw/share/sddm/themes/thyx
+```
+
+## OpenRGB
+
+`modules/standalone-linux/openrgb.nix` installs `pkgs.openrgb` as a system
+package, links its generated `60-openrgb.rules` into `/etc/udev/rules.d`, and
+loads `i2c-dev` through `/etc/modules-load.d`. The `openrgb-udev-reload` oneshot
+runs `udevadm control --reload-rules` and `udevadm trigger`. The OpenRGB SDK
+server is not enabled; the system package exists so standalone OpenRGB can reach
+USB and I2C devices through the rules.
+
+## Steam and the Nix PATH
+
+Noctalia starts desktop applications with `systemd-run` and copies its own
+environment into the service. The user PATH puts `~/.nix-profile/bin` ahead of
+`/usr/bin`, so Steam's shell helpers resolve `dirname` and `basename` to Nix
+coreutils. Steam then prepends its runtime to `LD_LIBRARY_PATH`, and Nix
+coreutils load the host glibc under that path:
+
+```text
+dirname: symbol lookup error: /usr/lib/libc.so.6: undefined symbol: __pointer_chk_guard, version GLIBC_PRIVATE
+```
+
+That breaks `steamwebhelper.sh` before it starts the webhelper, which Steam
+reports as "steamwebhelper is not responding".
+
+`modules/standalone-linux/cachyos.nix` writes
+`/etc/systemd/user/app-steam@.service.d/10-system-manager-path.conf` with a host
+PATH for the Steam systemd unit. Noctalia passes its environment with `-E PATH`,
+but the unit drop-in takes precedence, so Steam and its helpers use the host
+tools. `modules/standalone-linux/home-manager.nix` also installs
+`~/.local/bin/steam`, a wrapper that sets the same PATH for launches from a
+terminal.
+
+Apply the switch, reload the user manager, then relaunch Steam:
+
+```bash
+systemctl --user daemon-reload
+```
+
+The terminal wrapper is part of the Home Manager payload. Apply it with
+`nix run .#home-switch`, or let the next Home Manager switch install it.
+
+## Lock screen password authentication
+
+Nix-built Noctalia links nixpkgs libpam. Its `pam_unix` module calls
+`/run/wrappers/bin/unix_chkpwd`, a path NixOS creates through `security.pam`.
+CachyOS has no such path, so the lock screen rejects the correct password.
+`modules/standalone-linux/system.nix` declares the same wrapper through
+`security.wrappers.unix_chkpwd`. `/run/wrappers` already exists as a
+system-manager-managed tmpfs for the mount and umount wrappers, so this adds one
+setuid-root file to the same directory.
+
+The `/etc/shells` entry matters here as well. Both the login stack and the
+Noctalia lock screen run `pam_shells` before `pam_unix`, so the Nushell profile
+path must be listed or authentication fails before the password is checked.
+NixOS hosts already get this wrapper and shell list from their own modules; the
+standalone host needs the explicit declarations.
+
+If authentication still fails, the journal shows whether nixpkgs libpam rejected
+a CachyOS module:
+
+```bash
+journalctl --user -u noctalia -b
+```
+
 ## Applying it
 
 From a checkout on the host:
@@ -90,6 +233,24 @@ not pick up units added by the switch, so start the new mount once, or reboot:
 
 ```bash
 sudo systemctl start mnt-970.mount
+```
+
+The same applies to the bootstrap, udev, and font units on the switch that adds
+them. A reboot runs all of them in order. To apply them without a reboot:
+
+```bash
+sudo systemctl start cachyos-bootstrap openrgb-udev-reload system-manager-fonts
+sudo systemctl restart sddm
+```
+
+After the switch, check the parts that affect login and the display manager:
+
+```bash
+getent passwd mei
+grep -F /run/system-manager/sw/bin/nu /etc/shells
+ls -l /run/wrappers/bin/unix_chkpwd
+systemctl status cachyos-bootstrap openrgb-udev-reload
+ls -l /etc/udev/rules.d/60-openrgb.rules
 ```
 
 ## How the hostname is set

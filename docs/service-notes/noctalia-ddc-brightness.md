@@ -37,26 +37,23 @@ The NixOS host config also enables I2C access declaratively:
   - `hardware.i2c.enable = true`
   - user is in `i2c` and `video`
 
-## One-time OS setup for existing non-NixOS Linux
+## Root-level setup on standalone Linux
 
-Standalone Home Manager cannot safely own `/etc` kernel-module and udev files.
-For an existing Arch/CachyOS-style install, perform the root-level setup
-explicitly using the host distribution's normal administration workflow:
+`modules/standalone-linux/openrgb.nix` now owns the root-level I2C setup through
+system-manager. It writes `/etc/modules-load.d/i2c-dev.conf` and installs the
+OpenRGB udev rules, whose I2C rule grants the active session access with
+`TAG+="uaccess"`. The `openrgb-udev-reload` oneshot runs `udevadm control
+--reload-rules` and `udevadm trigger`. No `i2c` group membership is needed, and
+no manual file under `/etc` is required.
+
+Apply the layer and let the unit run:
 
 ```bash
-sudo modprobe i2c-dev
-echo i2c-dev | sudo tee /etc/modules-load.d/i2c-dev.conf
-sudo groupadd -f i2c
-sudo usermod -aG i2c "$USER"
-printf 'KERNEL=="i2c-[0-9]*", GROUP="i2c", MODE="0660", TAG+="uaccess"\n' \
-  | sudo tee /etc/udev/rules.d/70-i2c.rules
-sudo udevadm control --reload-rules
-sudo udevadm trigger
+nix run github:numtide/system-manager -- switch --flake .#massive --sudo
+sudo systemctl start openrgb-udev-reload
 ```
 
-Log out and back in after adding your user to the `i2c` group. These commands
-are operational guidance only; this repository did not execute or verify them
-on a live standalone machine.
+A reboot also loads `i2c-dev` through systemd-modules-load.
 
 ## Verification
 
