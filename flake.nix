@@ -29,12 +29,11 @@
       inputs.flake-compat.follows = "flake-compat";
     };
     noctalia = {
-      # Track the latest Noctalia commit that upstream has already cached.
-      # Keep this input independent from our nixpkgs pin so Noctalia's
-      # Cachix artifacts remain usable. zix passes `-I noctalia` to auto-follow
-      # for the same reason, or the next `zix follows fix` would fold this input
-      # onto our pin.
-      url = "github:noctalia-dev/noctalia/cachix";
+      # Pin the v5.4.1 release tag instead of following the `cachix` branch,
+      # which has moved past the release and would ship unreleased builds.
+      # The tag carries its own nixpkgs lock and this input does not follow our
+      # nixpkgs pin, so the upstream Cachix artifacts stay usable.
+      url = "github:noctalia-dev/noctalia/v5.4.1";
     };
     nix-plist-manager = {
       url = "github:sushydev/nix-plist-manager";
