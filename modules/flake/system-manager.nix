@@ -17,12 +17,22 @@
 { inputs, ... }:
 let
   inherit (inputs) system-manager;
+
+  # `massive` is a Den home, so its user identity lives in inventory.nix.
+  # system-manager sits outside Den and needs the name to own the data-disk
+  # mount point, so this reads the same record instead of repeating a literal.
+  inventory = import ../aspects/inventory.nix { };
+  home = inventory.den.homes.x86_64-linux.massive;
 in
 {
   flake.systemConfigs.massive = system-manager.lib.makeSystemConfig {
     modules = [
       ../standalone-linux/system.nix
-      { standalone.hostName = "massive"; }
+      {
+        standalone.hostName = "massive";
+        standalone.userName = home.userName;
+        standalone.dataDisk.enable = true;
+      }
     ];
   };
 }

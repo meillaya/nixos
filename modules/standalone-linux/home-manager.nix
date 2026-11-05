@@ -7,24 +7,9 @@
 
 let
   standalone-files = import ./files.nix { inherit pkgs; };
-  caches = import ../../lib/nix-caches.nix;
 in
 {
   imports = [ ../linux/home-manager.nix ];
-
-  # Trust the binary-cache union at the user level so `nix run .#home-switch`
-  # substitutes from signed caches instead of rebuilding. `mei` is a daemon
-  # trusted-user (`/etc/nix/nix.custom.conf`), so a trusted user's
-  # `extra-substituters` in the user config is honored. The CachyOS host runs
-  # Determinate Nix; ~/.config/nix/nix.conf is its user-level config.
-  # xdg.configFile (not home.file) so HM resolves the path instead of creating
-  # a literal `~` directory.
-  xdg.configFile."nix/nix.conf".text = ''
-    # BEGIN nix-caching-zen-browser: binary-cache union (managed by HM)
-    extra-substituters = ${lib.concatStringsSep " " caches.substituters}
-    extra-trusted-public-keys = ${lib.concatStringsSep " " caches.trustedPublicKeys}
-    # END nix-caching-zen-browser
-  '';
 
   # Podman is the Nix-provided package on a foreign distro: CachyOS packages
   # no podman and therefore no /etc/containers, which podman searches for its
@@ -63,7 +48,11 @@ in
   };
 
 
+  # system-manager owns /run/opengl-driver (see ./system.nix), so the user-level
+  # gpu module would build a second driver tree and then warn on every switch
+  # that the live symlink points at the other one.
   targets.genericLinux.enable = true;
+  targets.genericLinux.gpu.enable = false;
   fonts.fontconfig = {
     enable = true;
     # The desktop theme (GTK + KDE) declares Fira Sans as the UI font; make

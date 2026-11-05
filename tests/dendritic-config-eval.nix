@@ -6,6 +6,8 @@ let
   nixos = flake.nixosConfigurations.remembrance.config;
   entropy = flake.darwinConfigurations.entropy.config;
   massive = flake.homeConfigurations.massive.config;
+  system = flake.systemConfigs.massive.config;
+  lib = flake.inputs.nixpkgs.lib;
   packageName = package: package.pname or package.name or (builtins.baseNameOf (toString package));
   hasPackages = names: packages:
     let present = map packageName packages;
@@ -62,6 +64,16 @@ assert massive.home.homeDirectory == "/home/mei";
 assert massive.programs.nushell.enable;
 assert builtins.hasAttr "podman" massive.systemd.user.sockets;
 assert builtins.isAttrs flake.systemConfigs.massive;
+
+# system-manager owns the non-NixOS desktop plumbing: the GPU driver tree, the
+# Nix settings the distribution's nix.conf includes, and the data disk mount.
+assert massive.targets.genericLinux.enable;
+assert !massive.targets.genericLinux.gpu.enable;
+assert !(massive.xdg.configFile ? "nix/nix.conf");
+assert lib.hasInfix "trusted-users = root @wheel" system.environment.etc."nix/nix.custom.conf".text;
+assert lib.any (rule: lib.hasInfix "/run/opengl-driver" rule) system.systemd.tmpfiles.rules;
+assert lib.any (mount: mount.where == "/mnt/970" && mount.what == "LABEL=970EVO") system.systemd.mounts;
+assert builtins.hasAttr "data-disk-ownership" system.systemd.services;
 
 # Package policy still resolves the requested unfree packages.
 assert !(policyConfig ? allowBroken);
