@@ -73,8 +73,12 @@ profile record.
 | Add a CachyOS package or change fish removal | `modules/standalone-linux/cachyos.nix` | pacman bootstrap unit |
 | Change the SDDM theme | `modules/standalone-linux/cachyos.nix`, `pkgs/thyx.nix` | pinned v1.1.0; Blush preset |
 | Configure OpenRGB | `modules/standalone-linux/openrgb.nix` | generated udev rules and `i2c-dev` |
-| Fix Hydra game tools or umu | `pkgs/hydralauncher.nix`, `modules/linux/packages.nix` | FHS tools and umu 1.4.4 |
-| Change game trainer launching | `pkgs/game-trainer.nix`, `pkgs/game-trainer.sh` | detects the running prefix |
+| Change Hydra game launching | `pkgs/hydralauncher.nix`, `pkgs/hydralauncher-fhs.nix` | host-native; FHS fallback |
+| Change game trainer launching | `pkgs/game-trainer.nix`, `pkgs/game-trainer.sh` | prefix detection, config, CE auto-attach |
+| Change Cheat Engine | `pkgs/cheat-engine.nix` | pinned Linux build |
+| Change the gaming health check | `pkgs/gaming-health.nix` | host Vulkan report |
+| Change session recovery | `modules/standalone-linux/cachyos.nix`, `system.nix` | autologin, coredump, journal |
+| Change the Nix update guard | `tools/gaming-update` | builds in a temporary copy |
 | Change storage labels | `modules/nixos/storage-labels.nix` | `NIXBOOT`, `NIXROOT`; `my.storage.labels.enable` |
 | Change the installer | `distro/scripts/install.py` + `distro/pkgs/distro-installer.nix` | `--test` covers disk logic |
 | Add or pin a package | `zix add ...` | `tools/zix/README.md` |

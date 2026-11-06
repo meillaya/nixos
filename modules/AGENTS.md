@@ -82,8 +82,9 @@ their own flake outputs.
 - Nushell is the login shell; Bash is the only fallback. `/etc/shells` on the
   standalone host must list the system-manager Nushell path for `pam_shells`.
 - `modules/standalone-linux/cachyos.nix` owns the pacman package bootstrap,
-  fish removal, and SDDM theme. `openrgb.nix` owns the OpenRGB system package
-  and udev rules.
+  fish removal, SDDM theme, and SDDM autologin. `system.nix` owns the
+  coredump watcher and persistent journal. `openrgb.nix` owns the OpenRGB
+  system package and udev rules.
 
 ## ANTI-PATTERNS
 - No `_machine-authority`, intake JSON, enrollment scripts, or
