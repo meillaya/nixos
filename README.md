@@ -71,7 +71,8 @@ rather than changing the running system.
 - [docs/architecture/inputs.md](docs/architecture/inputs.md): the flake inputs and the removed ones.
 - [docs/service-notes/distro-iso.md](docs/service-notes/distro-iso.md): build, test, and write the live ISO.
 - [docs/service-notes/rootless-containers.md](docs/service-notes/rootless-containers.md): the container policy.
-- [docs/service-notes/hydra-launcher.md](docs/service-notes/hydra-launcher.md): Hydra's FHS game tools and umu runtime.
+- [docs/service-notes/hydra-launcher.md](docs/service-notes/hydra-launcher.md): host-native Hydra and the universal trainer.
+- [docs/service-notes/gaming-stability.md](docs/service-notes/gaming-stability.md): graphics, recovery, snapshots, and trainers.
 - [docs/service-notes/zix.md](docs/service-notes/zix.md) and [tools/zix/README.md](tools/zix/README.md): the developer tool, pins, sandboxes, VMs.
 - [secrets/README.md](secrets/README.md): the sops store and its recipients.
 

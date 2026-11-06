@@ -1,30 +1,24 @@
-# Hydralauncher with the game tools and a current umu-run in its FHS
-# environment.
+# Hydra with host graphics and host umu-launcher.
 #
-# The nixpkgs Hydra is an AppImage wrapped in buildFHSEnv, so Hydra sees its
-# own /usr/bin instead of CachyOS. That hides winetricks and mangohud, and
-# gamemoderun may be absent from the host. The bundled umu-run 1.3.0 also fails
-# to install the Steam runtime with a digest mismatch.
+# Hydra is an Electron AppImage. The nixpkgs package normally wraps it in
+# buildFHSEnv, which hides the CachyOS /usr and makes the bundled game launch
+# path use the Nix Mesa tree. That version skew is not acceptable for games, so
+# this package runs the extracted AppImage directly on the host. The only patch
+# is the umu-run helper: it execs the host umu-launcher so games use the host
+# Vulkan driver and the same runtime as Steam and Heroic.
 #
-# This package inherits the Hydra version, extracted contents, install commands,
-# metadata, and source from nixpkgs, then patches only what the FHS isolation
-# needs. A nixpkgs bump therefore moves Hydra and this wrapper together; only a
-# change to the AppImage's resources layout or its compatibility checks would
-# need a follow-up edit.
+# The previous FHS package is kept in hydralauncher-fhs.nix for rollback.
 {
+  lib,
   hydralauncher,
-  appimageTools,
   runCommand,
-  winetricks,
-  mangohud,
-  gamemode,
-  umu-launcher-unwrapped,
+  makeWrapper,
 }:
 
 let
-  inherit (hydralauncher) pname version contents;
+  inherit (hydralauncher) pname version contents meta;
 
-  patchedContents = runCommand "${pname}-${version}-patched" { } ''
+  patchedContents = runCommand "${pname}-${version}-host-patched" { } ''
     cp -a ${contents} $out
     chmod -R u+w $out
 
@@ -38,18 +32,25 @@ let
     chmod 0755 $out/resources/umu-run
   '';
 in
-appimageTools.wrapAppImage {
-  inherit pname version;
-  contents = patchedContents;
+runCommand "${pname}-${version}" {
+  nativeBuildInputs = [ makeWrapper ];
+  inherit pname version meta;
+} ''
+  mkdir -p $out/bin $out/share/hydralauncher
+  cp -a ${patchedContents}/. $out/share/hydralauncher/
+  chmod -R u+w $out/share/hydralauncher
 
-  extraPkgs = pkgs: [
-    pkgs.python3
-    umu-launcher-unwrapped
-    winetricks
-    mangohud
-    gamemode
-  ];
+  makeWrapper $out/share/hydralauncher/hydralauncher $out/bin/hydralauncher \
+    --add-flags "--no-sandbox" \
+    --unset LD_LIBRARY_PATH \
+    --unset LD_PRELOAD \
+    --prefix PATH : /usr/local/sbin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin
 
-  extraInstallCommands = hydralauncher.extraInstallCommands;
-  meta = hydralauncher.meta;
-}
+  install -Dm644 ${patchedContents}/hydralauncher.desktop \
+    $out/share/applications/hydralauncher.desktop
+  substituteInPlace $out/share/applications/hydralauncher.desktop \
+    --replace-fail 'Exec=AppRun' "Exec=$out/bin/hydralauncher"
+
+  install -Dm644 ${patchedContents}/usr/share/icons/hicolor/512x512/apps/hydralauncher.png \
+    $out/share/icons/hicolor/512x512/apps/hydralauncher.png
+''

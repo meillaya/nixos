@@ -672,6 +672,34 @@ in
   };
 
 
+  home.file.".local/share/applications/game-trainer.desktop" = {
+    force = true;
+    text = ''
+      [Desktop Entry]
+      Type=Application
+      Name=Game Trainer
+      Comment=Launch a trainer or Cheat Engine in the running game prefix
+      Exec=game-trainer
+      Icon=applications-games
+      Terminal=false
+      Categories=Game;Utility;
+    '';
+  };
+
+  home.file.".config/game-trainer/games.conf.example" = {
+    force = true;
+    text = ''
+      # Map a game process name to a trainer or Cheat Engine.
+      #
+      # [LOP-Win64-Shipping.exe]
+      # trainer=/home/mei/Downloads/trainer.exe
+      #
+      # [SomeGame.exe]
+      # cheat_engine=/home/mei/Downloads/cheatengine-x86_64.exe
+      # table=/home/mei/Downloads/SomeGame.CT
+    '';
+  };
+
   home.file.".local/bin/niri-close-window" = {
     force = true;
     executable = true;

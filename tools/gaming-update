@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+repo="$(cd "$(dirname "$0")/.." && pwd)"
+tmp="$(mktemp -d)"
+trap 'rm -rf "$tmp"' EXIT
+
+cp -a "$repo/." "$tmp/"
+rm -rf "$tmp/.git"
+
+printf 'Updating inputs in a temporary copy...\n'
+nix flake update --flake "$tmp"
+
+printf 'Building the system and Home Manager layers...\n'
+nix build --no-link "$tmp#systemConfigs.massive"
+nix build --no-link "$tmp#homeConfigurations.massive.activationPackage"
+
+printf 'Running repository checks...\n'
+(
+  cd "$tmp"
+  bash tests/dendritic-architecture.sh
+  bash tests/dendritic-boundaries.sh
+  bash tests/dendritic-shells.sh
+  bash tests/dendritic-apps.sh
+  bash tests/script-args.sh
+  bash tests/prose.sh
+  nix-instantiate --eval --strict --expr 'import ./tests/dendritic-config-eval.nix {}'
+)
+
+cp "$tmp/flake.lock" "$repo/flake.lock"
+printf 'Updated flake.lock. Review it, then switch explicitly.\n'

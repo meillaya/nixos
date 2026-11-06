@@ -41,6 +41,15 @@ output "DP-2" {
     position x=760 y=-1080
 }
 
+// The Dell S3422DWG advertises 144 Hz only over DisplayPort. Its HDMI input
+// tops out at 100 Hz, and without a matching block Niri falls back to the
+// 60 Hz preferred mode.
+output "HDMI-A-1" {
+    mode "3440x1440@99.982"
+    scale 1
+    position x=0 y=0
+}
+
 // ────────────── Workspaces ──────────────
 // Using dynamic numeric workspaces only, so empty named workspaces do not clutter the bar.
 
@@ -56,6 +65,7 @@ binds {
     Super+B hotkey-overlay-title="Open Browser: Zen" { spawn-sh "zen"; }
     Super+E hotkey-overlay-title="Open Files: Dolphin" { spawn-sh "env QT_STYLE_OVERRIDE=kvantum QT_QUICK_CONTROLS_STYLE=org.kde.desktop XDG_MENU_PREFIX=plasma- GTK_THEME=Sweet-Dark GTK_USE_PORTAL=1 dolphin"; }
     Super+ALT+L hotkey-overlay-title="Lock Screen" { spawn-sh "noctalia msg screen-lock"; }
+    Super+ALT+T hotkey-overlay-title="Game Trainer" { spawn "game-trainer"; }
 
     // ─── Media / Audio ───
     XF86AudioRaiseVolume allow-when-locked=true { spawn-sh "noctalia msg volume-up"; }

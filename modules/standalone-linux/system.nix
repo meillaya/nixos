@@ -30,6 +30,45 @@ let
     ++ lib.optional (pkgs.stdenv.hostPlatform.system == "x86_64-linux") pkgs.intel-media-driver;
   };
 
+  # amdgpu publishes a device coredump under /sys/class/devcoredump after a
+  # reset. The data file is root-only and disappears when it is read, so keep a
+  # small root-owned watcher rather than relying on a user to notice the reset.
+  amdgpuCoredumpWatch = pkgs.writeShellApplication {
+    name = "amdgpu-coredump-watch";
+    runtimeInputs = [ pkgs.coreutils ];
+    text = ''
+      set -u
+
+      out=/var/lib/amdgpu-coredump
+      mkdir -p "$out"
+
+      while :; do
+        for data in /sys/class/devcoredump/devcd*/data; do
+          [ -r "$data" ] || continue
+
+          dev=$(basename "$(dirname "$data")")
+          marker="$out/.seen-$dev"
+          [ -e "$marker" ] && continue
+
+          stamp=$(date -u +%Y%m%dT%H%M%SZ)
+          file="$out/amdgpu-$dev-$stamp.bin"
+          tmp="$out/.$dev-$stamp.tmp"
+
+          if cat "$data" > "$tmp"; then
+            mv "$tmp" "$file"
+            : > "$marker"
+            sync
+            printf 'saved %s\n' "$file"
+          else
+            rm -f "$tmp"
+          fi
+        done
+
+        sleep 10
+      done
+    '';
+  };
+
   # systemd derives a mount unit name from the mount point, and the ownership
   # service has to order itself after exactly that unit.
   mountUnit = "${utils.escapeSystemdPath disk.mountPoint}.mount";
@@ -159,6 +198,15 @@ in
       '';
     };
 
+    environment.etc."systemd/journald.conf.d/99-gaming.conf" = {
+      replaceExisting = true;
+      text = ''
+        [Journal]
+        Storage=persistent
+        SystemMaxUse=1G
+      '';
+    };
+
     # Both directories hold runtime and node-identity state rather than data
     # private to one unit, so activation creates them instead of tying their
     # lifetime to tailscaled. The paths are the ones the distribution package
@@ -167,10 +215,24 @@ in
     systemd.tmpfiles.rules = [
       "d /var/lib/tailscale 0700 root root -"
       "d /run/tailscale 0755 root root -"
+      "d /var/lib/amdgpu-coredump 0750 root root -"
       "L+ /run/opengl-driver - - - - ${gpuDrivers}"
     ] ++ lib.optionals disk.enable [
       "d ${disk.mountPoint} 0755 root root -"
     ];
+
+    systemd.services.amdgpu-coredump = {
+      description = "Save AMDGPU device coredumps";
+      wantedBy = [ "multi-user.target" ];
+      after = [ "local-fs.target" ];
+      serviceConfig = {
+        Type = "simple";
+        ExecStart = "${amdgpuCoredumpWatch}/bin/amdgpu-coredump-watch";
+        Restart = "always";
+        RestartSec = 10;
+        Nice = 10;
+      };
+    };
 
     systemd.mounts = lib.optional disk.enable {
       what = disk.device;

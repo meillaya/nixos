@@ -75,6 +75,10 @@ assert !massive.targets.genericLinux.gpu.enable;
 assert !(massive.xdg.configFile ? "nix/nix.conf");
 assert lib.hasInfix "trusted-users = root @wheel" system.environment.etc."nix/nix.custom.conf".text;
 assert lib.any (rule: lib.hasInfix "/run/opengl-driver" rule) system.systemd.tmpfiles.rules;
+assert lib.any (rule: lib.hasInfix "amdgpu-coredump" rule) system.systemd.tmpfiles.rules;
+assert builtins.hasAttr "amdgpu-coredump" system.systemd.services;
+assert lib.hasInfix "Relogin=true" system.environment.etc."sddm.conf.d/10-gaming-autologin.conf".text;
+assert lib.hasInfix "Storage=persistent" system.environment.etc."systemd/journald.conf.d/99-gaming.conf".text;
 assert lib.any (mount: mount.where == "/mnt/970" && mount.what == "LABEL=970EVO") system.systemd.mounts;
 assert builtins.hasAttr "data-disk-ownership" system.systemd.services;
 
@@ -106,7 +110,8 @@ assert builtins.hasAttr "systemd/user/app-steam@.service.d/10-system-manager-pat
 assert lib.hasInfix "Environment=PATH=/usr/local/sbin" system.environment.etc."systemd/user/app-steam@.service.d/10-system-manager-path.conf".text;
 assert massive.home.file ? ".local/bin/steam";
 assert hasPackages [ "thyx" "openrgb" "nushell" ] system.environment.systemPackages;
-assert hasPackages [ "hydralauncher" ] massive.home.packages;
+assert hasPackages [ "hydralauncher" "game-trainer" "gaming-health" "cheat-engine" ] massive.home.packages;
+assert massive.home.file ? ".local/share/applications/game-trainer.desktop";
 assert flake.packages.x86_64-linux ? thyx;
 
 # Package policy still resolves the requested unfree packages.

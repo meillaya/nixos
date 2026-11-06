@@ -48,11 +48,14 @@ with pkgs;
   gimp
   ghostty
   halloy
-  # Hydra's stock AppImage hides the host /usr/bin, so it cannot see
-  # winetricks, mangohud, or gamemoderun. The local package adds those tools
-  # to the FHS environment and replaces the bundled umu-run 1.3.0 with the
-  # current Nix umu-launcher.
+  # Hydra runs on the host so games use the host Vulkan driver instead of the
+  # Nix GPU tree. Its umu-run helper execs the host umu-launcher.
   (pkgs.callPackage ../../pkgs/hydralauncher.nix { })
+  # Launch a trainer or Cheat Engine in the prefix of the running game.
+  (pkgs.callPackage ../../pkgs/game-trainer.nix { })
+  # Read-only health report for the graphics stack and trainer detector.
+  (pkgs.callPackage ../../pkgs/gaming-health.nix { })
+  (pkgs.callPackage ../../pkgs/cheat-engine.nix { })
   imhex
   incus
   kicad

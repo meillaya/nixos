@@ -73,6 +73,11 @@ in
         "mangohud"
         "gamemode"
         "lib32-gamemode"
+        "snapper"
+        "snap-pac"
+        "limine-snapper-sync"
+        "linux-cachyos-lts"
+        "vulkan-tools"
       ];
       description = "Arch packages the CachyOS host must have.";
     };
@@ -127,6 +132,16 @@ in
     environment.systemPackages = lib.optional cfg.thyx.enable thyx;
 
     environment.etc = {
+      # A GPU reset can end the compositor session. Relogin starts a new niri
+      # session without a greeter stop, while unsaved application state is
+      # still lost with the old session.
+      "sddm.conf.d/10-gaming-autologin.conf".text = ''
+        [Autologin]
+        User=${config.standalone.userName}
+        Session=niri
+        Relogin=true
+      '';
+
       # Noctalia starts desktop apps with systemd-run and copies its own
       # environment into the unit. Steam then prepends its runtime to
       # LD_LIBRARY_PATH. The Nix coreutils on the inherited PATH load the host

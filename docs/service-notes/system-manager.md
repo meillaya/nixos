@@ -53,6 +53,21 @@ switch that includes this layer:
 sudo rm -f /etc/tmpfiles.d/non-nixos-gpu.conf /nix/var/nix/gcroots/non-nixos-gpu.conf
 ```
 
+The tree follows the nixpkgs Mesa version, while the host desktop follows the
+CachyOS Mesa package. Check both before blaming a game for a driver crash:
+
+```bash
+nix eval --raw --impure --expr 'let f = builtins.getFlake "path:/home/mei/nixos"; in f.inputs.nixpkgs.legacyPackages.x86_64-linux.mesa.version'
+pacman -Q mesa
+```
+
+A GPU reset can kill the compositor when Mesa aborts after `VRAM is lost`.
+`amdgpu-coredump` is a root watcher for the kernel dump. It reads
+`/sys/class/devcoredump/devcd*/data` and writes
+`/var/lib/amdgpu-coredump/amdgpu-*.bin`. The data file is root-only and is
+consumed when read, so the watcher is a system service rather than a user
+script. The dump can be inspected with `sudo ls -l /var/lib/amdgpu-coredump`.
+
 ## Nix settings and cache trust
 
 Determinate Nix includes `/etc/nix/nix.custom.conf` from `/etc/nix/nix.conf`, so

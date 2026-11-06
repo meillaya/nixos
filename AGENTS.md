@@ -74,6 +74,7 @@ profile record.
 | Change the SDDM theme | `modules/standalone-linux/cachyos.nix`, `pkgs/thyx.nix` | pinned v1.1.0; Blush preset |
 | Configure OpenRGB | `modules/standalone-linux/openrgb.nix` | generated udev rules and `i2c-dev` |
 | Fix Hydra game tools or umu | `pkgs/hydralauncher.nix`, `modules/linux/packages.nix` | FHS tools and umu 1.4.4 |
+| Change game trainer launching | `pkgs/game-trainer.nix`, `pkgs/game-trainer.sh` | detects the running prefix |
 | Change storage labels | `modules/nixos/storage-labels.nix` | `NIXBOOT`, `NIXROOT`; `my.storage.labels.enable` |
 | Change the installer | `distro/scripts/install.py` + `distro/pkgs/distro-installer.nix` | `--test` covers disk logic |
 | Add or pin a package | `zix add ...` | `tools/zix/README.md` |

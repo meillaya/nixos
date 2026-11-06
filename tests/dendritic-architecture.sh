@@ -42,6 +42,10 @@ for path in \
   modules/standalone-linux/openrgb.nix \
   pkgs/thyx.nix \
   pkgs/hydralauncher.nix \
+  pkgs/game-trainer.nix \
+  pkgs/game-trainer.sh \
+  pkgs/gaming-health.nix \
+  pkgs/cheat-engine.nix \
   distro/flake.nix \
   distro/modules/identity.nix \
   distro/modules/base.nix \
