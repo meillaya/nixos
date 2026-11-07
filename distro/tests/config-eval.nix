@@ -25,7 +25,10 @@ assert
 # boot the named host instead of a neutral install.
 assert installed.config.programs.niri.enable;
 assert installed.config.programs.noctalia.enable;
-assert installed.config.services.displayManager.defaultSession == "niri";
+assert installed.config.services.greetd.enable;
+assert installed.config.services.displayManager.noctalia-greeter.enable;
+assert installed.config.services.displayManager.noctalia-greeter.settings.session.default == "Niri";
+assert !installed.config.services.xserver.displayManager.lightdm.enable;
 assert installed.config.home-manager.users.mei.programs.nushell.enable;
 assert hasPackages [ "obsidian" ] installed.config.home-manager.users.mei.home.packages;
 
@@ -56,7 +59,8 @@ assert !live.config.services.tailscale.enable;
 assert !live.config.services.syncthing.enable;
 assert live.config.users.users.mei.openssh.authorizedKeys.keys == [ ];
 assert live.config.users.users.root.openssh.authorizedKeys.keys == [ ];
-assert live.config.services.displayManager.autoLogin.user == "mei";
+assert live.config.services.greetd.settings.initial_session.user == "mei";
+assert builtins.match ".*niri-session.*" live.config.services.greetd.settings.initial_session.command != null;
 assert live.config.users.users.mei.initialHashedPassword == "";
 assert !live.config.services.openssh.enable;
 assert !live.config.boot.loader.systemd-boot.enable;

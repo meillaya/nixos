@@ -34,8 +34,10 @@ in
 
   security.sudo.wheelNeedsPassword = lib.mkForce false;
 
-  services.displayManager.autoLogin = {
-    enable = true;
+  # Boot straight into the live desktop. greetd runs this initial session as the
+  # live user, then falls back to the Noctalia greeter once the session ends.
+  services.greetd.settings.initial_session = {
+    command = "${pkgs.niri}/bin/niri-session";
     user = username;
   };
 
