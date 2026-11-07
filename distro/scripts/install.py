@@ -258,10 +258,14 @@ def partition_name(disk: str, number: int) -> str:
 
 def partition(disk: str) -> tuple[str, str]:
     run(["wipefs", "-a", "-f", disk])
+    # The type is a GPT type GUID or a GPT shortcut. The MBR hex codes EF00
+    # and 8300 are not GPT types: sfdisk aborts the whole script with
+    # "Failed to add #1 partition: Invalid argument" and no partition is
+    # created. U is the EFI System GUID, L is the Linux filesystem GUID.
     layout = (
         "label: gpt\n"
-        f'size=1GiB, type=EF00, name="{BOOT_LABEL}"\n'
-        f'type=8300, name="{ROOT_LABEL}"\n'
+        f'size=1GiB, type=U, name="{BOOT_LABEL}"\n'
+        f'type=L, name="{ROOT_LABEL}"\n'
     )
     run(["sfdisk", "--wipe", "always", "--wipe-partitions", "always", disk], input_text=layout)
     run(["udevadm", "settle"], check=False)

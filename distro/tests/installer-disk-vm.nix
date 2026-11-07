@@ -45,6 +45,14 @@ pkgs.testers.runNixOSTest {
 
     installer.succeed("blkid -o value -s LABEL /dev/vdb1 | grep -Fx NIXBOOT")
     installer.succeed("blkid -o value -s LABEL /dev/vdb2 | grep -Fx NIXROOT")
+    # GPT type GUIDs, not the MBR hex codes: EF00/8300 make sfdisk abort the
+    # whole script with "Failed to add #1 partition: Invalid argument".
+    installer.succeed(
+        "sfdisk --part-type /dev/vdb 1 | grep -Fx C12A7328-F81F-11D2-BA4B-00A0C93EC93B"
+    )
+    installer.succeed(
+        "sfdisk --part-type /dev/vdb 2 | grep -Fx 0FC63DAF-8483-4772-8E79-3D69D8477DE4"
+    )
     installer.succeed("lsblk -o NAME,LABEL,PARTLABEL /dev/vdb")
   '';
 }
