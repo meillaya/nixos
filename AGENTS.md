@@ -72,6 +72,7 @@ profile record.
 | Change the standalone system layer | `modules/standalone-linux/system.nix` | system-manager owns `/etc`, units, users, wrappers |
 | Add a CachyOS package or change fish removal | `modules/standalone-linux/cachyos.nix` | pacman bootstrap unit |
 | Change the SDDM theme | `modules/standalone-linux/cachyos.nix`, `pkgs/thyx.nix` | pinned v1.1.0; Blush preset |
+| Change the NixOS login greeter | `modules/nixos/system.nix` | greetd runs Noctalia Greeter; the live profile starts niri from `initial_session` |
 | Configure OpenRGB | `modules/standalone-linux/openrgb.nix` | generated udev rules and `i2c-dev` |
 | Change Hydra game launching | `pkgs/hydralauncher.nix`, `pkgs/hydralauncher-fhs.nix` | host-native; FHS fallback |
 | Change game trainer launching | `pkgs/game-trainer.nix`, `pkgs/game-trainer.sh` | prefix detection, config, CE auto-attach |

@@ -1,10 +1,14 @@
-{ host, pkgs, ... }:
+{ config, host, pkgs, ... }:
 
 let
   identity = host.users.mei.identity;
   user = identity.name;
   home = identity.home;
   caches = import ../../lib/nix-caches.nix;
+  # The Wayland session the login greeter preselects. noctalia-greeter 1.5.0
+  # matches the desktop entry's Name= field, so this is "Niri", not the
+  # niri.desktop file stem.
+  session = "Niri";
   # The identity home-manager installs on every host at ~/.ssh/id_github, and at
   # ~/.ssh/id_ed25519 when that path is free. That is the key a machine actually
   # presents, so interactive login has to accept it or every host-to-host SSH
@@ -60,8 +64,43 @@ in
     dconf.enable = true;
   };
 
+  # Noctalia Greeter owns the login screen through greetd. It replaced LightDM,
+  # whose AccountsService default-session handoff failed on a fresh install with
+  # "Failed to start session". greeter.toml is generated from these settings;
+  # session.default preselects the niri desktop from the session desktop files.
+  services.displayManager.noctalia-greeter = {
+    enable = true;
+    settings = {
+      session.default = session;
+      # Single-user workstation: open the password step for this account.
+      user.default = user;
+      keyboard = {
+        layout = "us";
+        # services.xserver.xkb does not feed a Wayland greeter.
+        options = "ctrl:nocaps";
+      };
+      cursor = {
+        theme = "Adwaita";
+        size = 24;
+      };
+    };
+  };
+
+  # greetd runs the greeter and then the chosen session command itself, so its
+  # service PATH must expose the system profile: niri-session comes from the
+  # niri.desktop Exec line and the greeter session wrapper needs dbus-run-session
+  # plus coreutils. NixOS builds a service PATH from this list option.
+  systemd.services.greetd.path = [ config.system.path ];
+
+  # Point the greeter at the session desktop files. The nixpkgs module does not
+  # export XDG_DATA_DIRS to the service, and the wayland-sessions directory is
+  # not linked into the system profile.
+  services.greetd.settings.default_session.command =
+    "${pkgs.coreutils}/bin/env"
+    + " XDG_DATA_DIRS=${config.services.displayManager.sessionData.desktops}/share"
+    + " ${pkgs.noctalia-greeter}/bin/noctalia-greeter-session";
+
   services = {
-    displayManager.defaultSession = "niri";
     xserver = {
       enable = true;
 
@@ -76,13 +115,6 @@ in
       #   Option       "AllowIndirectGLXProtocol" "off"
       #   Option       "TripleBuffer" "on"
       # '';
-
-      # LightDM Display Manager
-      displayManager.lightdm = {
-        enable = true;
-        greeters.slick.enable = true;
-        background = ./config/login-wallpaper.png;
-      };
 
       xkb = {
         # Turn Caps Lock into Ctrl
