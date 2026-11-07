@@ -29,6 +29,10 @@ pkgs.testers.runNixOSTest {
     start_all()
     installer.wait_for_unit("multi-user.target")
 
+    listed = installer.succeed("nixos-install-tui --list-disks")
+    assert "/dev/vdb" in listed, listed
+    assert "/dev/vda" not in listed, listed
+
     output = installer.succeed(
         "nixos-install-tui --test --disk /dev/vdb --yes --non-interactive"
     )

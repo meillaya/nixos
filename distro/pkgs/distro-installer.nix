@@ -35,6 +35,6 @@ writeShellApplication {
     export NIXBOOT_LABEL=${lib.escapeShellArg labels.boot}
     export NIXROOT_LABEL=${lib.escapeShellArg labels.root}
     export NIXOS_LIVE_USER=${lib.escapeShellArg liveUser}
-    exec python3 ${../scripts/install.py} "$@"
+    exec python3 -B ${../scripts/install.py} "$@"
   '';
 }

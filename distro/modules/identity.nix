@@ -12,11 +12,6 @@
       default = "meinix";
       description = "Lowercase id used for image names and labels.";
     };
-    hostName = lib.mkOption {
-      type = lib.types.str;
-      default = "nixos";
-      description = "Hostname the installer bakes into the installed system.";
-    };
     liveUser = lib.mkOption {
       type = lib.types.str;
       default = "mei";

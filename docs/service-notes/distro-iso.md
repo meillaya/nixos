@@ -26,26 +26,36 @@ nix flake check
 nix build .#checks.x86_64-linux.installer-disk-vm
 ```
 
-The VM test boots the live profile with an extra blank disk and runs
-`nixos-install-tui --test`. It checks the `NIXBOOT` and `NIXROOT` labels, the
-four subvolumes, and the mount/unmount path. It does not install a system.
+The VM test boots the live profile with an extra blank disk. It checks that
+`nixos-install-tui --list-disks` finds the blank disk and not the live root,
+then runs `nixos-install-tui --test`. The test checks the `NIXBOOT` and
+`NIXROOT` labels, the four subvolumes, and the mount/unmount path. It does not
+install a system.
 
 ## Manual install
 
-Write the ISO as a raw image, boot UEFI, and run the installer from the live
-session:
+Copy the ISO to a Ventoy data partition, or write it as a raw image:
 
 ```bash
 sudo dd if=result/iso/*.iso of=/dev/sdX bs=4M status=progress oflag=sync
 ```
 
+Boot the medium with UEFI. After Niri starts, `nixos-install-gui` opens. It
+lists the eligible internal disks, asks for the password, confirms the erase,
+runs the installer, and offers a reboot. The console flow is available from a
+terminal:
+
+```bash
+sudo nixos-install-tui
+```
+
 The installer rejects the live medium, read-only devices, disks smaller than
-16 GiB, and BIOS boot. It prints the selected disk and requires `YES` before
-erasing.
+16 GiB, USB transports, zram, and device-mapper devices. It prints the selected
+disk and requires a typed `YES` before erasing.
 
 After the install, remove the ISO and reboot. The installed system mounts
-`NIXBOOT` and `NIXROOT`, so the same closure works from any disk the installer
-prepared.
+`NIXBOOT` and `NIXROOT`, and the first boot is `remembrance` with the password
+set during the install.
 
 ## Migration
 
@@ -71,3 +81,8 @@ original UUIDs and remain bootable.
   from the ISO.
 - Two disks with `NIXROOT` make the boot ambiguous. Keep one system disk per
   machine.
+- The graphical installer does not open: run `nixos-install-gui` from a
+  terminal, or use `sudo nixos-install-tui`.
+- The desktop does not start: choose **Options > Disable display-manager** in
+  the ISO boot menu, log in as `mei` with an empty password, and run the
+  console installer.

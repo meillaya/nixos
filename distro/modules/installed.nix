@@ -1,8 +1,10 @@
-# Installed-system behavior on top of the shared label storage contract.
-{ config, lib, ... }:
+# The installed profile is the real workstation configuration.
+#
+# The flake builds this profile by extending nixosConfigurations.remembrance.
+# The hostname, timezone, keyboard, kernel, user services, and SSH keys come
+# from the host aspect, so the first boot is the named host. This module keeps
+# the one setting the distro requires: SSH stays enabled for administration.
+{ lib, ... }:
 {
-  networking.hostName = lib.mkForce config.distro.hostName;
-
-  # SSH is available, but no key is trusted until the operator adds one.
   services.openssh.enable = lib.mkForce true;
 }

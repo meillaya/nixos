@@ -33,21 +33,28 @@ The only configured shells are Nushell (the login shell) and Bash.
 
 ## Install the distro
 
-Build the live ISO from the distro flake on an x86_64-linux machine, write it to
-a USB stick, boot UEFI, and run the installer from the live session:
+Build the live ISO from the distro flake on an x86_64-linux machine, then write
+it to a USB stick or copy it to a Ventoy data partition:
 
 ```bash
 nix build ./distro#iso.live
 sudo dd if=result/iso/*.iso of=/dev/sdX bs=4M status=progress oflag=sync
+```
+
+Boot the medium with UEFI. The live session opens the graphical installer,
+which lists the eligible internal disks, asks for the password, and copies the
+prebuilt installed system. The console installer is still available:
+
+```bash
 sudo nixos-install-tui
 ```
 
-The installer accepts any whole disk of at least 16 GiB, creates a 1 GiB EFI
-partition labelled `NIXBOOT` and a Btrfs root labelled `NIXROOT`, then copies
-the prebuilt installed system from the ISO. No network is needed for the
-install. The installed closure is the real workstation profile; after the first
-boot, switch it to a named host with `nixos-rebuild switch --flake
-/etc/nixos#remembrance`.
+The installer accepts any whole internal disk of at least 16 GiB and rejects
+USB disks, the live medium, read-only devices, zram, and device-mapper devices.
+It creates a 1 GiB EFI partition labelled `NIXBOOT` and a Btrfs root labelled
+`NIXROOT`. No network is needed for the install. The installed closure is the
+`remembrance` profile, and the first boot is that host with the password set
+during the install.
 
 Existing NixOS hosts use the same label contract. Before switching an existing
 host, relabel its root and ESP once:

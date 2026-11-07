@@ -2,7 +2,7 @@
 
 The distro is a separate flake under `distro/`. It owns one live ISO and one
 prebuilt installed system. Both are built from the real workstation profile,
-`nixosConfigurations.remembrance`, with the live/installed overrides in
+`nixosConfigurations.remembrance`, with the live and installed overrides in
 `distro/modules/`.
 
 ## Profiles
@@ -10,18 +10,21 @@ prebuilt installed system. Both are built from the real workstation profile,
 `distro/flake.nix` extends the fleet host configuration:
 
 - `nixosConfigurations.installed` adds `distro/modules/base.nix` and
-  `distro/modules/installed.nix`. It keeps the real Niri/Noctalia desktop, the
-  user payload, and the label storage contract, with a fixed `nixos` hostname,
-  SSH enabled, no trusted key, and mutable users.
-- `nixosConfigurations.live` adds `distro/modules/base.nix` and
-  `distro/modules/live.nix`. It sets `my.storage.labels.enable = false`, uses a
-  tmpfs root, auto-logs in as `mei`, gives passwordless sudo, and disables the
-  personal SSH, tailscale, and syncthing settings.
-- `iso.live` extends the live configuration with `distro/modules/iso.nix`,
-  `distro/modules/installer.nix`, the installed toplevel, and the main flake
-  source.
+  `distro/modules/installed.nix`. The hostname, timezone, keyboard, kernel,
+  Tailscale, Syncthing, SSH trust, and Home Manager payload come from the
+  `remembrance` aspect. `base.nix` adds the distro identity and a mutable user
+  so the installer can set a password. `installed.nix` keeps SSH enabled. The
+  first boot is the named host.
+- `nixosConfigurations.live` adds `base.nix` and `live.nix`. Live sets a tmpfs
+  root, auto-logs in as `mei`, gives passwordless sudo, and turns off the
+  personal SSH keys, Tailscale, Syncthing, and label mounts. It also pins the
+  US locale and keyboard.
+- `iso.live` extends the live configuration with `iso.nix`, `installer.nix`,
+  the installed toplevel, and the main flake source. `installer.nix` adds the
+  console installer, the Zenity wrapper, and a Niri `spawn-at-startup` line, so
+  the graphical installer opens in the live session.
 
-The installed closure is the workstation profile, not a second `distro-role`.
+The installed closure is the workstation profile, not a second distro role.
 The distro pins the same nixpkgs revision as the fleet and follows it through
 the `nixos-config` input.
 
@@ -46,10 +49,14 @@ From the repository root:
 
 ```bash
 nix build ./distro#iso.live
-sudo dd if=result/iso/*.iso of=/dev/sdX bs=4M status=progress oflag=sync
 ```
 
-Boot the medium with UEFI, open a terminal in the live session, and run:
+Write the ISO to a USB stick, or copy it to a Ventoy data partition. Boot the
+medium with UEFI. After Niri starts, `nixos-install-gui` opens.
+
+The graphical flow lists the eligible internal disks, asks for the password,
+confirms the erase, runs the installer, and offers a reboot. The console flow
+is still available:
 
 ```bash
 sudo nixos-install-tui
@@ -63,11 +70,20 @@ supplies:
 - `NIXBOOT_LABEL` and `NIXROOT_LABEL`;
 - `NIXOS_LIVE_USER`.
 
-The flow is UEFI check, disk selection, typed confirmation, GPT and filesystem
-creation, subvolume mounts, `nixos-install --system`, password creation,
-`/etc/nixos` copy, and unmount. `--test` stops after the mounts. `--yes` skips
-the typed confirmation; `--non-interactive` requires `--disk` and
-`NIXOS_PASSWORD`.
+`distro/pkgs/distro-installer-gui.nix` wraps the console installer with Zenity.
+The GUI collects a disk and a password, then calls the console installer with
+`--disk`, `--yes`, `--non-interactive`, and `--password-file`.
+
+The installer checks UEFI, then rejects read-only disks, the live medium,
+disks below 16 GiB, USB transports, zram, and device-mapper devices. It creates
+a 1 GiB ESP and a Btrfs root, mounts the subvolumes, runs
+`nixos-install --system`, sets the password, copies the flake source, and
+unmounts. No network is needed.
+
+`nixos-install-tui --list-disks` prints the eligible disks as JSON and exits.
+The GUI reads that same list. `--test` stops after the mounts. `--yes` skips
+the typed confirmation; `--non-interactive` takes the password from
+`--password-file` or `NIXOS_PASSWORD`.
 
 ## Checks
 
@@ -77,17 +93,17 @@ nix flake check
 nix build .#checks.x86_64-linux.installer-disk-vm
 ```
 
-`distro/tests/config-eval.nix` checks the live, installed, and ISO contracts.
-`distro/tests/installer-disk-vm.nix` runs the installer's disk phase against a
+`distro/tests/config-eval.nix` checks the installed host identity, the live
+overrides, the label contract, and the ISO contents. The VM test boots the live
+profile, checks `--list-disks`, and runs the installer's disk phase against a
 blank virtual disk.
 
 ## Rebuilds
 
-The installer copies the main flake source to the target's `/etc/nixos`. A
-later `nixos-rebuild switch --flake /etc/nixos#remembrance` (or `#antagony`)
-uses that source. The first switch targets the real host; the installed
-`nixos` hostname is only the initial identity. Rebuilds may fetch flake inputs;
-the install itself does not.
+The installer copies the main flake source to the target's `/etc/nixos`. Later
+`nixos-rebuild switch --flake /etc/nixos#remembrance` runs use that source and
+update the installed host. Rebuilds may fetch flake inputs; the install itself
+does not.
 
 ## Non-goals
 

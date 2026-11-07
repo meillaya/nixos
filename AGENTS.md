@@ -1,6 +1,6 @@
 # PROJECT KNOWLEDGE BASE
 
-**Updated:** 2026-11-04
+**Updated:** 2026-11-07
 **Branch:** main
 
 ## OVERVIEW
@@ -34,8 +34,8 @@ nixos/
 ├── distro/              # SEPARATE flake: ISO, installer, live/installed modules
 │   ├── flake.nix
 │   ├── modules/         # identity, base, live, installed, iso, installer
-│   ├── pkgs/            # distro-installer wrapper
-│   ├── scripts/         # install.py
+│   ├── pkgs/            # installer and Zenity GUI wrappers
+│   ├── scripts/         # install.py, install-gui.sh
 │   └── tests/           # config-eval, installer-disk-vm
 ├── apps/<system>/       # committed build/switch/clean scripts
 ├── tests/               # architecture, boundaries, config-eval, script args
@@ -81,6 +81,7 @@ profile record.
 | Change the Nix update guard | `tools/gaming-update` | builds in a temporary copy |
 | Change storage labels | `modules/nixos/storage-labels.nix` | `NIXBOOT`, `NIXROOT`; `my.storage.labels.enable` |
 | Change the installer | `distro/scripts/install.py` + `distro/pkgs/distro-installer.nix` | `--test` covers disk logic |
+| Change the graphical installer | `distro/scripts/install-gui.sh` + `distro/pkgs/distro-installer-gui.nix` | Zenity wrapper over the console installer |
 | Add or pin a package | `zix add ...` | `tools/zix/README.md` |
 | Change zix | `zix.json` | targets, tools, switches, checks |
 | Change agent rules | `agent-settings.nix`, `agents/excalidraw.nix` | render with `nix build .#agent-settings` |

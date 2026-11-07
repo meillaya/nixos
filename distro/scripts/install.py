@@ -10,8 +10,16 @@ to /etc/nixos for future rebuilds.
 Usage:
     sudo nixos-install-tui
     sudo nixos-install-tui --disk /dev/nvme0n1 --yes
+    sudo nixos-install-tui --list-disks
+    sudo nixos-install-tui --disk /dev/nvme0n1 --yes --non-interactive \
+        --password-file /run/user/1000/password
     sudo nixos-install-tui --test --disk /dev/vdb --yes --non-interactive
 """
+
+# /// script
+# requires-python = ">=3.11"
+# dependencies = []
+# ///
 
 from __future__ import annotations
 
@@ -28,6 +36,12 @@ import time
 TARGET = pathlib.Path("/mnt")
 LOG = pathlib.Path("/tmp/nixos-install.log")
 MIN_DISK_BYTES = 16 * 1024**3
+# The live medium is a USB disk. Excluding USB transports keeps the Ventoy
+# stick out of the target list and out of an explicit --disk selection.
+EXCLUDED_TRANSPORTS = frozenset({"usb"})
+# zram and device-mapper entries are not install targets.
+EXCLUDED_NAME_PREFIXES = ("/dev/zram", "/dev/dm-", "/dev/loop", "/dev/md")
+QUIET = False
 
 INSTALLED_SYSTEM = os.environ.get("NIXOS_INSTALLED_SYSTEM", "")
 FLAKE_SOURCE = os.environ.get("NIXOS_FLAKE_SOURCE", "")
@@ -37,6 +51,8 @@ LIVE_USER = os.environ.get("NIXOS_LIVE_USER", "mei")
 
 
 def log(message: str) -> None:
+    if QUIET:
+        return
     print(message, flush=True)
     LOG.parent.mkdir(parents=True, exist_ok=True)
     with LOG.open("a", encoding="utf-8") as handle:
@@ -44,12 +60,25 @@ def log(message: str) -> None:
 
 
 def die(message: str) -> "NoReturn":
-    log(f"install: {message}")
+    # Errors go to stderr so --list-disks can keep stdout as clean JSON.
+    print(f"install: {message}", file=sys.stderr, flush=True)
+    if not QUIET:
+        LOG.parent.mkdir(parents=True, exist_ok=True)
+        with LOG.open("a", encoding="utf-8") as handle:
+            handle.write(f"install: {message}\n")
     raise SystemExit(1)
 
 
-def run(argv: list[str], *, input_text: str | None = None, check: bool = True) -> subprocess.CompletedProcess[str]:
-    log("+ " + " ".join(argv))
+def run(
+    argv: list[str],
+    *,
+    input_text: str | None = None,
+    check: bool = True,
+    quiet: bool | None = None,
+) -> subprocess.CompletedProcess[str]:
+    quiet = QUIET if quiet is None else quiet
+    if not quiet:
+        log("+ " + " ".join(argv))
     result = subprocess.run(
         argv,
         input=input_text,
@@ -57,7 +86,7 @@ def run(argv: list[str], *, input_text: str | None = None, check: bool = True) -
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
     )
-    if result.stdout:
+    if result.stdout and not quiet:
         for line in result.stdout.splitlines():
             log("  " + line)
     if check and result.returncode != 0:
@@ -131,6 +160,11 @@ def eligible_disks() -> list[dict[str, object]]:
             continue
         if name in live or read_only(name):
             continue
+        if any(name.startswith(prefix) for prefix in EXCLUDED_NAME_PREFIXES):
+            continue
+        transport = str(device.get("tran") or "").lower()
+        if transport in EXCLUDED_TRANSPORTS:
+            continue
         size = int(device.get("size") or 0)
         if size < MIN_DISK_BYTES:
             continue
@@ -147,16 +181,41 @@ def human(size: object) -> str:
     return f"{value:.1f} TiB"
 
 
-def choose_disk(explicit: str | None, assume_yes: bool, non_interactive: bool) -> str:
+def list_disks() -> int:
+    disks = eligible_disks()
+    for device in disks:
+        device["size_human"] = human(device.get("size"))
+    print(json.dumps(disks, indent=2))
+    return 0
+
+
+def describe_disk(device: dict[str, object]) -> None:
+    print(
+        f"\nTarget: {device['name']}\n"
+        f"  size:  {human(device.get('size'))}\n"
+        f"  model: {device.get('model') or 'unknown'}\n"
+        "Everything on this disk will be erased."
+    )
+
+
+def choose_disk(explicit: str | None, non_interactive: bool) -> str:
     disks = eligible_disks()
     if explicit:
-        if not any(str(device["name"]) == explicit for device in disks):
-            die(f"{explicit} is not an eligible whole disk (UEFI, >=16 GiB, not the live medium)")
+        selected = next((device for device in disks if str(device["name"]) == explicit), None)
+        if selected is None:
+            die(f"{explicit} is not an eligible whole disk (UEFI, >=16 GiB, internal, not the live medium)")
+        describe_disk(selected)
         return explicit
     if non_interactive:
         die("--non-interactive needs --disk")
     if not disks:
         die("no eligible disk found; pass --disk explicitly")
+
+    # A single internal disk needs no selection prompt.
+    if len(disks) == 1:
+        describe_disk(disks[0])
+        return str(disks[0]["name"])
+
     print("\nEligible disks:")
     for index, device in enumerate(disks, start=1):
         print(
@@ -168,16 +227,29 @@ def choose_disk(explicit: str | None, assume_yes: bool, non_interactive: bool) -
         selected = disks[int(choice) - 1]
     except (ValueError, IndexError):
         die("invalid disk selection")
-    disk = str(selected["name"])
-    print(
-        f"\nTarget: {disk}\n"
-        f"  size:  {human(selected.get('size'))}\n"
-        f"  model: {selected.get('model') or 'unknown'}\n"
-        "Everything on this disk will be erased."
-    )
-    if not assume_yes and input('Type "YES" to continue: ') != "YES":
-        die("cancelled")
-    return disk
+    describe_disk(selected)
+    return str(selected["name"])
+
+
+def read_password_file(path: str) -> str:
+    file = pathlib.Path(path)
+    try:
+        mode = file.stat().st_mode & 0o777
+    except OSError as exc:
+        die(f"cannot stat password file: {exc}")
+    if mode & 0o077:
+        die("password file must not be readable or writable by group or other")
+    try:
+        lines = file.read_text(encoding="utf-8").splitlines()
+    except OSError as exc:
+        die(f"cannot read password file: {exc}")
+    if not lines or not lines[0]:
+        die("password file is empty")
+    try:
+        file.unlink()
+    except OSError:
+        pass
+    return lines[0]
 
 
 def partition_name(disk: str, number: int) -> str:
@@ -272,19 +344,34 @@ def install(password: str) -> None:
 
 
 def main() -> int:
+    global QUIET
+
     parser = argparse.ArgumentParser(description="Install the prebuilt NixOS system on a disk.")
     parser.add_argument("--disk", help="whole-disk device, for example /dev/nvme0n1")
     parser.add_argument("--yes", action="store_true", help="skip the typed confirmation")
     parser.add_argument("--non-interactive", action="store_true", help="never prompt")
+    parser.add_argument(
+        "--password-file",
+        help="read the login password from this file (mode 0600)",
+    )
+    parser.add_argument(
+        "--list-disks",
+        action="store_true",
+        help="print eligible disks as JSON and exit",
+    )
     parser.add_argument("--test", action="store_true", help="partition and mount, then stop")
     args = parser.parse_args()
+
+    if args.list_disks:
+        QUIET = True
+        return list_disks()
 
     LOG.write_text("", encoding="utf-8")
     os.chmod(LOG, 0o600)
     require_root()
     require_uefi()
 
-    disk = choose_disk(args.disk, args.yes, args.non_interactive)
+    disk = choose_disk(args.disk, args.non_interactive)
     if not args.yes and not args.non_interactive and input(f'Type "YES" to erase {disk}: ') != "YES":
         die("cancelled")
 
@@ -300,10 +387,13 @@ def main() -> int:
             log("install: test mode complete; no system was installed")
             return 0
 
-        password = os.environ.get("NIXOS_PASSWORD")
+        if args.password_file:
+            password = read_password_file(args.password_file)
+        else:
+            password = os.environ.get("NIXOS_PASSWORD")
         if password is None:
             if args.non_interactive:
-                die("set NIXOS_PASSWORD for --non-interactive")
+                die("set --password-file or NIXOS_PASSWORD for --non-interactive")
             password = getpass.getpass(f"Password for {LIVE_USER}: ")
             if password != getpass.getpass("Repeat password: "):
                 die("passwords do not match")
@@ -311,7 +401,7 @@ def main() -> int:
             die("password must not be empty")
 
         install(password)
-        log(f"install: complete; remove the ISO and reboot into {LIVE_USER}")
+        log("install: complete; remove the ISO and reboot into the installed system")
         return 0
     finally:
         if mounted:
