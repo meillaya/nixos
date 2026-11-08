@@ -49,6 +49,24 @@ window when possible, otherwise the largest game process. It sets
 script beside Cheat Engine so the table can attach to that process. There is no
 custom picker UI.
 
+Cheat Engine on Linux needs Yama `ptrace_scope = 0` to read another process's
+memory. The config is generated at `/etc/sysctl.d/99-gaming-ptrace.conf`. Apply
+it immediately with:
+
+```bash
+sudo sysctl kernel.yama.ptrace_scope=0
+```
+
+or after the system switch:
+
+```bash
+sudo systemd-sysctl
+```
+
+A reboot also applies it. If Cheat Engine shows its temporary-root prompt,
+choose No; the system setting is the durable path. Scope 0 allows same-user
+process inspection, which is appropriate for this single-user gaming desktop.
+
 ## Session recovery
 
 `/etc/sddm.conf.d/10-gaming-autologin.conf` sets SDDM to log `mei` back into

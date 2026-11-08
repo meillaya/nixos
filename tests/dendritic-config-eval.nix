@@ -82,6 +82,7 @@ assert lib.any (rule: lib.hasInfix "amdgpu-coredump" rule) system.systemd.tmpfil
 assert builtins.hasAttr "amdgpu-coredump" system.systemd.services;
 assert lib.hasInfix "Relogin=true" system.environment.etc."sddm.conf.d/10-gaming-autologin.conf".text;
 assert lib.hasInfix "Storage=persistent" system.environment.etc."systemd/journald.conf.d/99-gaming.conf".text;
+assert lib.hasInfix "kernel.yama.ptrace_scope = 0" system.environment.etc."sysctl.d/99-gaming-ptrace.conf".text;
 assert lib.any (mount: mount.where == "/mnt/970" && mount.what == "LABEL=970EVO") system.systemd.mounts;
 assert builtins.hasAttr "data-disk-ownership" system.systemd.services;
 

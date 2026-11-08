@@ -207,6 +207,17 @@ in
       '';
     };
 
+    # Cheat Engine reads another process's memory through process_vm_readv.
+    # Yama scope 1 only permits tracing descendants, so it rejects the game.
+    # Scope 0 permits same-user process inspection; this is a single-user
+    # gaming desktop. Restore 1 on a shared host.
+    environment.etc."sysctl.d/99-gaming-ptrace.conf" = {
+      replaceExisting = true;
+      text = ''
+        kernel.yama.ptrace_scope = 0
+      '';
+    };
+
     # Both directories hold runtime and node-identity state rather than data
     # private to one unit, so activation creates them instead of tying their
     # lifetime to tailscaled. The paths are the ones the distribution package
