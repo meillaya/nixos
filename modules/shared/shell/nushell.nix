@@ -27,6 +27,14 @@
       # launchd's minimal PATH, so `dsh` was unrecognised while `node`
       # still worked via fnm. Listed here so nushell never depends on what
       # happened to launch it.
+      #
+      # Elevation tools live outside the store. NixOS keeps the setuid sudo
+      # wrapper in /run/wrappers/bin and only prefixes that directory in
+      # /etc/set-environment, which Nushell does not source. The standalone
+      # host keeps its system profile in /run/system-manager/sw/bin, and the
+      # foreign distros put sudo and run0 in /usr/bin. IDE terminals, TTY
+      # logins, and sandboxes all hand Nushell a reduced environment, so the
+      # three directories are listed here instead of inherited.
       $env.PATH = ([
         ($env.HOME | path join ".nix-profile/bin")
         "/run/current-system/sw/bin"
@@ -34,6 +42,9 @@
         ($env.HOME | path join ".npm-packages/bin")
         ($env.HOME | path join "bin")
         ($env.HOME | path join ".local/bin")
+        "/run/wrappers/bin"
+        "/run/system-manager/sw/bin"
+        "/usr/bin"
       ] | append $env.PATH | uniq)
 
       # Node comes from fnm (official prebuilt releases) rather than
