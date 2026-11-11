@@ -67,6 +67,41 @@ let
     numbers as projected and measured numbers as measured. A performance figure
     carries the hardware, the shape, and the source.
 
+    ### Reflection figures (v2 worklog style)
+
+    README figures stay minimal. Figures that document a performance
+    reflection (docs/reflections.md in a project that has one) use the richer
+    worklog style: every diagram makes one argument and carries its own
+    evidence.
+
+    - The title states the claim of the figure, not its topic.
+    - Put measured numbers and at least one equation in the scene, next to the
+      element they explain. Write `number unit` exactly as in the results
+      table.
+    - Comparative figures use paired before/after lanes or stacked bars on a
+      shared scale. If a bar is zoomed, label the zoom factor next to it.
+    - Annotate boxes with the module that implements them, as small notes
+      above the box (for example `Retain.hs` or `Clone.hs`).
+    - Draw repeated work (writes, seeks, unlinks, allocations) as a row of
+      small cells followed by an ellipsis, never as one box, so O(N) churn is
+      visible.
+    - Keep code snippets to six lines or fewer in a code-style box. Do not rely
+      on a monospace font in the hand-drawn face.
+    - Intuition panels and analogies are allowed once per figure; the measured
+      bar or equation remains the evidence.
+    - ASCII stays ASCII in equations: `O(N^2)`, `mod 2^32`, `xor`.
+    - Reflection figures may use the extended glyph whitelist below. If the
+      render probe rejects a glyph, remove it from `extendedGlyphs` and from
+      the whitelist in the project generator.
+    - A colour without a role in the palette is not allowed; the semantic role
+      aliases `before`, `after`, `store`, `math`, `measure`, `network`, and
+      `code` are part of the palette.
+    - Captions in the reflection state what the reader should learn, not what
+      the scene depicts, and may link the benchmark row or the code module.
+
+    Extended glyph whitelist (verified with the render probe):
+    `↑ ↓ × · ² ³ ⁻ √ ∞ ¬ ∑ ∏`
+
     ### Size
 
     For a figure that lands at 6.5 inches wide, use a scene 1400 to 1600 units
@@ -148,6 +183,35 @@ in
       stroke = "#495057";
       fill = "#f1f3f5";
     };
+    # Reflection figure aliases (v2 worklog style).
+    before = {
+      stroke = "#e03131";
+      fill = "#ffe3e3";
+    };
+    after = {
+      stroke = "#2f9e44";
+      fill = "#d3f9d8";
+    };
+    store = {
+      stroke = "#0c8599";
+      fill = "#c5f6fa";
+    };
+    math = {
+      stroke = "#f08c00";
+      fill = "#fff3bf";
+    };
+    measure = {
+      stroke = "#9c36b5";
+      fill = "#f3d9fa";
+    };
+    network = {
+      stroke = "#1971c2";
+      fill = "#d0ebff";
+    };
+    code = {
+      stroke = "#212529";
+      fill = "#ffffff";
+    };
   };
 
   defaults = {
@@ -163,6 +227,18 @@ in
       title = 32;
       body = 22;
       note = 18;
+    };
+    reflection = {
+      sceneWidth = 1520;
+      sceneHeight = 940;
+      fontSize = {
+        title = 32;
+        section = 24;
+        body = 22;
+        math = 22;
+        note = 18;
+      };
+      extendedGlyphs = "↑↓×·²³⁻√∞¬∑∏";
     };
   };
 
@@ -183,5 +259,10 @@ in
     "Projected numbers are marked as projected."
     "The palette role matches the meaning."
     "The scene and the PNG are both present."
+    "The figure carries a measured number or an equation."
+    "Before/after costs share one scale or carry a labelled zoom factor."
+    "Repeated O(N) work is drawn as cells, not as a single box."
+    "Boxes that map to code carry module tags."
+    "Extended glyphs stay inside the whitelist."
   ];
 }
