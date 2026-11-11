@@ -73,4 +73,10 @@ else
   flake_ref="path:${flake_root}"
 fi
 
+# The NixOS sudo wrapper lives in /run/wrappers/bin, outside the store. nh
+# invokes sudo by name, and a shell launched by a GUI app or a launcher can
+# hand this script a PATH without that directory. Put the system paths first
+# so the switch runs from any terminal.
+export PATH="/run/wrappers/bin:/run/current-system/sw/bin:${PATH}"
+
 exec nh os switch "$flake_ref" --hostname "$host" "${nh_args[@]}"
