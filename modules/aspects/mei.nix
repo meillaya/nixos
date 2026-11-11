@@ -61,7 +61,36 @@ in
         pkgs.herdr
       ];
       gtk.gtk4.theme = config.gtk.theme;
-      home.file = import ../shared/files.nix { inherit config pkgs lib; };
+      home.file = (import ../shared/files.nix { inherit config pkgs lib; }) // {
+        # Activation replaces the linked config with a private copy; stop the
+        # next switch from treating that copy as a foreign file.
+        ".ssh/config".force = true;
+      };
+
+      # `programs.ssh` (modules/shared/home-manager.nix) links ~/.ssh/config
+      # into the read-only store, so the live file carries the store owner and
+      # mode 0444. OpenSSH accepts a config owned by root, but a user namespace
+      # (the FHS wrapper of a GUI app, an agent sandbox) leaves that owner
+      # unmapped, so the file reads as `nobody` and every `git push` over SSH
+      # stops with "Bad owner or permissions on ~/.ssh/config"
+      # (nix-community/home-manager#322). Replace the link with a 0600 copy
+      # after the generation links.
+      home.activation.fixSshConfigPermissions =
+        lib.hm.dag.entryAfter [ "linkGeneration" ] ''
+          ${pkgs.coreutils}/bin/install -d -m 0700 "$HOME/.ssh"
+
+          # The link exists only on the switch that changes the generated
+          # config; later switches leave the copy in place.
+          if [ -L "$HOME/.ssh/config" ]; then
+            $VERBOSE_ECHO "ssh: installing $HOME/.ssh/config as a private copy"
+            generated="$(${pkgs.coreutils}/bin/readlink -f "$HOME/.ssh/config")"
+            $DRY_RUN_CMD ${pkgs.coreutils}/bin/install -m 0600 "$generated" "$HOME/.ssh/config"
+          fi
+
+          if [ -e "$HOME/.ssh/config" ] && [ ! -L "$HOME/.ssh/config" ]; then
+            $DRY_RUN_CMD ${pkgs.coreutils}/bin/chmod 0600 "$HOME/.ssh/config"
+          fi
+        '';
 
       # `programs.git.signing` (in shared/home-manager.nix) points at
       # ~/.ssh/git_signing_ed25519.pub and sets commit.gpgsign = true, but nothing

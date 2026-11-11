@@ -58,6 +58,8 @@ assert hasPackages [ "ghostty" "obsidian" "noctalia" ] (
   nixos.home-manager.users.mei.home.packages ++ nixos.environment.systemPackages
 );
 assert packageName nixos.users.users.mei.shell == "nushell";
+# The shared Home Manager payload applies to the NixOS hosts too.
+assert nixos.home-manager.users.mei.home.activation ? fixSshConfigPermissions;
 # The NixOS hosts already provide the PAM helper wrapper that Nix-built
 # Noctalia expects. The standalone layer mirrors the same wrapper.
 assert nixos.security.wrappers.unix_chkpwd.setuid;
@@ -68,6 +70,12 @@ assert entropy.users.users.mei.home == "/Users/mei";
 assert massive.home.username == "mei";
 assert massive.home.homeDirectory == "/home/mei";
 assert massive.programs.nushell.enable;
+
+# `programs.ssh` links ~/.ssh/config from the store, where a user namespace
+# reads the owner as `nobody` and OpenSSH rejects the file. Activation replaces
+# the link with a 0600 copy.
+assert massive.home.file.".ssh/config".force;
+assert lib.hasInfix "install -m 0600" massive.home.activation.fixSshConfigPermissions.data;
 assert builtins.hasAttr "podman" massive.systemd.user.sockets;
 assert builtins.isAttrs flake.systemConfigs.massive;
 
