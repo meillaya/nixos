@@ -25,6 +25,9 @@ in
       };
       efi.canTouchEfiVariables = true;
     };
+    # ZFS is unused; set the 26.11 default explicitly so nixpkgs stops warning
+    # about forceImportRoot still being true.
+    zfs.forceImportRoot = false;
     initrd.availableKernelModules = [ "xhci_pci" "ahci" "nvme" "usbhid" "usb_storage" "sd_mod" ];
     # Uncomment for AMD GPU
     # initrd.kernelModules = [ "amdgpu" ];

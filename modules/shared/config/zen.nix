@@ -51,9 +51,6 @@
           icon = "chrome://browser/skin/zen-icons/selectable/briefcase.svg";
         };
       };
-
-      # Live keyboard-shortcut schema version (prevents silent breakage).
-      keyboardShortcutsVersion = 20;
     };
   };
 }

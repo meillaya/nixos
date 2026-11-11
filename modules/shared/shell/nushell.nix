@@ -4,6 +4,10 @@
   # activation scripts and recovery.
   nushell = {
     enable = true;
+    # Adopt the 26.11 default: source the Home Manager session environment in
+    # env.nu so Nushell sees home.sessionVariables and home.sessionPath even
+    # when the launcher did not inherit them.
+    loadSessionVariables = true;
     settings = {
       show_banner = false;
       show_hints = true;
