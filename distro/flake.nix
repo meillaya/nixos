@@ -5,7 +5,7 @@
     # Mirror the parent fleet pin. A path input does not carry its own lock into
     # the consumer, so the distro pins the same nixpkgs revision explicitly and
     # follows it through nixos-config.
-    nixpkgs.url = "github:nixos/nixpkgs/4975466d324710c576dc11ad614684e6bd8cad8e";
+    nixpkgs.url = "github:nixos/nixpkgs/f4a03c008967841f2a0b3cb7c436fc6fc31671f6";
     # The personal flake is the source of the real workstation profile. The
     # NixOS configuration below extends nixosConfigurations.remembrance rather
     # than duplicating a distro-only role chain.

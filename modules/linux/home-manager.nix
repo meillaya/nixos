@@ -2,18 +2,18 @@
 
 let
   garudaDr460nized = pkgs.fetchzip {
-    url = "https://gitlab.com/garuda-linux/themes-and-settings/settings/garuda-dr460nized/-/archive/35eb3abbc534f4046257c43ad9e05a9c010235cf/garuda-dr460nized-35eb3abbc534f4046257c43ad9e05a9c010235cf.tar.gz";
-    hash = "sha256-4kRU4h3WRuVjixhK5B/x19bIxtHc9vcfbv5QPjFMBfc=";
+    url = "https://gitlab.com/garuda-linux/themes-and-settings/settings/garuda-dr460nized/-/archive/1280f411dc307847332ecab2f578ed984d33498c/garuda-dr460nized-1280f411dc307847332ecab2f578ed984d33498c.tar.gz";
+    hash = "sha256-P3nLSVC7wjDbizXnKGKKKoYSZg877Jx4L/CXmykZsjc=";
   };
 
   beautylineSrc = pkgs.fetchzip {
-    url = "https://gitlab.com/garuda-linux/themes-and-settings/artwork/beautyline/-/archive/cb19ed82a10c49e035a68000860c9a49fea79ff2/beautyline-cb19ed82a10c49e035a68000860c9a49fea79ff2.tar.gz";
-    hash = "sha256-pjpT0zJZ03RAH4mz5gJgJRzSAJ2mI23mMlx45JQiOnY=";
+    url = "https://gitlab.com/garuda-linux/themes-and-settings/artwork/beautyline/-/archive/07e3736f8be38f9f48cf015d992f56f06e455002/beautyline-07e3736f8be38f9f48cf015d992f56f06e455002.tar.gz";
+    hash = "sha256-8ER5BnrFtVggWB3B9GaMoTZdHDtrmOU1hlMROTuBQ7U=";
   };
 
   candyIconsSrc = pkgs.fetchzip {
-    url = "https://github.com/EliverLara/candy-icons/archive/83512fbcadcb7e1015ebbe1729a1894946b021be.tar.gz";
-    hash = "sha256-TzovzmfrUuaSrtpKCQxyXcih7cKSBhBtMpZLVwY/ScA=";
+    url = "https://github.com/EliverLara/candy-icons/archive/750fe2ca7909a721179ec34336042b15808d8ab9.tar.gz";
+    hash = "sha256-aXskjAxfvP9P3WZo7YGsSg0iGXVIAQfHXLEi/EgyRJw=";
   };
 
   # Vendored: upstream removed the theme over gtk-engine-murrine (#549887)
