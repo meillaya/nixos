@@ -8,7 +8,7 @@ let
   unfreeNames = [
     "android-studio"
     "google-chrome"
-    "idea"
+    "intellij-idea"
     "obsidian"
     "postman"
     "pycharm"
@@ -26,7 +26,34 @@ let
       ghostty-bin = lib.callPackageWith prev ../pkgs/ghostty-bin.nix { };
     };
 
-  overlays = [ ghosttyBinOverlay ] ++ (
+  # The nixpkgs cargo setup hook now runs every Rust build through
+  # cargoUseSystemLibs, which forces system libraries for zstd-sys, aws-lc-sys,
+  # libgit2-sys, libsqlite3-sys, libssh2-sys, and libz-sys. The nixpkgs packages
+  # below omit some of those inputs, so add them here. Drop an entry when the
+  # nixpkgs package carries the inputs itself.
+  rustSystemLibsOverlay = final: prev: {
+    fnm = prev.fnm.overrideAttrs (old: {
+      nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ final.pkg-config ];
+      buildInputs = (old.buildInputs or [ ]) ++ [ final.zstd ];
+    });
+
+    tectonic-unwrapped = prev.tectonic-unwrapped.overrideAttrs (old: {
+      buildInputs = (old.buildInputs or [ ]) ++ [ final.aws-lc ];
+    });
+
+    yaak = prev.yaak.overrideAttrs (old: {
+      buildInputs = (old.buildInputs or [ ]) ++ [
+        final.aws-lc
+        final.libgit2
+        final.libssh2
+        final.sqlite
+        final.zlib
+        final.zstd
+      ];
+    });
+  };
+
+  overlays = [ ghosttyBinOverlay rustSystemLibsOverlay ] ++ (
     let
       pins = builtins.fromJSON (builtins.readFile ../zix/managed/pins.json);
     in
