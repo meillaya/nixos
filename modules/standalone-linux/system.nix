@@ -48,7 +48,11 @@ let
 
           dev=$(basename "$(dirname "$data")")
           marker="$out/.seen-$dev"
-          [ -e "$marker" ] && continue
+          signature=$(stat -c '%d:%i:%Y.%y' "$data" 2>/dev/null || true)
+          [ -n "$signature" ] || continue
+          if [ -f "$marker" ] && [ "$(cat "$marker" 2>/dev/null)" = "$signature" ]; then
+            continue
+          fi
 
           stamp=$(date -u +%Y%m%dT%H%M%SZ)
           file="$out/amdgpu-$dev-$stamp.bin"
@@ -56,7 +60,7 @@ let
 
           if cat "$data" > "$tmp"; then
             mv "$tmp" "$file"
-            : > "$marker"
+            printf '%s\n' "$signature" > "$marker"
             sync
             printf 'saved %s\n' "$file"
           else
