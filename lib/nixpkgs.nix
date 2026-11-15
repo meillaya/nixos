@@ -68,6 +68,12 @@ let
   config = {
     allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) unfreeNames;
     allowInsecure = false;
+    # glances (modules/shared/packages.nix) propagates python-jose for its web
+    # UI. The 2026-11-11 nixpkgs marked python-jose 3.5.0 insecure
+    # (CVE-2026-120459) and evaluation of every host aborted. Narrow,
+    # version-exact exception until nixpkgs ships a fixed python-jose or
+    # glances drops the dependency; delete this entry then.
+    permittedInsecurePackages = [ "python3.14-python-jose-3.5.0" ];
   };
 in
 {

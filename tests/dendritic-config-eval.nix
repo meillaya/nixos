@@ -128,7 +128,10 @@ assert flake.packages.x86_64-linux ? thyx;
 
 # Package policy still resolves the requested unfree packages.
 assert !(policyConfig ? allowBroken);
-assert !(policyConfig ? permittedInsecurePackages);
+# One audited insecure exception: glances propagates python-jose, which the
+# 2026-11-11 nixpkgs marks insecure (CVE-2026-120459). Keep the list exact so
+# any further exception is a deliberate policy edit. See lib/nixpkgs.nix.
+assert policyConfig.permittedInsecurePackages == [ "python3.14-python-jose-3.5.0" ];
 assert !(policyConfig ? allowUnfree);
 assert policyConfig.allowInsecure == false;
 assert policyConfig ? allowUnfreePredicate;
