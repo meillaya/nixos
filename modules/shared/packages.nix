@@ -23,6 +23,7 @@ with pkgs;
   rsync
   resvg
   sqlite
+  uv
   wget
   zip
 

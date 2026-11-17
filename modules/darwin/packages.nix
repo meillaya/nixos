@@ -42,5 +42,4 @@ shared-packages ++ [
   # Chromium through EXCALIDRAW_BROWSER_PATH.
   (pkgs.callPackage ../../pkgs/excalidraw-cli { })
   pycharm
-  uv
 ]
