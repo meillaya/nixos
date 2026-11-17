@@ -29,11 +29,11 @@
       inputs.flake-compat.follows = "flake-compat";
     };
     noctalia = {
-      # Pin the v5.4.1 release tag instead of following the `cachix` branch,
+      # Pin the v5.5.0 release tag instead of following the `cachix` branch,
       # which has moved past the release and would ship unreleased builds.
       # The tag carries its own nixpkgs lock and this input does not follow our
       # nixpkgs pin, so the upstream Cachix artifacts stay usable.
-      url = "github:noctalia-dev/noctalia/v5.4.1";
+      url = "github:noctalia-dev/noctalia/v5.5.0";
     };
     # Native Wayland file manager from the Noctalia project. Linux only, and the
     # flake exports the package plus the Home Manager module used below.
