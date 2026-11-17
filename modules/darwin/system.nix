@@ -11,7 +11,7 @@ let
   # This is the identity home-manager installs on every host at
   # ~/.ssh/id_github, and at ~/.ssh/id_ed25519 when that path is free. That is
   # the key a machine actually presents, so it is what login has to accept.
-  # See docs/service-notes/github-ssh-key.md.
+  # See docs/NIXOS.md, "Secrets, SSH, and signing".
   keys = [ (import ../../lib/keys.nix).github ];
 in
 {

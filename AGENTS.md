@@ -45,7 +45,7 @@ nixos/
 ├── zix.json             # zix manifest
 ├── zix/managed/         # zix-generated package set and pins
 ├── secrets/             # sops/age stores
-└── docs/                # architecture, service notes, dated audits
+└── docs/                # the fleet manual and the logo
 ```
 
 ## HOSTS

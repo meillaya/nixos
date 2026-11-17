@@ -1,94 +1,75 @@
-# nixos
+<div align="center">
 
-One flake for four personal machines, plus a separate distro flake for the
-personal live/install medium. Den owns the host and user entities; flake-parts
-owns the fleet outputs.
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/figures/logo-dark.svg">
+  <img src="docs/figures/logo-light.svg" alt="The nixos logo: a lambda rising from an open book" width="148">
+</picture>
+
+<p><i>Four machines, one flake, no machine record.</i></p>
+
+</div>
+
+Two NixOS workstations, an Apple silicon Mac, and a CachyOS laptop running
+standalone Home Manager, composed from one Den entity/aspect tree. A second flake
+builds the personal live ISO and installer from the real `remembrance`
+workstation profile.
+
+Host identity lives in `modules/aspects/inventory.nix`. Everything else is an
+aspect: the flake has no machine authority, no per-host disk binding, and no
+second source for a key, cache, or package pin.
 
 ## Hosts
 
-- `remembrance`, `antagony`: NixOS x86_64 workstations.
-- `entropy`: nix-darwin on Apple silicon.
-- `massive`: standalone Home Manager plus a system-manager layer on CachyOS.
-- `distro/`: the personal live ISO and installer. It extends the real
-  `remembrance` workstation profile rather than duplicating a distro role.
-
-Host identity lives in `modules/aspects/inventory.nix` as
-`users.mei.identity`. There is no machine-authority record, intake document, or
-per-host disk binding.
+| Host | System | Role | Apply with |
+| --- | --- | --- | --- |
+| `remembrance` | NixOS `x86_64-linux` | `workstation-role-linux` | `nix run .#build-switch` |
+| `antagony` | NixOS `x86_64-linux` | `workstation-role-linux` | `nix run .#build-switch` |
+| `entropy` | nix-darwin `aarch64-darwin` | `workstation-role-darwin` | `nix run .#build-switch` |
+| `massive` | CachyOS `x86_64-linux` | standalone Home Manager and `systemConfigs.massive` | `nix run .#home-switch` |
 
 ## Quickstart
 
 ```bash
-nix run .#build                # build the current host, change nothing
-nix run .#build-switch         # build and activate the current host
-nix run .#nh -- os dry-build   # print the activation diff
+nix run .#build          # build the current host, change nothing
+nix run .#build-switch   # build and activate the current host
+nix run .#home-switch    # activate the standalone Home Manager profile
+nix run .#update         # refresh flake inputs and theme source pins
+nix run .#clean          # drop generations older than seven days
 ```
 
-`build` and `build-switch` infer the current hostname and refuse to fall back to
-another host. `nix run .#update` refreshes the flake inputs and `nix run .#clean`
-drops system generations older than seven days. `zix` is a developer tool:
-`nix run .#zix -- --help`; it is not installed on the hosts.
+`build` and `build-switch` use the current hostname. `zix` is the developer
+tool: `nix run .#zix -- --help`. The only configured shells are Nushell, the
+login shell, and Bash, the fallback.
 
-The only configured shells are Nushell (the login shell) and Bash.
+## Layout
 
-## Install the distro
-
-Build the live ISO from the distro flake on an x86_64-linux machine, then write
-it to a USB stick or copy it to a Ventoy data partition:
-
-```bash
-nix build ./distro#iso.live
-sudo dd if=result/iso/*.iso of=/dev/sdX bs=4M status=progress oflag=sync
+```text
+flake.nix            inputs and one mkFlake call
+modules/aspects/     the flat Den tree: hosts, roles, platforms, features
+modules/flake/       flake-parts outputs: apps, checks, packages, systems
+modules/nixos/       NixOS payload and the NixOS Home Manager module
+modules/linux/       Linux Home Manager payload
+modules/shared/      cross-platform Home Manager payload
+modules/darwin/      nix-darwin payload and macOS Home Manager module
+modules/standalone-linux/  Home Manager and system-manager layer for massive
+distro/              separate flake: live ISO, installer, live and installed profiles
+tests/, distro/tests/  evaluation, architecture, and installer checks
+lib/                 keys, caches, nixpkgs policy
+pkgs/                repo-local derivations
+tools/zix/           the developer CLI, its own flake
+docs/                the fleet manual and the logo
 ```
-
-Boot the medium with UEFI. The live session opens the graphical installer,
-which lists the eligible internal disks, asks for the password, and copies the
-prebuilt installed system. The console installer is still available:
-
-```bash
-sudo nixos-install-tui
-```
-
-The installer accepts any whole internal disk of at least 16 GiB and rejects
-USB disks, the live medium, read-only devices, zram, and device-mapper devices.
-It creates a 1 GiB EFI partition labelled `NIXBOOT` and a Btrfs root labelled
-`NIXROOT`. No network is needed for the install. The installed closure is the
-`remembrance` profile, and the first boot is that host with the password set
-during the install.
-
-Existing NixOS hosts use the same label contract. Before switching an existing
-host, relabel its root and ESP once:
-
-```bash
-sudo btrfs filesystem label / NIXROOT
-boot_dev=$(findmnt -no SOURCE /boot)
-sudo umount /boot
-sudo fatlabel "$boot_dev" NIXBOOT
-sudo mount /boot
-sudo nixos-rebuild switch --flake .#remembrance
-```
-
-The first switch keeps the old generation; a label typo fails at the next boot
-rather than changing the running system.
 
 ## Documentation
 
-- [docs/architecture/dendritic.md](docs/architecture/dendritic.md): entity and aspect composition.
-- [docs/architecture/distro.md](docs/architecture/distro.md): the distro flake, real profile, and storage contract.
-- [docs/architecture/inputs.md](docs/architecture/inputs.md): the flake inputs and the removed ones.
-- [docs/service-notes/distro-iso.md](docs/service-notes/distro-iso.md): build, test, and write the live ISO.
-- [docs/service-notes/rootless-containers.md](docs/service-notes/rootless-containers.md): the container policy.
-- [docs/service-notes/hydra-launcher.md](docs/service-notes/hydra-launcher.md): host-native Hydra and the universal trainer.
-- [docs/service-notes/gaming-stability.md](docs/service-notes/gaming-stability.md): graphics, recovery, snapshots, and trainers.
-- [docs/service-notes/zix.md](docs/service-notes/zix.md) and [tools/zix/README.md](tools/zix/README.md): the developer tool, pins, sandboxes, VMs.
-- [secrets/README.md](secrets/README.md): the sops store and its recipients.
+[docs/NIXOS.md](docs/NIXOS.md) is the single manual: composition, every host
+layer, the desktop session, applications, secrets, updates, the distro, and the
+checks. Agent rules live in [AGENTS.md](AGENTS.md).
 
 ## Checks
 
 ```bash
 nix flake check --all-systems --no-build
+bash tests/prose.sh
 cd distro && nix flake check
 ```
-
-`zix check` runs the fleet's quick suite. The installer disk test lives with the
-distro: `cd distro && nix build .#checks.x86_64-linux.installer-disk-vm`.

@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <title>The nixos fleet logo</title>
+  <!-- One lambda: an ink stroke that turns blue as it reaches the page. -->
+  <path d="M88 118 L128 46 L180 168" fill="none" stroke="#E9E5F6" stroke-width="18" stroke-linejoin="miter" stroke-linecap="butt"/>
+  <path d="M148.8 94.8 L180 168" fill="none" stroke="#A395FF" stroke-width="18" stroke-linecap="butt"/>
+  <path d="M128 208 C104 196 78 192 44 196 L44 160 C78 156 104 160 128 172 Z" fill="#E9E5F6"/>
+  <path d="M128 208 C152 196 178 192 212 196 L212 160 C178 156 152 160 128 172 Z" fill="#E9E5F6"/>
+  <g stroke="#17161D" stroke-width="4.5" stroke-linecap="round">
+    <path d="M60 172 L106 179"/>
+    <path d="M60 184 L98 190"/>
+    <path d="M62 196 L96 201"/>
+    <path d="M150 179 L196 172"/>
+    <path d="M158 190 L196 184"/>
+    <path d="M160 201 L194 196"/>
+  </g>
+</svg>

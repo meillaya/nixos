@@ -58,6 +58,6 @@ bootstrap-password.nix  First-install external password verifier
    nix build .#nixosConfigurations.hostname.config.system.build.toplevel --dry-run
    ```
 
-See `docs/architecture/dendritic.md` for ownership and routing rules.
+See `docs/NIXOS.md` for ownership and routing rules.
 
 Niri bindings live in `modules/linux/config/niri/config.kdl`.

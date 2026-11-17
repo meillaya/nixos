@@ -13,7 +13,7 @@ Tracked, committed, sops/age-encrypted:
   `~/.ssh/id_ed25519` when that path is still free) by
   `home.activation.installGithubSshKey` in `modules/aspects/mei.nix`. The public
   half is declared in `lib/keys.nix`. See
-  [../docs/service-notes/github-ssh-key.md](../docs/service-notes/github-ssh-key.md).
+  [../docs/NIXOS.md](../docs/NIXOS.md#secrets-ssh-and-signing).
 
 Untracked by design, never commit:
 
