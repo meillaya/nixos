@@ -119,9 +119,8 @@ with pkgs;
   nil
   nixd
   basedpyright
-  rustc
-  cargo
-  rust-analyzer
+  # Rust toolchains come from rustup, added through zix; its shims provide
+  # rustc, cargo, and rust-analyzer.
   # Java 21 LTS, kept as the profile's only JDK: the Android projects' Gradle
   # daemon JVM criteria require "Java 21" and a second JDK would collide on
   # bin/java. For a newer JDK use a per-project `nix shell nixpkgs#openjdk25`.

@@ -4,6 +4,11 @@
       "added": "2026-10-07",
       "name": "caddy",
       "target": "managed"
+    },
+    {
+      "added": "2026-11-17",
+      "name": "rustup",
+      "target": "managed"
     }
   ],
   "pins": {
