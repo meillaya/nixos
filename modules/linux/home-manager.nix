@@ -8,12 +8,12 @@ let
 
   beautylineSrc = pkgs.fetchzip {
     url = "https://gitlab.com/garuda-linux/themes-and-settings/artwork/beautyline/-/archive/07e3736f8be38f9f48cf015d992f56f06e455002/beautyline-07e3736f8be38f9f48cf015d992f56f06e455002.tar.gz";
-    hash = "sha256-KhQrI0mLM0tbFLVk+PioXCerUGCj2vjZCW09jj+oOGc=";
+    hash = "sha256-8ER5BnrFtVggWB3B9GaMoTZdHDtrmOU1hlMROTuBQ7U=";
   };
 
   candyIconsSrc = pkgs.fetchzip {
     url = "https://github.com/EliverLara/candy-icons/archive/750fe2ca7909a721179ec34336042b15808d8ab9.tar.gz";
-    hash = "sha256-4qSFiwJbeIIuHjuQETgfQlL8BuLYrsEdfDzvvpqwqLA=";
+    hash = "sha256-aXskjAxfvP9P3WZo7YGsSg0iGXVIAQfHXLEi/EgyRJw=";
   };
 
   # Vendored: upstream removed the theme over gtk-engine-murrine (#549887)
