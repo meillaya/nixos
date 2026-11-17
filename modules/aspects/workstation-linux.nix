@@ -4,6 +4,7 @@
     den.aspects.linux-platform
     den.aspects.niri
     den.aspects.noctalia
+    den.aspects.luciole
     den.aspects.linux-desktop
   ];
 }

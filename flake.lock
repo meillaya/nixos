@@ -210,6 +210,26 @@
         "type": "github"
       }
     },
+    "luciole": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1794886061,
+        "narHash": "sha256-6o1PGZSN5Eb03550vvGAA56iMKavYt5Bc5pWfWA/R4E=",
+        "owner": "noctalia-dev",
+        "repo": "luciole",
+        "rev": "00cea101723f9dc445f36366938e53bf7671b2fa",
+        "type": "github"
+      },
+      "original": {
+        "owner": "noctalia-dev",
+        "repo": "luciole",
+        "type": "github"
+      }
+    },
     "multiverse": {
       "locked": {
         "lastModified": 1794615216,
@@ -330,6 +350,7 @@
         "helium": "helium",
         "home-manager": "home-manager",
         "import-tree": "import-tree",
+        "luciole": "luciole",
         "multiverse": "multiverse",
         "nix-plist-manager": "nix-plist-manager",
         "nixpkgs": "nixpkgs",

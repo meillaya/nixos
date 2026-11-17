@@ -35,6 +35,12 @@
       # nixpkgs pin, so the upstream Cachix artifacts stay usable.
       url = "github:noctalia-dev/noctalia/v5.4.1";
     };
+    # Native Wayland file manager from the Noctalia project. Linux only, and the
+    # flake exports the package plus the Home Manager module used below.
+    luciole = {
+      url = "github:noctalia-dev/luciole";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     nix-plist-manager = {
       url = "github:sushydev/nix-plist-manager";
       inputs.nixpkgs.follows = "nixpkgs";

@@ -7,6 +7,7 @@
         den.aspects.mei
         den.aspects.rootless-containers-standalone
         den.aspects.noctalia
+        den.aspects.luciole
         den.aspects.desktop-media
       ];
       homeManager = import ../standalone-linux/home-manager.nix {

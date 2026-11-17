@@ -54,7 +54,7 @@ assert nixos.services.pipewire.enable;
 assert nixos.services.power-profiles-daemon.enable;
 assert nixos.services.upower.enable;
 assert nixos.networking.networkmanager.enable;
-assert hasPackages [ "ghostty" "obsidian" "noctalia" ] (
+assert hasPackages [ "ghostty" "obsidian" "noctalia" "luciole" ] (
   nixos.home-manager.users.mei.home.packages ++ nixos.environment.systemPackages
 );
 assert packageName nixos.users.users.mei.shell == "nushell";
@@ -65,6 +65,8 @@ assert nixos.home-manager.users.mei.home.activation ? fixSshConfigPermissions;
 assert nixos.security.wrappers.unix_chkpwd.setuid;
 assert entropy.networking.hostName == "entropy";
 assert entropy.users.users.mei.home == "/Users/mei";
+# Luciole is Linux only, so the macOS host must not import its module.
+assert !(entropy.home-manager.users.mei.programs ? luciole);
 
 # The standalone host keeps its own Home Manager and system-manager layers.
 assert massive.home.username == "mei";
@@ -122,7 +124,7 @@ assert builtins.hasAttr "systemd/user/app-steam@.service.d/10-system-manager-pat
 assert lib.hasInfix "Environment=PATH=/usr/local/sbin" system.environment.etc."systemd/user/app-steam@.service.d/10-system-manager-path.conf".text;
 assert massive.home.file ? ".local/bin/steam";
 assert hasPackages [ "thyx" "openrgb" "nushell" ] system.environment.systemPackages;
-assert hasPackages [ "hydralauncher" "game-trainer" "gaming-health" "cheat-engine" ] massive.home.packages;
+assert hasPackages [ "hydralauncher" "game-trainer" "gaming-health" "cheat-engine" "luciole" ] massive.home.packages;
 assert massive.home.file ? ".local/share/applications/game-trainer.desktop";
 assert flake.packages.x86_64-linux ? thyx;
 
