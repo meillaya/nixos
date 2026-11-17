@@ -450,9 +450,12 @@ through the manifest.
 - Zen Browser runs from the `zen-browser` flake input with a declarative profile
   fragment. Spaces, pins, settings, and policies stay declarative; cookies,
   history, sessions, and extension state do not.
-- Helium comes from the `helium` input through `pkgs/helium.nix`, wrapped with
-  host fonts. The `browser-choices` notes are gone: the repo declares Zen and
-  Helium, and both profiles stay unmanaged.
+- Helium comes from the `helium` input through `pkgs/helium.nix`. The wrapper
+  replaces the AppImage's bundled fontconfig with the Nix one and points it at a
+  generated `FONTCONFIG_FILE`. The bwrap sandbox binds the host `/etc/fonts` but
+  replaces `/usr`, so a foreign distro resolves browser UI text to whichever
+  font fontconfig finds first; on CachyOS that was an icon font. Both browser
+  profiles stay unmanaged.
 - Luciole is the Noctalia Wayland file manager. The `luciole` aspect installs
   the upstream Home Manager module on the Linux hosts. The Linux package list
   also carries its runtime helpers: `ffmpegthumbnailer` for video thumbnails,
