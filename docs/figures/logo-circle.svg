@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <title>The nixos fleet logo, circular badge</title>
+  <!-- A lambda rising from an open book, on a dark disc. The disc carries its
+       own background, so one file reads on light and dark pages. -->
+  <circle cx="128" cy="128" r="120" fill="#17161D"/>
+  <circle cx="128" cy="128" r="116.5" fill="none" stroke="#9D8CFF" stroke-width="5"/>
+  <g transform="translate(128 128) scale(0.72) translate(-128 -128)">
+    <path d="M88 118 L128 46 L180 168" fill="none" stroke="#EDEAF7" stroke-width="18" stroke-linejoin="miter" stroke-linecap="butt"/>
+    <path d="M148.8 94.8 L180 168" fill="none" stroke="#9D8CFF" stroke-width="18" stroke-linecap="butt"/>
+    <path d="M128 208 C104 196 78 192 44 196 L44 160 C78 156 104 160 128 172 Z" fill="#EDEAF7"/>
+    <path d="M128 208 C152 196 178 192 212 196 L212 160 C178 156 152 160 128 172 Z" fill="#EDEAF7"/>
+    <g stroke="#17161D" stroke-width="4.5" stroke-linecap="round">
+      <path d="M60 172 L106 179"/>
+      <path d="M60 184 L98 190"/>
+      <path d="M62 196 L96 201"/>
+      <path d="M150 179 L196 172"/>
+      <path d="M158 190 L196 184"/>
+      <path d="M160 201 L194 196"/>
+    </g>
+  </g>
+</svg>
