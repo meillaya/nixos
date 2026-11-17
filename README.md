@@ -1,9 +1,6 @@
 <div align="center">
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/figures/logo-dark.svg">
-  <img src="docs/figures/logo-light.svg" alt="The nixos logo: a lambda rising from an open book" width="148">
-</picture>
+<img src="docs/figures/logo-circle.svg" alt="The nixos logo: a lambda rising from an open book on a circular badge" width="132">
 
 <p><i>Four machines, one flake, no machine record.</i></p>
 
