@@ -83,6 +83,14 @@ with pkgs;
     browser = lib.getExe pkgs.google-chrome;
   })
 
+  # Luciole runtime helpers: media and PDF thumbnails, encrypted 7z input, and
+  # terminal actions. The Luciole module is in modules/aspects/luciole.nix; these
+  # helpers are optional but keep the file manager's actions working.
+  ffmpegthumbnailer
+  poppler-utils
+  _7zz
+  xdg-terminal-exec
+
   # Vendored: removed upstream over gtk-engine-murrine (nixpkgs #549887)
   (pkgs.callPackage ../../pkgs/sweet.nix { })
 
