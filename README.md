@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="docs/figures/logo-circle.svg" alt="The nixos logo: a lambda rising from an open book on a circular badge" width="132">
+<img src="docs/figures/logo-circle.svg" alt="The nixos logo: the NixOS snowflake on a frosted glass badge in asexual colours" width="132">
 
 <p><i>Four machines, one flake, no machine record.</i></p>
 
