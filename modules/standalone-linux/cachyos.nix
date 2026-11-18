@@ -16,6 +16,10 @@ let
     preset = cfg.thyx.preset;
   };
 
+  # The Gamescope session sits beside Niri at the SDDM greeter. Niri has no HDR
+  # output, so this is where games and applications can use the HDR monitor.
+  gamescopeHdrSession = pkgs.callPackage ../../pkgs/gamescope-hdr-session.nix { };
+
   pacman = "/usr/bin/pacman";
 
   managedPackages = cfg.packages ++ lib.optionals cfg.thyx.enable cfg.thyx.packages;
@@ -68,6 +72,10 @@ in
         "yay"
         "cachyos-gaming-meta"
         "cachyos-gaming-applications"
+        "steam"
+        "gamescope"
+        # The 32-bit gamescope WSI layer, so 32-bit Proton games can see HDR.
+        "lib32-gamescope"
         "wine-mono"
         "winetricks"
         "mangohud"
@@ -129,17 +137,27 @@ in
   };
 
   config = lib.mkIf cfg.enable {
-    environment.systemPackages = lib.optional cfg.thyx.enable thyx;
+    environment.systemPackages =
+      lib.optional cfg.thyx.enable thyx
+      ++ [ gamescopeHdrSession ];
 
     environment.etc = {
-      # A GPU reset can end the compositor session. Relogin starts a new niri
-      # session without a greeter stop, while unsaved application state is
-      # still lost with the old session.
+      # Boot autologin starts Niri. Relogin stays off so that ending a session
+      # returns to the greeter, where Gamescope HDR can be picked. A GPU reset
+      # therefore costs one login instead of an automatic restart.
       "sddm.conf.d/10-gaming-autologin.conf".text = ''
         [Autologin]
         User=${config.standalone.userName}
         Session=niri
-        Relogin=true
+        Relogin=false
+      '';
+
+      # The Gamescope HDR desktop file lives in the system-manager profile.
+      # Add that directory to the SDDM search path without dropping the two
+      # distribution directories.
+      "sddm.conf.d/20-gamescope-hdr.conf".text = ''
+        [Wayland]
+        SessionDir=/run/system-manager/sw/share/wayland-sessions,/usr/local/share/wayland-sessions,/usr/share/wayland-sessions
       '';
 
       # Noctalia starts desktop apps with systemd-run and copies its own

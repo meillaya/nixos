@@ -324,7 +324,8 @@ the system state that Home Manager cannot reach on a foreign distribution.
 - the CachyOS pacman bootcstrap and fish removal;
 - the Thyx SDDM theme (the Blush preset) and its Qt6 packages;
 - OpenRGB with generated udev rules and `i2c-dev`;
-- a Steam PATH drop-in and the gaming autologin and journal settings.
+- a Steam PATH drop-in, the gaming autologin and journal settings, and the
+  Gamescope HDR session.
 
 Apply it from the repository root:
 
@@ -343,8 +344,9 @@ the tmpfiles rule itself and a reboot creates the symlink. Home Manager's
 
 A GPU reset can kill the compositor. `amdgpu-coredump` reads the kernel dump
 from `/sys/class/devcoredump` and writes it under `/var/lib/amdgpu-coredump`.
-The journal is persistent and capped at 1 GB, and SDDM logs the user back into
-Niri after a session ends.
+The journal is persistent and capped at 1 GB. SDDM autologins Niri at boot;
+when a session ends it returns to the greeter, so the Gamescope HDR session can
+be selected. A GPU reset therefore costs one login.
 
 ### Home Manager on massive
 
@@ -403,6 +405,37 @@ from the pre-update Limine entry before trying again.
 
 Trainers and Cheat Engine are for single-player offline games. Online and
 anti-cheat games are not supported.
+
+### HDR output
+
+The Dell S3422DWG on this host is an HDR10 panel. Its EDID advertises the SMPTE
+ST 2084 EOTF and HDR static metadata, so the monitor accepts HDR10 over
+DisplayPort. Niri 26.04 has no HDR output and no color management, which means
+the normal desktop and every Niri application stay SDR.
+
+`pkgs/gamescope-hdr-session.nix` adds a `Gamescope HDR` session to SDDM. It
+hands the monitor to the host gamescope with `--backend drm`, `--hdr-enabled`,
+and `--hdr-itm-enabled`, then starts the host Steam in Big Picture. The session
+exports the variables that let games see HDR:
+
+```bash
+ENABLE_GAMESCOPE_WSI=1
+DXVK_HDR=1
+STEAM_GAMESCOPE_HDR_SUPPORTED=1
+STEAM_GAMESCOPE_FORCE_HDR_DEFAULT=1
+STEAM_GAMESCOPE_FORCE_OUTPUT_TO_HDR10PQ_DEFAULT=1
+STEAM_GAMESCOPE_COLOR_MANAGED=1
+```
+
+To use it, log out, pick `Gamescope HDR` at the SDDM greeter, and open a game
+that has an HDR option. Games that support HDR detect it through DXGI and the
+gamescope WSI layer; other Vulkan applications launched from that session share
+the layer. Enable the monitor's HDR preset in its OSD if it is not automatic.
+The session drives the `DP-1` connector; edit the package if the monitor moves
+to another output.
+
+HDR is limited to that session. Applications in a Niri session cannot use HDR
+until Niri implements color management.
 
 ## The desktop session
 
@@ -676,6 +709,8 @@ The agent rules live in `agent-settings.nix` and are rendered by
   then works.
 - Nix flake evaluation reads tracked files only. Stage new files before
   building.
+- HDR is only available in the Gamescope HDR session. Niri has no HDR output or
+  color management, so the normal desktop stays SDR.
 - macOS app bundle appearance and the first Darwin activation are checked by
   hand; the darwin-uninstaller is disabled until its manual renderer matches
   nix-darwin.

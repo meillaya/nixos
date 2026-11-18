@@ -90,7 +90,12 @@ assert lib.hasInfix "trusted-users = root @wheel" system.environment.etc."nix/ni
 assert lib.any (rule: lib.hasInfix "/run/opengl-driver" rule) system.systemd.tmpfiles.rules;
 assert lib.any (rule: lib.hasInfix "amdgpu-coredump" rule) system.systemd.tmpfiles.rules;
 assert builtins.hasAttr "amdgpu-coredump" system.systemd.services;
-assert lib.hasInfix "Relogin=true" system.environment.etc."sddm.conf.d/10-gaming-autologin.conf".text;
+# Boot autologin starts Niri, but a session ends at the greeter so the
+# Gamescope HDR session can be chosen without editing SDDM config by hand.
+assert lib.hasInfix "Relogin=false" system.environment.etc."sddm.conf.d/10-gaming-autologin.conf".text;
+assert lib.hasInfix "SessionDir=/run/system-manager/sw/share/wayland-sessions" system.environment.etc."sddm.conf.d/20-gamescope-hdr.conf".text;
+assert lib.elem "lib32-gamescope" system.standalone.cachyos.packages;
+assert lib.any (package: package.name == "gamescope-hdr-session") system.environment.systemPackages;
 assert lib.hasInfix "Storage=persistent" system.environment.etc."systemd/journald.conf.d/99-gaming.conf".text;
 assert lib.hasInfix "kernel.yama.ptrace_scope = 0" system.environment.etc."sysctl.d/99-gaming-ptrace.conf".text;
 assert lib.any (mount: mount.where == "/mnt/970" && mount.what == "LABEL=970EVO") system.systemd.mounts;
