@@ -435,7 +435,12 @@ that has an HDR option. Games that support HDR detect it through DXGI and the
 gamescope WSI layer; other Vulkan applications launched from that session share
 the layer. Enable the monitor's HDR preset in its OSD if it is not automatic.
 The session drives the `DP-1` connector; edit the package if the monitor moves
-to another output.
+to another output. It writes gamescope output to
+`~/.local/share/sddm/gamescope-hdr.log`; SDDM's own `wayland-session.log` is
+reused by the next session, so use the dedicated file when the screen stays
+black. Steam runs as normal Big Picture, not the Steam Deck client, because the
+Deck flags switch the shared client to a beta branch and start a large
+first-run download while gamescope shows a black screen.
 
 HDR is limited to that session. Applications in a Niri session cannot use HDR
 until Niri implements color management.

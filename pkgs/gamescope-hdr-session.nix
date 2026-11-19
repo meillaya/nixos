@@ -10,6 +10,11 @@
 # already run against. The Nix wrappers would put a second driver tree in
 # front of them.
 #
+# Steam runs as normal Big Picture, not with the Steam Deck flags. The deck
+# flags switch the shared Steam client to the steamdeck_stable beta branch,
+# which starts a large first-run download while gamescope shows only a black
+# screen. Game HDR comes from the gamescope WSI layer, not Deck mode.
+#
 # SDDM lists the session from `share/wayland-sessions`; the module writes the
 # matching `SessionDir` override. Edit the connector below if the HDR monitor
 # moves to a different output.
@@ -27,6 +32,23 @@ let
       export XDG_SESSION_TYPE=x11
       export XDG_CURRENT_DESKTOP=gamescope
       export PATH=/usr/local/sbin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin
+
+      # SDDM's wayland-session.log is overwritten by the next session. Keep the
+      # gamescope output in its own file so a black screen can be diagnosed.
+      log="$HOME/.local/share/sddm/gamescope-hdr.log"
+      mkdir -p "$(dirname "$log")"
+      exec >"$log" 2>&1
+      printf 'gamescope-hdr-session %s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+
+      # The earlier session used the Steam Deck flags, which left the shared
+      # Steam client on the steamdeck_stable beta. That branch downloads the
+      # Deck client on first launch, and gamescope shows a black screen while it
+      # extracts. Clear only that leftover choice; other beta selections stay.
+      steam_beta="$HOME/.local/share/Steam/package/beta"
+      if [ "$(cat "$steam_beta" 2>/dev/null)" = "steamdeck_stable" ]; then
+        rm -f "$steam_beta"
+        printf 'cleared leftover steamdeck_stable beta\n'
+      fi
 
       # The WSI layer is how DXVK and vkd3d-proton see HDR support from the
       # game's Vulkan device. DXVK_HDR keeps SDR games tonemapped SDR unless
@@ -48,7 +70,7 @@ let
         --hdr-itm-enabled \
         -f -e \
         -O DP-1 \
-        -- /usr/bin/steam -steamos3 -steampal -steamdeck -gamepadui
+        -- /usr/bin/steam -gamepadui
     '';
   };
 
