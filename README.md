@@ -30,6 +30,7 @@ second source for a key, cache, or package pin.
 nix run .#build          # build the current host, change nothing
 nix run .#build-switch   # build and activate the current host
 nix run .#home-switch    # activate the standalone Home Manager profile
+nix run .#home-news      # Home Manager news for the current generation
 nix run .#update         # refresh flake inputs and theme source pins
 nix run .#clean          # drop generations older than seven days
 ```

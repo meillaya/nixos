@@ -22,6 +22,17 @@ do
   test -x "$root/apps/x86_64-linux/$app"
 done
 
+# sudo resets PATH on a foreign distribution, so clean resolves the collector
+# before escalating. A bare `sudo nix-collect-garbage` fails on the CachyOS
+# host even though the command is on the user's PATH.
+for system in x86_64-linux aarch64-darwin; do
+  grep -Fq 'command -v nix-collect-garbage' "$root/apps/$system/clean"
+  if grep -Fq 'sudo nix-collect-garbage' "$root/apps/$system/clean"; then
+    echo 'clean app must resolve nix-collect-garbage before sudo' >&2
+    exit 1
+  fi
+done
+
 for system in x86_64-linux; do
   app_names=$(nix eval --impure --json --expr \
     "builtins.attrNames (builtins.getFlake \"path:$root\").apps.$system")

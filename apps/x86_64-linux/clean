@@ -10,6 +10,15 @@ if [[ ${1:-} == "--help" || ${1:-} == "-h" ]]; then
   exit 0
 fi
 
+# sudo resets PATH to its own secure path, which on the standalone host does
+# not include the Nix profile. Resolve the collector before escalating so the
+# command works from a normal shell on every host.
+nix_gc="$(command -v nix-collect-garbage || true)"
+if [[ -z $nix_gc ]]; then
+  printf '%s\n' 'clean: nix-collect-garbage is not on PATH' >&2
+  exit 1
+fi
+
 printf '%b\n' "${yellow}Cleaning up old system generations...${reset}"
-sudo nix-collect-garbage --delete-older-than 7d
+sudo "$nix_gc" --delete-older-than 7d
 printf '%b\n' "${green}Cleanup complete.${reset}"

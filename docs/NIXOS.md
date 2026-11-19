@@ -583,6 +583,11 @@ nix run .#search-pkgs -- gdb # search stable and unstable nixpkgs
 nix run .#clean              # drop generations older than seven days
 ```
 
+The bare `home-manager news` command reads `~/.config/home-manager/home.nix`,
+which this standalone configuration does not use. `nix run .#home-news` passes
+`--flake` and the current host for you; `home-manager news --flake
+<checkout>#massive` is the same call by hand.
+
 `build` and `build-switch` infer the current hostname and refuse to fall back to
 another host. `home-switch` selects the only standalone home. `zix switch HOST`
 wraps the same commands, and `zix check` runs the quick suite.
