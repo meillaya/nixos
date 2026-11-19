@@ -1,4 +1,4 @@
-{ pkgs, user, ... }:
+{ pkgs, user, lib, ... }:
 {
   imports = [ ../linux/home-manager.nix ];
 
@@ -7,7 +7,13 @@
     username = user.identity.name;
     homeDirectory = user.identity.home;
     packages = pkgs.callPackage ./packages.nix {};
-    file = import ./files.nix { homeDirectory = user.identity.home; };
+    file = (import ./files.nix { homeDirectory = user.identity.home; }) // {
+      # The NixOS workstations show the NixOS snowflake. The shared profile
+      # keeps Snoopy for macOS, and massive stays on Snoopy through that shared
+      # profile; only this NixOS payload forces the Linux config.
+      ".config/fastfetch/config.jsonc".source =
+        lib.mkForce ../shared/config/fastfetch/linux.jsonc;
+    };
     stateVersion = "21.05";
   };
 
