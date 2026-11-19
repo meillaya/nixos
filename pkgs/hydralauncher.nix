@@ -8,15 +8,42 @@
 # Vulkan driver and the same runtime as Steam and Heroic.
 #
 # The previous FHS package is kept in hydralauncher-fhs.nix for rollback.
+#
+# Version floor: nixpkgs nixos-unstable still packages Hydra 4.4.0, but 4.4.1 is
+# the release that adds recompilation (PS4-port) and RPCS3 trophy achievements.
+# Until the flake's nixpkgs pin carries 4.4.1 or newer, build the 4.4.1 AppImage
+# from upstream. Once nixpkgs catches up this automatically returns to the
+# nixpkgs package, so the floor can then be deleted.
 {
   lib,
+  appimageTools,
+  fetchurl,
   hydralauncher,
   runCommand,
   makeWrapper,
 }:
 
 let
-  inherit (hydralauncher) pname version contents meta;
+  inherit (hydralauncher) pname meta;
+
+  fallbackVersion = "4.4.1";
+  useFallback = lib.versionOlder hydralauncher.version fallbackVersion;
+
+  fallbackSrc = fetchurl {
+    url = "https://github.com/hydralauncher/hydra/releases/download/v${fallbackVersion}/hydralauncher-${fallbackVersion}.AppImage";
+    hash = "sha256-zRy/rcz/1hP/JnnzwOQrP3M7DBEc3G8sd44QHu1XoKA=";
+  };
+
+  version = if useFallback then fallbackVersion else hydralauncher.version;
+  contents =
+    if useFallback then
+      appimageTools.extract {
+        inherit pname;
+        src = fallbackSrc;
+        version = fallbackVersion;
+      }
+    else
+      hydralauncher.contents;
 
   patchedContents = runCommand "${pname}-${version}-host-patched" { } ''
     cp -a ${contents} $out
