@@ -36,8 +36,10 @@ nix run .#clean          # drop generations older than seven days
 ```
 
 `build` and `build-switch` use the current hostname. `zix` is the developer
-tool: `nix run .#zix -- --help`. The only configured shells are Nushell, the
-login shell, and Bash, the fallback.
+tool: `nix run .#zix -- --help`. Nushell is the login shell and Bash is the
+fallback. Zsh is still part of the repository: its Powerlevel10k config lives
+at `modules/shared/config/p10k.zsh` and is kept, even though zsh is not wired
+as a login shell.
 
 ## Layout
 

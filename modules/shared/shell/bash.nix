@@ -45,6 +45,18 @@
         fastfetch --config "$HOME/.config/fastfetch/config.jsonc"
         echo
       fi
+
+      # Herdr and Kitty graphics terminals keep image placements when the text
+      # screen clears, so a plain clear leaves the Fastfetch image behind.
+      # Delete the Kitty image data, then clear the screen and scrollback. The
+      # Ctrl+L binding is needed because readline's clear-screen bypasses the
+      # clear command.
+      clear() {
+        printf '\033_Ga=d,d=A\033\\\033[H\033[2J\033[3J'
+      }
+      if [[ $- == *i* ]]; then
+        bind -x '"\C-l": clear'
+      fi
     '';
     initExtra = ''
       if [[ "$(uname)" == Linux && -n "''${WAYLAND_DISPLAY-}" ]]; then
@@ -85,8 +97,9 @@
       }
 
       fastfetch() {
-          # Always route through the rich system profile (Snoopy image + full
-          # module set). Pass through --config/-c when explicitly requested.
+          # Always route through the rich system profile and the platform image
+          # (Snoopy on macOS, NixOS logo on Linux). Pass through --config/-c
+          # when explicitly requested.
           if [[ "$*" == *-c* || "$*" == *--config* ]]; then
               command fastfetch "$@"
           else

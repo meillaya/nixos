@@ -52,7 +52,8 @@ The fixture distro does not add entities here. It extends
 - Storage facts come from `modules/nixos/storage-labels.nix`; the live profile
   disables the mount set with `my.storage.labels.enable = false`.
 - A capability only one host uses can live inline in that host's file.
-- Nushell is the login shell; Bash is the only fallback.
+- Nushell is the login shell; Bash is the fallback. The retained zsh
+  Powerlevel10k config lives in `modules/shared/config`; keep it.
 
 ## ANTI-PATTERNS
 - No `_machine-authority`, `authority.nix`, intake JSON, or `host.machine`.
@@ -61,5 +62,6 @@ The fixture distro does not add entities here. It extends
 - No `live`/`installed` aspects or distro platform/role chains.
 - No literal `"mei"` / `/home/mei` / `/Users/mei` in a feature module; read the
   entity or the distro option.
-- No fish or zsh shell configuration.
+- No fish shell configuration. Do not remove the retained zsh Powerlevel10k
+  asset or add a zsh login shell.
 - No handwritten machine record or enrollment document.

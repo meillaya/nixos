@@ -79,8 +79,10 @@ their own flake outputs.
 - Storage is a label contract, never a disk ID.
 - Aspect names are kebab-case; class payloads are `nixos`, `darwin`,
   `homeManager`.
-- Nushell is the login shell; Bash is the only fallback. `/etc/shells` on the
-  standalone host must list the system-manager Nushell path for `pam_shells`.
+- Nushell is the login shell; Bash is the fallback. The zsh Powerlevel10k
+  config at `modules/shared/config/p10k.zsh` is kept on purpose; do not remove
+  it. `/etc/shells` on the standalone host must list the system-manager Nushell
+  path for `pam_shells`.
 - `modules/standalone-linux/cachyos.nix` owns the pacman package bootstrap,
   fish removal, SDDM theme, and SDDM autologin. `system.nix` owns the
   coredump watcher and persistent journal. `openrgb.nix` owns the OpenRGB
@@ -97,4 +99,5 @@ their own flake outputs.
   flake.
 - No second Niri session authority; Noctalia owns bar, notifications, lock, and
   wallpaper.
-- No fish or zsh shell configuration.
+- No fish shell configuration. Do not remove the retained zsh Powerlevel10k
+  asset or add a zsh login shell.

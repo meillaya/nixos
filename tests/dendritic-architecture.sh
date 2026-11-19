@@ -144,6 +144,15 @@ fi
 grep -Fq '"source": "~/.config/fastfetch/snoopy-mugiwara.png"' \
   modules/shared/config/fastfetch/config.jsonc
 
+# Linux builds keep the same Snoopy config for macOS, but force the NixOS
+# snowflake config on top of it. Both assets stay in the shared tree.
+test -f modules/shared/config/fastfetch/linux.jsonc
+grep -Fq '"source": "~/.config/fastfetch/logo/nixos_logo_2.png"' \
+  modules/shared/config/fastfetch/linux.jsonc
+grep -Fq 'lib.mkForce ../shared/config/fastfetch/linux.jsonc' \
+  modules/linux/home-manager.nix
+test -f modules/shared/config/p10k.zsh
+
 if grep -Eq 'nixpkgs\.lib\.nixosSystem|darwin\.lib\.darwinSystem|homeManagerConfiguration' flake.nix; then
   echo 'flake.nix still manually constructs configuration entities' >&2
   exit 1

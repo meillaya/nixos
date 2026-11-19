@@ -110,9 +110,11 @@ profile record.
   not a host package.
 - One ISO only: `distro/flake.nix`. The installer copies the prebuilt
   `nixosConfigurations.installed` closure, which is the real workstation profile.
-- Nushell is the login shell; Bash is the only fallback. Do not add fish or zsh
-  to `environment.shells`, and keep `/etc/shells` in step with the Nushell
-  profile path on the standalone host.
+- Nushell is the login shell; Bash is the fallback. Zsh is not a login shell,
+  but the Powerlevel10k config at `modules/shared/config/p10k.zsh` is kept on
+  purpose; do not remove it. Do not add fish or zsh to `environment.shells`,
+  and keep `/etc/shells` in step with the Nushell profile path on the
+  standalone host.
 - system-manager owns the standalone host's `/etc` files, systemd units, login
   account, wrappers, and pacman package bootstrap. Home Manager does not reach
   those.

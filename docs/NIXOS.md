@@ -270,7 +270,10 @@ Manager payload and three activation scripts that run after `writeBoundary`:
   sandboxes. The Home Manager entry carries `force = true` so the next switch
   treats the copy as replaceable.
 
-Nushell is the login shell and Bash is the only fallback. The Nushell PATH lists
+Nushell is the login shell and Bash is the fallback. Zsh is not a configured
+login shell, but it is still part of the repository: the Powerlevel10k config
+at `modules/shared/config/p10k.zsh` is kept on purpose, and zsh remains
+installed on the CachyOS and macOS hosts. The Nushell PATH lists
 the nix profiles plus `/run/wrappers/bin`, `/run/system-manager/sw/bin`, and
 `/usr/bin`, so `sudo` and `run0` resolve even when a GUI launcher hands the shell
 a reduced environment. `nix run .#build-switch` prepends the wrapper and system

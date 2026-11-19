@@ -15,8 +15,12 @@ in
     '';
   };
 
-  ".config/fastfetch" = {
-    source = ../shared/config/fastfetch;
+  ".config/fastfetch/config.jsonc".source = ./config/fastfetch/config.jsonc;
+  ".config/fastfetch/nixos-01.jsonc".source = ./config/fastfetch/nixos-01.jsonc;
+  ".config/fastfetch/nixos-02.jsonc".source = ./config/fastfetch/nixos-02.jsonc;
+  ".config/fastfetch/snoopy-mugiwara.png".source = ./config/fastfetch/snoopy-mugiwara.png;
+  ".config/fastfetch/logo" = {
+    source = ./config/fastfetch/logo;
     recursive = true;
   };
 

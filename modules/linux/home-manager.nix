@@ -672,6 +672,11 @@ in
   };
 
 
+  # Fastfetch shows the NixOS snowflake on every Linux host. The shared
+  # profile keeps Snoopy for macOS, so force the Linux config over that one.
+  home.file.".config/fastfetch/config.jsonc".source =
+    lib.mkForce ../shared/config/fastfetch/linux.jsonc;
+
   home.file.".local/share/applications/game-trainer.desktop" = {
     force = true;
     text = ''

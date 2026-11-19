@@ -66,6 +66,21 @@
         fastfetch --config ($env.HOME | path join ".config/fastfetch/config.jsonc")
         print ""
       }
+
+      # Herdr and Kitty graphics terminals keep image placements when the text
+      # screen clears, so the Fastfetch image survives Ctrl+L on its own. Delete
+      # the Kitty image data before clearing the screen and scrollback.
+      def clear-terminal [] {
+        ^printf '\x1b_Ga=d,d=A\x1b\\\x1b[H\x1b[2J\x1b[3J'
+      }
+      alias clear = clear-terminal
+      $env.config.keybindings = (($env.config.keybindings? | default []) | append {
+        name: clear-terminal
+        modifier: control
+        keycode: char_l
+        mode: [emacs, vi_normal, vi_insert]
+        event: { send: executehostcommand, cmd: "clear-terminal" }
+      })
     '';
     shellAliases = {
       pn = "pnpm";
