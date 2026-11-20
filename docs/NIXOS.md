@@ -325,6 +325,9 @@ the system state that Home Manager cannot reach on a foreign distribution.
 - the 970 EVO data disk at `/mnt/970`, with a oneshot that gives the desktop
   user ownership;
 - the login account, its Nushell shell, and `/etc/shells`;
+- `/etc/ssh/ssh_config`, without the distribution's `ssh_config.d` include,
+  because OpenSSH rejects the root-owned systemd SSH proxy drop-in inside a
+  user namespace sandbox;
 - the `unix_chkpwd` PAM helper wrapper;
 - the CachyOS pacman bootcstrap and fish removal;
 - the Thyx SDDM theme (the Blush preset) and its Qt6 packages;

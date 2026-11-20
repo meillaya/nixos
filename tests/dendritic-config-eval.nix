@@ -127,6 +127,11 @@ assert lib.hasInfix "i2c-dev" system.environment.etc."modules-load.d/i2c-dev.con
 assert builtins.hasAttr "udev/rules.d/60-openrgb.rules" system.environment.etc;
 assert builtins.hasAttr "systemd/user/app-steam@.service.d/10-system-manager-path.conf" system.environment.etc;
 assert lib.hasInfix "Environment=PATH=/usr/local/sbin" system.environment.etc."systemd/user/app-steam@.service.d/10-system-manager-path.conf".text;
+
+# OpenSSH rejects included files owned by neither root nor the caller. The
+# systemd proxy drop-in is root-owned and a user namespace sandbox cannot see
+# host root, so the system ssh_config must not include the drop-in directory.
+assert !(lib.hasInfix "Include /etc/ssh/ssh_config.d" system.environment.etc."ssh/ssh_config".text);
 assert massive.home.file ? ".local/bin/steam";
 assert hasPackages [ "thyx" "openrgb" "nushell" ] system.environment.systemPackages;
 assert hasPackages [ "hydralauncher" "game-trainer" "gaming-health" "cheat-engine" "luciole" ] massive.home.packages;

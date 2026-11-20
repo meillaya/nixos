@@ -175,6 +175,22 @@ in
       '';
     };
 
+    # OpenSSH checks the owner of every file pulled in by an Include. The
+    # distribution ssh_config includes /etc/ssh/ssh_config.d/*.conf, and the
+    # systemd SSH proxy drop-in there is a root-owned symlink. In a user
+    # namespace sandbox the host root UID is unmapped, so ssh rejects that file
+    # with "Bad owner or permissions" although the host file is correct.
+    # Nothing on this host uses the systemd-ssh-proxy Host entries, so the
+    # managed client config omits the include. Home Manager applies the same
+    # fix to ~/.ssh/config through fixSshConfigPermissions.
+    environment.etc."ssh/ssh_config" = {
+      replaceExisting = true;
+      text = ''
+        # Managed by modules/standalone-linux/system.nix through system-manager.
+        # The distribution Include of /etc/ssh/ssh_config.d/*.conf is removed.
+      '';
+    };
+
     # Nix-built Noctalia links nixpkgs libpam, whose pam_unix calls
     # /run/wrappers/bin/unix_chkpwd. NixOS creates that wrapper through
     # security.pam; a foreign distribution does not. This is the same wrapper
