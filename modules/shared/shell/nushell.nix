@@ -81,6 +81,10 @@
         mode: [emacs, vi_normal, vi_insert]
         event: { send: executehostcommand, cmd: "clear-terminal" }
       })
+
+      # Powerlevel10k only runs in zsh. This file builds the same lean prompt in
+      # Nushell; see ../config/nushell/prompt.nu.
+      source ${../config/nushell/prompt.nu}
     '';
     shellAliases = {
       pn = "pnpm";
